@@ -1,0 +1,101 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "1. Install Root Dependencies",
+      "type": "shell",
+      "command": "pnpm install",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "detail": "Step 1: Install all project dependencies in root directory"
+    },
+    {
+      "label": "2. Build Project",
+      "type": "shell",
+      "command": "pnpm run build",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "detail": "Step 2: Build the project"
+    },
+    {
+      "label": "3. Kill Port 3000",
+      "type": "shell",
+      "command": "$proc = Get-NetTCPConnection -LocalPort 3000 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique; if ($proc) { $proc | ForEach-Object { Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue }; Write-Output 'Killed process on port 3000' } else { Write-Output 'No process found on port 3000' }; Start-Sleep -Seconds 1",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "detail": "Step 3: Kill any process using port 3000"
+    },
+    {
+      "label": "4. Clean Docs node_modules",
+      "type": "shell",
+      "command": "if (Test-Path '${workspaceFolder}\\docs\\node_modules') { Remove-Item '${workspaceFolder}\\docs\\node_modules' -Recurse -Force -ErrorAction SilentlyContinue }; Write-Output 'node_modules cleaned or not exists'",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "detail": "Step 4: Delete docs/node_modules directory"
+    },
+    {
+      "label": "5. Clean Docs Cache",
+      "type": "shell",
+      "command": "if (Test-Path '${workspaceFolder}\\docs\\.docusaurus') { Remove-Item '${workspaceFolder}\\docs\\.docusaurus' -Recurse -Force -ErrorAction SilentlyContinue }; if (Test-Path '${workspaceFolder}\\docs\\build') { Remove-Item '${workspaceFolder}\\docs\\build' -Recurse -Force -ErrorAction SilentlyContinue }; Write-Output 'Cache cleaned'",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "detail": "Step 5: Delete docs/.docusaurus and docs/build directories"
+    },
+    {
+      "label": "6. Install Docs Dependencies",
+      "type": "shell",
+      "command": "pnpm install",
+      "options": {
+        "cwd": "${workspaceFolder}/docs"
+      },
+      "problemMatcher": [],
+      "detail": "Step 6: Execute pnpm install in docs directory"
+    },
+    {
+      "label": "7. Start Docs Dev Server",
+      "type": "shell",
+      "command": "pnpm run docs:start",
+      "options": {
+        "cwd": "${workspaceFolder}/docs"
+      },
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "docs",
+        "close": false
+      },
+      "detail": "Step 7: Start Docusaurus development server"
+    },
+    {
+      "label": "Full Setup: Install + Build + Start Docs",
+      "dependsOn": [
+        "1. Install Root Dependencies",
+        "2. Build Project",
+        "3. Kill Port 3000",
+        "4. Clean Docs node_modules",
+        "5. Clean Docs Cache",
+        "6. Install Docs Dependencies",
+        "7. Start Docs Dev Server"
+      ],
+      "dependsOrder": "sequence",
+      "problemMatcher": [],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "detail": "Complete workflow: Install dependencies -> Build project -> Kill port -> Clean docs -> Install docs deps -> Start Docusaurus dev server"
+    }
+  ]
+}

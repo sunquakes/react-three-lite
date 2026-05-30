@@ -1,0 +1,62 @@
+{
+  "version.label": {
+    "message": "Next",
+    "description": "The label for version current"
+  },
+  "sidebar.guideSidebar.category.Model Loader": {
+    "message": "模型加载器",
+    "description": "The label for category 'Model Loader' in sidebar 'guideSidebar'"
+  },
+  "sidebar.guideSidebar.category.Mesh": {
+    "message": "网格",
+    "description": "The label for category 'Mesh' in sidebar 'guideSidebar'"
+  },
+  "sidebar.guideSidebar.category.Effect": {
+    "message": "效果",
+    "description": "The label for category 'Effect' in sidebar 'guideSidebar'"
+  },
+  "sidebar.guideSidebar.doc.getting-started": {
+    "message": "快速开始",
+    "description": "The label for doc 'getting-started' in sidebar 'guideSidebar'"
+  },
+  "sidebar.guideSidebar.doc.scene": {
+    "message": "场景",
+    "description": "The label for doc 'scene' in sidebar 'guideSidebar'"
+  },
+  "sidebar.guideSidebar.doc.sky-box": {
+    "message": "天空盒",
+    "description": "The label for doc 'sky-box' in sidebar 'guideSidebar'"
+  },
+  "sidebar.guideSidebar.doc.model-loader-component": {
+    "message": "组件方式加载模型",
+    "description": "The label for doc 'model-loader-component' in sidebar 'guideSidebar'"
+  },
+  "sidebar.guideSidebar.doc.model-loader-function": {
+    "message": "函数方式加载模型",
+    "description": "The label for doc 'model-loader-function' in sidebar 'guideSidebar'"
+  },
+  "sidebar.guideSidebar.doc.popup": {
+    "message": "弹窗",
+    "description": "The label for doc 'popup' in sidebar 'guideSidebar'"
+  },
+  "sidebar.guideSidebar.doc.movable-element": {
+    "message": "可移动元素",
+    "description": "The label for doc 'movable-element' in sidebar 'guideSidebar'"
+  },
+  "sidebar.guideSidebar.doc.animation": {
+    "message": "动画",
+    "description": "The label for doc 'animation' in sidebar 'guideSidebar'"
+  },
+  "sidebar.guideSidebar.doc.meshes/wave-circle-mesh": {
+    "message": "波浪圆环网格",
+    "description": "The label for doc 'meshes/wave-circle-mesh' in sidebar 'guideSidebar'"
+  },
+  "sidebar.guideSidebar.doc.meshes/flow-line-mesh": {
+    "message": "流动线网格",
+    "description": "The label for doc 'meshes/flow-line-mesh' in sidebar 'guideSidebar'"
+  },
+  "sidebar.guideSidebar.doc.effects/bloom": {
+    "message": "光晕效果",
+    "description": "The label for doc 'effects/bloom' in sidebar 'guideSidebar'"
+  }
+}

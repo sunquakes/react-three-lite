@@ -1,0 +1,22 @@
+{
+  "title": {
+    "message": "React Three Lite",
+    "description": "Navbar title"
+  },
+  "item.label.Guide": {
+    "message": "指南",
+    "description": "Navbar item label 'Guide'"
+  },
+  "item.label.GitHub": {
+    "message": "GitHub",
+    "description": "Navbar item label 'GitHub'"
+  },
+  "item.label.English": {
+    "message": "English",
+    "description": "Navbar item label 'English'"
+  },
+  "item.label.简体中文": {
+    "message": "简体中文",
+    "description": "Navbar item label '简体中文'"
+  }
+}

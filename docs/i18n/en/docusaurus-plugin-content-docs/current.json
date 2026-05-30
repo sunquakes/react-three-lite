@@ -1,0 +1,18 @@
+{
+  "version.label": {
+    "message": "Next",
+    "description": "The label for version current"
+  },
+  "sidebar.guideSidebar.category.Model Loader": {
+    "message": "Model Loader",
+    "description": "The label for category 'Model Loader' in sidebar 'guideSidebar'"
+  },
+  "sidebar.guideSidebar.category.Mesh": {
+    "message": "Mesh",
+    "description": "The label for category 'Mesh' in sidebar 'guideSidebar'"
+  },
+  "sidebar.guideSidebar.category.Effect": {
+    "message": "Effect",
+    "description": "The label for category 'Effect' in sidebar 'guideSidebar'"
+  }
+}

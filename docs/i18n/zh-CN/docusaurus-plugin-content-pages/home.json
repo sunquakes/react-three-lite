@@ -1,0 +1,39 @@
+{
+  "hero.title": "React Three Lite",
+  "hero.description": "基于 Three.js 构建的轻量级 React 组件库，实现无缝的 3D Web 体验。",
+  "hero.badge": "v2.0.0 已发布",
+  "hero.getStarted": "开始使用",
+  "hero.github": "GitHub",
+  
+  "features.title": "3D 开发所需的一切",
+  "features.description": "用最少的代码构建令人惊叹的 3D Web 应用",
+  
+  "features.automatic.title": "自动初始化",
+  "features.automatic.description": "组件挂载时自动初始化 3D 场景，设置渲染器、相机、灯光、坐标轴辅助和控制器。",
+  
+  "features.model.title": "模型加载与缓存",
+  "features.model.description": "支持使用 IndexedDB 缓存模型以减少重复加载时间。首次加载会将模型数据存储在本地数据库中。",
+  
+  "features.interactivity.title": "增强的交互性",
+  "features.interactivity.description": "创建可以包含自定义 React 组件的弹窗，支持在 3D 空间中定位和平滑移动。",
+  
+  "features.animation.title": "动画支持",
+  "features.animation.description": "内置动画系统，用于播放和控制 3D 模型动画，支持多个动画片段。",
+  
+  "features.effects.title": "自定义效果",
+  "features.effects.description": "轻松添加视觉效果，如 bloom、景深和后期处理，增强您的 3D 场景。",
+  
+  "features.typescript.title": "TypeScript 就绪",
+  "features.typescript.description": "完整的 TypeScript 支持，包含所有组件和工具的全面类型定义。",
+  
+  "quickStart.title": "快速开始",
+  "quickStart.description": "几分钟内开始使用 React Three Lite！",
+  "quickStart.readDocs": "阅读文档",
+  
+  "stats.gzippedSize": "Gzipped 大小",
+  "stats.typescript": "TypeScript",
+  "stats.dependencies": "依赖项",
+  
+  "contributors.title": "贡献者",
+  "contributors.description": "感谢所有贡献者！"
+}

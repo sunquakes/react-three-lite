@@ -1,0 +1,57 @@
+---
+hide_table_of_contents: true
+---
+
+import HomeContent from '@site/src/components/HomeContent';
+
+<HomeContent
+  badge="v2.0.0 released"
+  title="React Three Lite"
+  description="A lightweight React component library built on Three.js for seamless 3D web experiences."
+  getStarted="Get Started"
+  github="GitHub"
+  featuresTitle="Everything you need for 3D"
+  featuresDescription="Build stunning 3D web applications with minimal code"
+  quickStartTitle="Quick Start"
+  quickStartDescription="Get started with React Three Lite in minutes!"
+  readDocs="Read the Docs"
+  contributorsTitle="Contributors"
+  contributorsDescription="Thanks to all our contributors!"
+  features={[
+    {
+      icon: "🚀",
+      title: "Automatic Initialization",
+      description: "Automatically initializes a 3D scene when the component is mounted, setting up the renderer, camera, lights, axes helper, and controls."
+    },
+    {
+      icon: "📦",
+      title: "Model Loading and Caching",
+      description: "Supports caching models using IndexedDB to reduce repeated load times. The first load stores model data in a local database."
+    },
+    {
+      icon: "🎯",
+      title: "Enhanced Interactivity",
+      description: "Creates popups that can contain custom React components, supporting positioning and smooth movement in 3D space."
+    },
+    {
+      icon: "🎬",
+      title: "Animation Support",
+      description: "Built-in animation system for playing and controlling 3D model animations with support for multiple animation clips."
+    },
+    {
+      icon: "✨",
+      title: "Custom Effects",
+      description: "Easily add visual effects like bloom, depth of field, and post-processing to enhance your 3D scenes."
+    },
+    {
+      icon: "📘",
+      title: "TypeScript Ready",
+      description: "Full TypeScript support with comprehensive type definitions for all components and utilities."
+    }
+  ]}
+  stats={[
+    { label: "Gzipped Size", value: "~15KB" },
+    { label: "TypeScript", value: "100%" },
+    { label: "Dependencies", value: "Minimal" }
+  ]}
+/>

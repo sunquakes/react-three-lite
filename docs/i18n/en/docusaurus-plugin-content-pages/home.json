@@ -1,0 +1,39 @@
+{
+  "hero.title": "React Three Lite",
+  "hero.description": "A lightweight React component library built on Three.js for seamless 3D web experiences.",
+  "hero.badge": "v2.0.0 released",
+  "hero.getStarted": "Get Started",
+  "hero.github": "GitHub",
+  
+  "features.title": "Everything you need for 3D",
+  "features.description": "Build stunning 3D web applications with minimal code",
+  
+  "features.automatic.title": "Automatic Initialization",
+  "features.automatic.description": "Automatically initializes a 3D scene when the component is mounted, setting up the renderer, camera, lights, axes helper, and controls.",
+  
+  "features.model.title": "Model Loading and Caching",
+  "features.model.description": "Supports caching models using IndexedDB to reduce repeated load times. The first load stores model data in a local database.",
+  
+  "features.interactivity.title": "Enhanced Interactivity",
+  "features.interactivity.description": "Creates popups that can contain custom React components, supporting positioning and smooth movement in 3D space.",
+  
+  "features.animation.title": "Animation Support",
+  "features.animation.description": "Built-in animation system for playing and controlling 3D model animations with support for multiple animation clips.",
+  
+  "features.effects.title": "Custom Effects",
+  "features.effects.description": "Easily add visual effects like bloom, depth of field, and post-processing to enhance your 3D scenes.",
+  
+  "features.typescript.title": "TypeScript Ready",
+  "features.typescript.description": "Full TypeScript support with comprehensive type definitions for all components and utilities.",
+  
+  "quickStart.title": "Quick Start",
+  "quickStart.description": "Get started with React Three Lite in minutes!",
+  "quickStart.readDocs": "Read the Docs",
+  
+  "stats.gzippedSize": "Gzipped Size",
+  "stats.typescript": "TypeScript",
+  "stats.dependencies": "Dependencies",
+  
+  "contributors.title": "Contributors",
+  "contributors.description": "Thanks to all our contributors!"
+}
