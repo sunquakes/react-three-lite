@@ -1,4 +1,5 @@
 ---
+id: scene
 lang: en-US
 title: Scene
 ---
@@ -70,6 +71,7 @@ function App() {
 | camera        | THREE.Camera                | THREE.PerspectiveCamera | `optional` Defaults to a PerspectiveCamera.                                                            |
 | light         | THREE.Light                 | THREE.HemisphereLight   | `optional` Defaults to a HemisphereLight.                                                              |
 | axesHelper    | THREE.AxesHelper \| boolean | THREE.AxesHelper        | `optional` Defaults to a AxesHelper, `false` to hide it.                                               |
+| gridHelper    | THREE.GridHelper \| boolean | THREE.GridHelper        | `optional` Defaults to a GridHelper, `false` to hide it.                                                 |
 | controls      | OrbitControls \| boolean    | OrbitControls           | `optional` Defaults to a OrbitControls, `false` to disable it.                                         |
 
 ## Events
