@@ -9,7 +9,7 @@ export default function SkyBoxComponent() {
   const handleCreated = (scene: THREE.Scene, components: SceneComponents) => {
     const { camera } = components
     sceneRef.current = scene
-    camera.position.set(0, 1.5, 3)
+    camera.position.set(0, 0, 3)
   }
 
   useEffect(() => {
@@ -27,6 +27,6 @@ export default function SkyBoxComponent() {
   }, [])
 
   return (
-    <Scene style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '300px', border: '1px solid #eee', borderRadius: '4px', overflow: 'hidden' }} onCreated={handleCreated} />
+    <Scene style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '300px', border: '1px solid #eee', borderRadius: '4px', overflow: 'hidden' }} gridHelper={false} onCreated={handleCreated} />
   )
 }

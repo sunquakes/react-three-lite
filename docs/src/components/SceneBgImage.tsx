@@ -24,6 +24,7 @@ export default function SceneBgImageComponent({ style }: SceneBgImageComponentPr
     <Scene
       style={{ ...defaultStyle, ...style }}
       bgImage="/images/examples/bg.jpg"
+      gridHelper={false}
       onCreated={handleCreated}
     />
   )

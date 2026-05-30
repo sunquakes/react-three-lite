@@ -9,10 +9,10 @@ export default function AnimationComponent() {
   const handleCreated = async (scene: THREE.Scene, components: SceneComponents) => {
     const { camera } = components
     sceneRef.current = scene
-    camera.position.set(0, 1, 4)
+    camera.position.set(0, 1.8, 4)
 
     const model = await GLTFLoaderAsync('/models/perseverance.glb')
-    model.position.set(0, -0.5, 0)
+    model.position.set(0, 0, 0)
     scene.add(model)
 
     const animation = new Animation(model)

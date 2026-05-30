@@ -23,6 +23,7 @@ export default function SceneBgColorComponent({ style }: SceneBgColorComponentPr
     <Scene
       style={{ ...defaultStyle, ...style }}
       bgColor="#98F5F9"
+      gridHelper={false}
       onCreated={handleCreated}
     />
   )
