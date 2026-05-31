@@ -6,7 +6,12 @@ title: 流动线网格
 
 类
 
+import FlowLineMesh from '@site/src/components/meshes/FlowLineMesh'
+import FlowLineMeshOptions from '@site/src/components/meshes/FlowLineMeshOptions'
+
 ## 默认用法
+
+<FlowLineMesh />
 
 ```tsx
 import { Scene, FlowLineMesh, AxisType } from 'react-three-lite'
@@ -62,6 +67,8 @@ function App() {
 
 ## 自定义选项
 
+<FlowLineMeshOptions />
+
 ```tsx
 import { Scene, FlowLineMesh, AxisType } from 'react-three-lite'
 import * as THREE from 'three'
@@ -116,10 +123,11 @@ function App() {
 
 ## 构造函数参数
 
-| 参数    | 属性   | 类型                | 默认值                                       | 描述                                                                            |
-| ------- | ------ | ------------------- | -------------------------------------------- | ------------------------------------------------------------------------------- |
-| options | points | THREE.Vector3[]     | `[-1,0,0], [0,0.5,0], [1,0,0]`              | `可选` 定义线路径的所有 3D 坐标点数组。                                         |
-|         | color  | [number, number, number, number] | [0.6, 0.96, 0.98, 1] | `可选` 流动线的颜色（RGBA）。                                                   |
-|         | speed  | number              | 1                                            | `可选` 流动动画的速度。                                                         |
-|         | width  | number              | 0.05                                         | `可选` 线的宽度。                                                               |
-|         | axis   | AxisType            | AxisType.Z                                   | `可选` 线的朝向轴。`X`、`Y` 或 `Z`。                                            |
+| 参数    | 属性          | 类型                             | 默认值                                       | 描述                                                                            |
+| ------- | ------------- | -------------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------- |
+| options | points        | THREE.Vector3[]                  | `[-1,0,0], [0,0.5,0], [1,0,0]`              | `可选` 定义线路径的所有 3D 坐标点数组。                                         |
+|         | color         | [number, number, number, number] | [0.6, 0.96, 0.98, 1]                        | `可选` 流动线的颜色（RGBA）。                                                   |
+|         | speed         | number                           | 1                                            | `可选` 流动动画的速度。                                                         |
+|         | width         | number                           | 0.05                                         | `可选` 线的宽度。                                                               |
+|         | axis          | AxisType                         | AxisType.Z                                   | `可选` 线的朝向轴。`X`、`Y` 或 `Z`。                                            |
+|         | textureRepeat | number                           | 1                                            | `可选` 纹理重复次数。                                                           |
