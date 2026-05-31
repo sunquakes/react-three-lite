@@ -3,8 +3,8 @@
 # React Three Lite
 
 <p align="center">
-  <a href="https://t3l.sunquakes.com/" target="_blank" rel="noopener noreferrer">
-    <img width="200" src="https://t3l.sunquakes.com/images/logo.png" alt="react-three-lite logo">
+  <a href="https://r3l.sunquakes.com/" target="_blank" rel="noopener noreferrer">
+    <img width="200" src="https://r3l.sunquakes.com/images/logo.png" alt="react-three-lite logo">
   </a>
 </p>
 <p align="center">
@@ -15,7 +15,7 @@
 
 ## 文档
 
-访问 [t3l.sunquakes.com](https://t3l.sunquakes.com).
+访问 [r3l.sunquakes.com](https://r3l.sunquakes.com).
 
 ## 安装
 
