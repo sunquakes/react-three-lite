@@ -25,7 +25,7 @@ const sidebars = {
       type: 'category',
       label: 'Effect',
       collapsible: true,
-      items: ['effects/bloom'],
+      items: ['effects/bloom', 'effects/rain'],
     },
   ],
 };

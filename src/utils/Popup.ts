@@ -27,7 +27,7 @@ export default class Popup {
     this.update = this.update.bind(this)
   }
 
-  create(position: Position, component: ReactNode, props: object | {}): void {
+  create(position: Position, component: ReactNode, _props: object | {}): void {
     if (this.root) {
       return
     }

@@ -3,6 +3,7 @@ import GLTFLoader from './components/GLTFLoader'
 import FBXLoader from './components/FBXLoader'
 import OBJLoader from './components/OBJLoader'
 import Bloom from './components/Bloom'
+import Rain from './components/Rain'
 import SkyBox from './utils/SkyBox'
 import Popup from './utils/Popup'
 import Movable from './utils/Movable'
@@ -13,7 +14,7 @@ import { SceneContext, useScene } from './context/SceneContext'
 import { GLTFLoader as GLTFLoaderFn, FBXLoader as FBXLoaderFn, OBJLoader as OBJLoaderFn } from './utils/ModelLoader'
 
 // components
-export { Scene, GLTFLoader, FBXLoader, OBJLoader, Bloom, SceneContext, useScene }
+export { Scene, GLTFLoader, FBXLoader, OBJLoader, Bloom, Rain, SceneContext, useScene }
 
 // types
 export type { SceneComponents, CallbackFrame } from './context/SceneContext'

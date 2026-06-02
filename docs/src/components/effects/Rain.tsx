@@ -1,0 +1,15 @@
+import * as THREE from 'three'
+import { Scene, Rain } from 'react-three-lite'
+
+export default function RainComponent() {
+  const handleCreated = (scene: THREE.Scene, { camera }: any) => {
+    if (!camera) return
+    camera.position.set(0, 1.5, 3)
+  }
+
+  return (
+    <Scene onCreated={handleCreated} bgColor="#1a1a2e" style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '300px' }}>
+      <Rain count={3000} speed={0.8} color={0xaaaaee} range={30} height={20} />
+    </Scene>
+  )
+}

@@ -29,7 +29,7 @@ interface SceneProps {
 }
 
 const SceneComponent = ({
-  modelValue,
+  modelValue: _modelValue,
   renderer: propRenderer,
   bgColor,
   bgImage,
@@ -40,7 +40,7 @@ const SceneComponent = ({
   controls: propControls,
   onCreated,
   onBeforeFrame,
-  onFrame,
+  onFrame: _onFrame,
   onAfterFrame,
   children,
   style,
