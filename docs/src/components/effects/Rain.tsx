@@ -4,7 +4,8 @@ import { Scene, Rain } from 'react-three-lite'
 export default function RainComponent() {
   const handleCreated = (scene: THREE.Scene, { camera }: any) => {
     if (!camera) return
-    camera.position.set(0, 1.5, 3)
+    camera.position.set(0, 0, 4)
+    camera.lookAt(0, 0, 0)
   }
 
   return (

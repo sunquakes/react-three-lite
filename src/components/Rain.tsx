@@ -44,8 +44,8 @@ const vertexShader = `
 
     vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
 
-    float baseSize = 2.0 + aSpeed * 2.0;
-    gl_PointSize = baseSize * aScaleY * (10.0 / -mvPosition.z);
+    float baseSize = 3.0 + aSpeed * 2.0;
+    gl_PointSize = baseSize * (8.0 / -mvPosition.z);
 
     gl_Position = projectionMatrix * mvPosition;
 
@@ -61,9 +61,13 @@ const fragmentShader = `
 
   void main() {
     vec2 coord = gl_PointCoord - vec2(0.5);
-    float dist = length(coord);
 
-    float alpha = 1.0 - smoothstep(0.3, 0.5, dist);
+    coord.y += 0.15;
+
+    float dist = length(coord * vec2(8.0, 1.0));
+
+    float alpha = 1.0 - smoothstep(0.08, 0.3, dist);
+
     alpha *= vAlpha * uOpacity;
 
     if (alpha < 0.01) discard;
@@ -74,7 +78,7 @@ const fragmentShader = `
 
 const Rain = ({
   count = 4000,
-  color = 0xaaaaaa,
+  color = 0xb0c4de,
   speed = 1,
   range = 20,
   height = 15,

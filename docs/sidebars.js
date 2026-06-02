@@ -1,5 +1,4 @@
-// @ts-check
-
+// @ts-ignore
 /** @type {import('@docusaurus/plugin-content-docs').SidebarsConfig} */
 const sidebars = {
   guideSidebar: [
