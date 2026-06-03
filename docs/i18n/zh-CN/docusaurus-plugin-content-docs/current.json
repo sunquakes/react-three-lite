@@ -58,5 +58,13 @@
   "sidebar.guideSidebar.doc.effects/bloom": {
     "message": "光晕效果",
     "description": "The label for doc 'effects/bloom' in sidebar 'guideSidebar'"
+  },
+  "sidebar.guideSidebar.doc.effects/rain": {
+    "message": "下雨效果",
+    "description": "The label for doc 'effects/rain' in sidebar 'guideSidebar'"
+  },
+  "sidebar.guideSidebar.doc.effects/snow": {
+    "message": "下雪效果",
+    "description": "The label for doc 'effects/snow' in sidebar 'guideSidebar'"
   }
 }

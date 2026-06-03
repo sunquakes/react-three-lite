@@ -9,8 +9,8 @@ export default function RainComponent() {
   }
 
   return (
-    <Scene onCreated={handleCreated} bgColor="#1a1a2e" style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '300px' }}>
-      <Rain count={3000} speed={0.8} color={0xaaaaee} range={30} height={20} />
+    <Scene onCreated={handleCreated} bgColor="#0f172a" style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '300px' }}>
+      <Rain count={3000} speed={0.8} color={0x87ceeb} range={30} height={20} />
     </Scene>
   )
 }
