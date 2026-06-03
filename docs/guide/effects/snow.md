@@ -1,30 +1,29 @@
 ---
-sidebar_position: 2
+lang: en-US
+title: Snow
 ---
 
-# Snow
+## Type
 
-The `Snow` component simulates a snowfall effect using a particle system, suitable for creating atmospheric winter scenes.
+Component
 
-## Basic Usage
+import SnowComponent from '@site/src/components/effects/Snow'
+
+## Default Usage
+
+<SnowComponent />
 
 ```tsx
 import { Scene, Snow } from 'react-three-lite'
 
 export default function App() {
   return (
-    <Scene bgColor="#1a1a2e" style={{ width: '100%', height: '300px' }}>
+    <Scene bgColor="#1e293b" style={{ width: '100%', height: '300px' }}>
       <Snow count={2000} speed={0.5} color={0xffffff} range={25} height={18} />
     </Scene>
   )
 }
 ```
-
-## Example
-
-import SnowComponent from '@site/src/components/effects/Snow'
-
-<SnowComponent />
 
 ## Props
 
