@@ -133,7 +133,7 @@ const SceneComponent = ({
       controls: currentControls
     }
 
-    const scene = createScene(currentRenderer, container, sceneComponents, frame, beforeFrame, afterFrame)
+    const { scene, dispose: disposeScene } = createScene(currentRenderer, container, sceneComponents, frame, beforeFrame, afterFrame)
 
     if (bgImage != undefined) {
       const textureLoader = new TextureLoader()
@@ -166,9 +166,21 @@ const SceneComponent = ({
       addBeforeFrame: (callback: CallbackFrame) => {
         beforeFrameChildrenRef.current.push(callback)
         beforeFrameSetRef.current = true
+        return () => {
+          const index = beforeFrameChildrenRef.current.indexOf(callback)
+          if (index > -1) {
+            beforeFrameChildrenRef.current.splice(index, 1)
+          }
+        }
       },
       addAfterFrame: (callback: CallbackFrame) => {
         afterFrameChildrenRef.current.push(callback)
+        return () => {
+          const index = afterFrameChildrenRef.current.indexOf(callback)
+          if (index > -1) {
+            afterFrameChildrenRef.current.splice(index, 1)
+          }
+        }
       }
     })
 
@@ -176,8 +188,32 @@ const SceneComponent = ({
     setShowSlot(true)
 
     return () => {
+      disposeScene()
+      // 清理背景纹理
+      if (scene.background && 'dispose' in scene.background) {
+        (scene.background as any).dispose()
+      }
+      // 清理场景中的所有对象
+      scene.traverse((child) => {
+        if ('geometry' in child) {
+          (child as any).geometry?.dispose()
+        }
+        if ('material' in child) {
+          const material = (child as any).material
+          if (Array.isArray(material)) {
+            material.forEach((m: any) => m?.dispose())
+          } else {
+            material?.dispose()
+          }
+        }
+        if ('dispose' in child && typeof (child as any).dispose === 'function') {
+          (child as any).dispose()
+        }
+      })
       currentRenderer.dispose()
       currentControls.dispose()
+      currentLight.dispose()
+      currentCamera.clear()
     }
   }, [])
 

@@ -158,9 +158,10 @@ const Rain = ({
 
     scene.add(points)
 
-    addBeforeFrame?.(animate)
+    const removeBeforeFrame = addBeforeFrame?.(animate)
 
     return () => {
+      removeBeforeFrame?.()
       geometry.dispose()
       material.dispose()
       if (pointsRef.current) {

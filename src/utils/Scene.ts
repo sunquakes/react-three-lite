@@ -10,7 +10,7 @@ export default function (
   frame: CallbackFrame,
   beforeFrame?: CallbackFrame,
   afterFrame?: CallbackFrame
-): Scene {
+): { scene: Scene; dispose: () => void } {
   const camera = components.camera
   const scene = new Scene()
   
@@ -28,7 +28,11 @@ export default function (
   container.appendChild(css2DRenderer.domElement)
   renderer.autoClear = false
 
+  let animationId: number
+  let disposed = false
+
   function animate() {
+    if (disposed) return
     beforeFrame?.(renderer, scene, components)
     if (components.controls instanceof OrbitControls) {
       components.controls.update()
@@ -38,7 +42,7 @@ export default function (
       css2DRenderer.render(scene, camera)
     }
     afterFrame?.(renderer, scene, components)
-    requestAnimationFrame(animate)
+    animationId = requestAnimationFrame(animate)
   }
   animate()
 
@@ -51,10 +55,41 @@ export default function (
   }
 
   function onWindowResize() {
-    renderer.setSize(containerWidth, containerHeight)
-    css2DRenderer.setSize(containerWidth, containerHeight)
+    renderer.setSize(container.clientWidth, container.clientHeight)
+    css2DRenderer.setSize(container.clientWidth, container.clientHeight)
   }
 
   window.addEventListener('resize', onWindowResize)
-  return scene
+
+  return {
+    scene,
+    dispose: () => {
+      disposed = true
+      cancelAnimationFrame(animationId)
+      window.removeEventListener('resize', onWindowResize)
+      if (renderer.domElement.parentNode) {
+        renderer.domElement.parentNode.removeChild(renderer.domElement)
+      }
+      if (css2DRenderer.domElement.parentNode) {
+        css2DRenderer.domElement.parentNode.removeChild(css2DRenderer.domElement)
+      }
+      // 清理场景中的所有对象
+      scene.traverse((child) => {
+        if ('geometry' in child) {
+          (child as any).geometry?.dispose()
+        }
+        if ('material' in child) {
+          const material = (child as any).material
+          if (Array.isArray(material)) {
+            material.forEach((m: any) => m?.dispose())
+          } else {
+            material?.dispose()
+          }
+        }
+        if ('dispose' in child && typeof (child as any).dispose === 'function') {
+          (child as any).dispose()
+        }
+      })
+    }
+  }
 }

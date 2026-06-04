@@ -16,8 +16,8 @@ export type SceneSlotProps = {
   scene?: Scene
   sceneComponents?: SceneComponents
   setFrame?: (callback: CallbackFrame) => void
-  addBeforeFrame?: (callback: CallbackFrame) => void
-  addAfterFrame?: (callback: CallbackFrame) => void
+  addBeforeFrame?: (callback: CallbackFrame) => () => void
+  addAfterFrame?: (callback: CallbackFrame) => () => void
 }
 
 export type CallbackFrame = (

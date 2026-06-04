@@ -47,6 +47,8 @@ const Bloom = ({
     ))
     bloomComposerRef.current = bloomComposer
 
+    let removeBeforeFrame: (() => void) | undefined
+
     if (layer === 0) {
       // layer 0: Apply bloom to all objects
       setFrame?.(
@@ -58,7 +60,7 @@ const Bloom = ({
       )
     } else {
       // layer > 0: Apply bloom only to objects in that layer
-      addBeforeFrame?.(
+      removeBeforeFrame = addBeforeFrame?.(
         (renderer: WebGLRenderer, _scene: Scene, components: any) => {
           renderer.clear()
           components.camera.layers.set(layer)
@@ -70,8 +72,11 @@ const Bloom = ({
 
     // Cleanup
     return () => {
+      removeBeforeFrame?.()
       bloomComposer.dispose()
       bloomComposerRef.current = null
+      light.layers.disable(layer)
+      camera.layers.disable(layer)
     }
   }, [sceneContext, layer, strength, radius, threshold])
 

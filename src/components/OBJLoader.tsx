@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { Scene, Group } from 'three'
 import { OBJLoader as OBJLoaderUtil } from '../utils/ModelLoader'
 import { useScene } from '../context/SceneContext'
@@ -28,8 +28,11 @@ const OBJLoader = ({
   onLoaded
 }: OBJLoaderProps) => {
   const sceneContext = useScene()
+  const modelRef = useRef<Group | null>(null)
 
   useEffect(() => {
+    let cancelled = false
+
     const init = async () => {
       const scene = propScene || sceneContext?.scene
       if (!scene) return
@@ -37,12 +40,39 @@ const OBJLoader = ({
       const model = await OBJLoaderUtil(modelUrl, mtlUrl, cache, (event) =>
         onProgress?.(event)
       )
+      if (cancelled) return
+
       model.scale.set(...scale)
       scene.add(model)
+      modelRef.current = model
       onLoaded?.(model)
     }
     init()
-  }, [])
+
+    return () => {
+      cancelled = true
+      if (modelRef.current) {
+        const scene = propScene || sceneContext?.scene
+        if (scene) {
+          scene.remove(modelRef.current)
+        }
+        modelRef.current.traverse((child) => {
+          if ('geometry' in child) {
+            ;(child as any).geometry?.dispose()
+          }
+          if ('material' in child) {
+            const material = (child as any).material
+            if (Array.isArray(material)) {
+              material.forEach((m: any) => m?.dispose())
+            } else {
+              material?.dispose()
+            }
+          }
+        })
+        modelRef.current = null
+      }
+    }
+  }, [propScene, sceneContext?.scene, modelUrl, mtlUrl, scale, cache, onProgress, onLoaded])
 
   return null
 }

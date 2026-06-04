@@ -30,10 +30,10 @@ const GLTFLoader = ({
   onLoaded
 }: GLTFLoaderProps) => {
   const sceneContext = useScene()
-  const loadedRef = useRef(false)
+  const modelRef = useRef<Group | null>(null)
 
   useEffect(() => {
-    if (loadedRef.current) return
+    let cancelled = false
     
     const init = async () => {
       const scene = propScene || sceneContext?.scene
@@ -43,16 +43,42 @@ const GLTFLoader = ({
         return
       }
 
-      loadedRef.current = true
       const model = await GLTFLoaderUtil(modelUrl, useDraco, dracoDecoderPath, cache, (event) =>
         onProgress?.(event)
       )
+      if (cancelled) return
+      
       model.scale.set(...scale)
       scene.add(model)
+      modelRef.current = model
       onLoaded?.(model)
     }
     init()
-  }, [propScene, sceneContext?.scene, modelUrl, scale, cache, dracoDecoderPath, onProgress, onLoaded])
+
+    return () => {
+      cancelled = true
+      if (modelRef.current) {
+        const scene = propScene || sceneContext?.scene
+        if (scene) {
+          scene.remove(modelRef.current)
+        }
+        modelRef.current.traverse((child) => {
+          if ('geometry' in child) {
+            ;(child as any).geometry?.dispose()
+          }
+          if ('material' in child) {
+            const material = (child as any).material
+            if (Array.isArray(material)) {
+              material.forEach((m: any) => m?.dispose())
+            } else {
+              material?.dispose()
+            }
+          }
+        })
+        modelRef.current = null
+      }
+    }
+  }, [propScene, sceneContext?.scene, modelUrl, scale, cache, dracoDecoderPath, useDraco, onProgress, onLoaded])
 
   return null
 }

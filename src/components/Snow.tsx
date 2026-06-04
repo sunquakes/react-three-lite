@@ -213,11 +213,13 @@ const Snow = ({
 
     scene.add(points)
 
-    addBeforeFrame?.(animate)
+    const removeBeforeFrame = addBeforeFrame?.(animate)
 
     return () => {
+      removeBeforeFrame?.()
       geometry.dispose()
       material.dispose()
+      texture.dispose()
       if (pointsRef.current) {
         scene.remove(pointsRef.current)
         pointsRef.current = null
