@@ -3,7 +3,13 @@ alwaysApply: true
 scene: git_message
 ---
 
-# Git Commit Message Rules (English)
+# Git Commit Message Rules (English Only)
+
+## Language Requirement
+- **ALL commit messages MUST be in English ONLY**
+- **DO NOT use any other language (no Chinese, no other languages)**
+- This applies to ALL parts: subject line, body, and footer
+- This is a STRICT requirement - always generate English commit messages
 
 ## Format
 - Commit messages must be in **English**
@@ -11,6 +17,7 @@ scene: git_message
 - Keep the first line under 50 characters (subject line)
 - Separate subject from body with a blank line
 - Wrap body lines at 72 characters
+- Body bullet points MUST also be in English
 
 ## Structure
 ```
