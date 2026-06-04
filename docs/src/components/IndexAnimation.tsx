@@ -11,7 +11,7 @@ export default function IndexAnimationComponent() {
     sceneRef.current = scene
     camera.position.set(0, 1.5, 2.1)
 
-    const model = await GLTFLoaderAsync('/models/perseverance.glb')
+    const model = await GLTFLoaderAsync('/models/perseverance-draco.glb', true)
     model.scale.set(0.7, 0.7, 0.7)
     model.position.set(0, 0, 0)
     scene.add(model)

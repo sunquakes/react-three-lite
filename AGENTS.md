@@ -116,8 +116,10 @@ When creating particle effects like Rain or Snow, follow this workflow:
 
 **5. Create Demo Component**
 - Set front-facing camera: `camera.position.set(0, 0, 4)`
+- Use `camera.lookAt(0, 0, 0)` to ensure proper orientation
 - Choose contrasting background color
 - Adjust camera distance for visibility
+- Set demo container style: `style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '300px' }}`
 
 **6. Iterative Visual Tuning**
 - Adjust shape in fragment shader
@@ -129,6 +131,8 @@ When creating particle effects like Rain or Snow, follow this workflow:
 - Write English guide page in `docs/guide/`
 - Write Chinese guide page in `docs/i18n/zh-CN/docusaurus-plugin-content-docs/current/`
 - Update sidebar and i18n labels
+
+> **Note**: Steps 5 and 7 are required for all new features (components, meshes, utilities, etc.), not just particle effects.
 
 ### Testing
 ```bash

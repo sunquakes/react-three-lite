@@ -1,5 +1,5 @@
 import { Group, AnimationClip, Mesh, MeshBasicMaterial, MeshStandardMaterial } from 'three'
-import { GLTFLoader as THREEGLTFLoader, FBXLoader as THREEFBXLoader, OBJLoader as THREEOBJLoader, MTLLoader as THREEMTLLoader } from 'three-stdlib'
+import { GLTFLoader as THREEGLTFLoader, FBXLoader as THREEFBXLoader, OBJLoader as THREEOBJLoader, MTLLoader as THREEMTLLoader, DRACOLoader } from 'three-stdlib'
 
 interface LoadEvent {
   type: 'cache' | 'fetch' | 'parse'
@@ -133,13 +133,34 @@ async function fetchWithProgress(url: string, onProgress?: (event: LoadEvent) =>
   return combined.buffer
 }
 
+function getDefaultDecoderPath(): string {
+  return 'https://www.gstatic.com/draco/versioned/decoders/1.5.7/'
+}
+
+let dracoLoader: DRACOLoader | null = null
+
+function getDRACOLoader(decoderPath?: string): DRACOLoader {
+  const path = decoderPath || getDefaultDecoderPath()
+  if (!dracoLoader) {
+    dracoLoader = new DRACOLoader()
+    dracoLoader.setDecoderPath(path)
+    dracoLoader.preload()
+  }
+  return dracoLoader
+}
+
 export async function GLTFLoader(
   url: string,
+  useDraco?: boolean,
+  dracoDecoderPath?: string,
   cache?: boolean,
   onProgress?: (event: LoadEvent) => void
 ): Promise<Group> {
   const data = await fileLoader(url, cache, onProgress)
   const loader = new THREEGLTFLoader()
+  if (useDraco) {
+    loader.setDRACOLoader(getDRACOLoader(dracoDecoderPath))
+  }
   return new Promise((resolve) => {
     onProgress?.({ type: 'parse', progress: 0 })
     loader.parse(data, '', (gltf) => {

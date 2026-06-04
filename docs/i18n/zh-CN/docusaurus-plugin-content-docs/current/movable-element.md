@@ -21,7 +21,7 @@ function App() {
     camera.position.set(0, 1.5, 3)
 
     // 使用GLTFLoader函数版本加载模型
-    const model = await GLTFLoader('/models/perseverance.glb')
+    const model = await GLTFLoader('/models/perseverance-draco.glb', true)
     model.scale.set(0.8, 0.8, 0.8)
     scene.add(model)
 

@@ -19,7 +19,7 @@ export default function GLTFLoaderComponentComponent() {
 
   return (
     <Scene style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '300px', border: '1px solid #eee', borderRadius: '4px', overflow: 'hidden' }} onCreated={handleCreated}>
-      {GLTFLoader && <GLTFLoader modelUrl="/models/perseverance.glb" scale={[0.8, 0.8, 0.8]} />}
+      {GLTFLoader && <GLTFLoader modelUrl="/models/perseverance-draco.glb" scale={[0.8, 0.8, 0.8]} useDraco />}
     </Scene>
   )
 }

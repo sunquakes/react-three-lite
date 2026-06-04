@@ -30,11 +30,29 @@ function App() {
       style={{ marginTop: '10px', width: '100%', height: '300px' }} 
       onCreated={handleCreated}
     >
-      <GLTFLoader modelUrl="/models/perseverance.glb" scale={[0.8, 0.8, 0.8]} />
+      <GLTFLoader modelUrl="/models/perseverance-draco.glb" scale={[0.8, 0.8, 0.8]} useDraco />
     </Scene>
   )
 }
 ```
+
+### Props
+
+| Name     | Type                     | Default         | Description                                           |
+| -------- | ------------------------ | --------------- | ----------------------------------------------------- |
+| modelUrl | string                   |                 | `required` The model url.                            |
+| scene    | THREE.Scene              | THREE.Scene     | `optional` The Scene where the model will be rendered.|
+| scale    | [number, number, number] | [1.0, 1.0, 1.0] | `optional` The scale of the model.                   |
+| cache    | boolean                  | true            | `optional` The model will be cached into the indexDB. |
+| useDraco | boolean                  | false           | `optional` Whether to use Draco decoder. Set to `true` for Draco-compressed GLTF models. |
+| dracoDecoderPath | string           | `https://www.gstatic.com/draco/versioned/decoders/1.5.7/` | `optional` The Draco decoder path. Only needed when `useDraco` is `true`. |
+
+### Events
+
+| Name       | Parameters                           | Description                                     |
+| ---------- | ------------------------------------ | ----------------------------------------------- |
+| onProgress | (event: ProgressEvent) => void       | The callback function when loading the model.   |
+| onLoaded   | (model: THREE.Group) => void         | The callback function when the model is loaded. |
 
 ## FBX Loader
 
@@ -60,6 +78,22 @@ function App() {
   )
 }
 ```
+
+### Props
+
+| Name     | Type                     | Default         | Description                                           |
+| -------- | ------------------------ | --------------- | ----------------------------------------------------- |
+| modelUrl | string                   |                 | `required` The model url.                            |
+| scene    | THREE.Scene              | THREE.Scene     | `optional` The Scene where the model will be rendered.|
+| scale    | [number, number, number] | [1.0, 1.0, 1.0] | `optional` The scale of the model.                   |
+| cache    | boolean                  | true            | `optional` The model will be cached into the indexDB. |
+
+### Events
+
+| Name       | Parameters                           | Description                                     |
+| ---------- | ------------------------------------ | ----------------------------------------------- |
+| onProgress | (event: ProgressEvent) => void       | The callback function when loading the model.   |
+| onLoaded   | (model: THREE.Group) => void         | The callback function when the model is loaded. |
 
 ## OBJ Loader
 
@@ -90,19 +124,19 @@ function App() {
 }
 ```
 
-## Props
+### Props
 
 | Name     | Type                     | Default         | Description                                           |
 | -------- | ------------------------ | --------------- | ----------------------------------------------------- |
-| modelUrl | string                   | string          | `required` The model url.                            |
+| modelUrl | string                   |                 | `required` The model url.                            |
 | mtlUrl   | string                   |                 | `optional` The material url for OBJ models.           |
 | scene    | THREE.Scene              | THREE.Scene     | `optional` The Scene where the model will be rendered.|
 | scale    | [number, number, number] | [1.0, 1.0, 1.0] | `optional` The scale of the model.                   |
 | cache    | boolean                  | true            | `optional` The model will be cached into the indexDB. |
 
-## Events
+### Events
 
-| Name        | Parameters                             | Description                                     |
-| ----------- | -------------------------------------- | ----------------------------------------------- |
-| onProgress  | (event: ProgressEvent) => void         | The callback function when loading the model.   |
-| onLoaded    | (model: THREE.Group) => void           | The callback function when the model is loaded. |
+| Name       | Parameters                           | Description                                     |
+| ---------- | ------------------------------------ | ----------------------------------------------- |
+| onProgress | (event: ProgressEvent) => void       | The callback function when loading the model.   |
+| onLoaded   | (model: THREE.Group) => void         | The callback function when the model is loaded. |

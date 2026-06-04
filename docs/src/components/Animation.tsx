@@ -11,7 +11,7 @@ export default function AnimationComponent() {
     sceneRef.current = scene
     camera.position.set(0, 1.8, 4)
 
-    const model = await GLTFLoaderAsync('/models/perseverance.glb')
+    const model = await GLTFLoaderAsync('/models/perseverance-draco.glb', true)
     model.position.set(0, 0, 0)
     scene.add(model)
 

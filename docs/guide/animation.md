@@ -21,7 +21,7 @@ function App() {
     scene.position.set(0, -0.5, 0)
     camera.position.set(0, 1.5, 3)
 
-    const model = await GLTFLoader('/models/perseverance.glb')
+    const model = await GLTFLoader('/models/perseverance-draco.glb', true)
     scene.add(model)
 
     const animation = new Animation(model)

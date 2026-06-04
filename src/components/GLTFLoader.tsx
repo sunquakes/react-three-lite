@@ -13,6 +13,8 @@ interface GLTFLoaderProps {
   scene?: Scene
   scale?: [number, number, number]
   cache?: boolean
+  dracoDecoderPath?: string
+  useDraco?: boolean
   onProgress?: (event: LoadEvent) => void
   onLoaded?: (model: Group) => void
 }
@@ -22,6 +24,8 @@ const GLTFLoader = ({
   scene: propScene,
   scale = [1, 1, 1],
   cache = true,
+  dracoDecoderPath,
+  useDraco,
   onProgress,
   onLoaded
 }: GLTFLoaderProps) => {
@@ -40,7 +44,7 @@ const GLTFLoader = ({
       }
 
       loadedRef.current = true
-      const model = await GLTFLoaderUtil(modelUrl, cache, (event) =>
+      const model = await GLTFLoaderUtil(modelUrl, useDraco, dracoDecoderPath, cache, (event) =>
         onProgress?.(event)
       )
       model.scale.set(...scale)
@@ -48,7 +52,7 @@ const GLTFLoader = ({
       onLoaded?.(model)
     }
     init()
-  }, [propScene, sceneContext?.scene, modelUrl, scale, cache, onProgress, onLoaded])
+  }, [propScene, sceneContext?.scene, modelUrl, scale, cache, dracoDecoderPath, onProgress, onLoaded])
 
   return null
 }

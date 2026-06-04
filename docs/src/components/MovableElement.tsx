@@ -11,7 +11,7 @@ export default function MovableElementComponent() {
     sceneRef.current = scene
     camera.position.set(0, 1.5, 3)
 
-    const model = await GLTFLoaderAsync('/models/perseverance.glb')
+    const model = await GLTFLoaderAsync('/models/perseverance-draco.glb', true)
     if (model) {
       model.scale.set(0.8, 0.8, 0.8)
       scene.add(model)
