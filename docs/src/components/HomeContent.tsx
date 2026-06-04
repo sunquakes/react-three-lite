@@ -2,7 +2,7 @@
 import Link from '@docusaurus/Link';
 // @ts-ignore
 import IndexAnimation from '@site/src/components/IndexAnimation';
-import { useEffect, useState } from 'react';
+import versionJson from '../version.json';
 
 interface HomeContentProps {
   badge: string;
@@ -41,20 +41,7 @@ export default function HomeContent({
   contributorsDescription,
   features
 }: HomeContentProps): JSX.Element {
-  const [version, setVersion] = useState(badge);
-
-  useEffect(() => {
-    fetch('https://api.github.com/repos/sunquakes/react-three-lite/releases/latest')
-      .then(res => res.json())
-      .then(data => {
-        if (data.tag_name) {
-          setVersion(`v${data.tag_name} released`);
-        }
-      })
-      .catch(() => {
-        // Fallback to static badge if API fails
-      });
-  }, []);
+  const version = `v${versionJson.version}`;
 
   return (
     <div style={{ marginLeft: 'calc(-50vw + 50%)', marginRight: 'calc(-50vw + 50%)', overflowX: 'hidden', marginTop: '-2rem' }}>

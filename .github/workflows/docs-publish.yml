@@ -31,6 +31,9 @@ jobs:
         run: | 
           cd docs
           pnpm i
+          # Update version from package.json
+          VERSION=$(node -p "require('../package.json').version")
+          echo "{\"version\": \"$VERSION\"}" > src/version.json
           pnpm docs:build
 
       - name: Deploy to GitHub Pages
