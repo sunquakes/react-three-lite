@@ -78,6 +78,26 @@ Components for loading 3D models (GLTF, FBX, OBJ) with caching support via Index
 5. Update `docs/sidebars.js`
 6. Add i18n labels in `docs/i18n/*/docusaurus-plugin-content-docs/current.json`
 
+**Resource Cleanup on Unmount**: When adding new components, meshes, utilities, or any feature that allocates Three.js resources (geometries, materials, textures, shaders, event listeners, animation frames, etc.), you MUST implement proper cleanup in the `useEffect` return function to prevent memory leaks:
+
+```tsx
+useEffect(() => {
+  // Initialize resources
+  const geometry = new THREE.BufferGeometry()
+  const material = new THREE.ShaderMaterial({ ... })
+  const mesh = new THREE.Points(geometry, material)
+  scene.add(mesh)
+
+  // Cleanup on unmount
+  return () => {
+    scene.remove(mesh)
+    geometry.dispose()
+    material.dispose()
+    // Dispose textures, cancel animation frames, remove event listeners, etc.
+  }
+}, [])
+```
+
 **Note on Demo Components**: When creating demo components for visual effects:
 - Set camera position for front-facing view: `camera.position.set(0, 0, 4)`
 - Use `camera.lookAt(0, 0, 0)` to ensure proper orientation
