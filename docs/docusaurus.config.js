@@ -9,10 +9,10 @@ import { themes as prismThemes } from 'prism-react-renderer';
 /** @type {import('@docusaurus/types').Config} */
 const config = {
   title: 'React Three Lite',
-  tagline: 'A React component library of Three.js.',
+  tagline: 'A lightweight React component library for building 3D web experiences with Three.js.',
   favicon: 'images/logo.png',
 
-  url: 'https://your-docusaurus-site.example.com',
+  url: 'https://r3l.sunquakes.com',
   baseUrl: '/',
   trailingSlash: false,
 
@@ -55,24 +55,128 @@ const config = {
           exclude: ['node_modules/**', '.docusaurus/**'],
           routeBasePath: 'guide',
           includeCurrentVersion: true,
+          showLastUpdateTime: true,
         },
         pages: {},
         theme: {
           customCss: './src/css/custom.css',
+        },
+        sitemap: {
+          changefreq: 'weekly',
+          priority: 0.5,
+          ignorePatterns: ['/tags/**'],
+          filename: 'sitemap.xml',
         },
       }),
     ],
   ],
   staticDirectories: ['static'],
 
+  headTags: [
+    {
+      tagName: 'meta',
+      attributes: {
+        name: 'description',
+        content: 'React Three Lite is a lightweight React component library built on Three.js for seamless 3D web experiences. Includes particle effects, model loaders, and more.',
+      },
+    },
+    {
+      tagName: 'meta',
+      attributes: {
+        name: 'keywords',
+        content: 'React, Three.js, 3D, WebGL, component library, particle effects, rain, snow, bloom, GLTF, FBX, OBJ, webgl renderer',
+      },
+    },
+    {
+      tagName: 'meta',
+      attributes: {
+        name: 'author',
+        content: 'Shing Rui',
+      },
+    },
+    {
+      tagName: 'meta',
+      attributes: {
+        property: 'og:type',
+        content: 'website',
+      },
+    },
+    {
+      tagName: 'meta',
+      attributes: {
+        property: 'og:url',
+        content: 'https://r3l.sunquakes.com',
+      },
+    },
+    {
+      tagName: 'meta',
+      attributes: {
+        property: 'og:title',
+        content: 'React Three Lite - Lightweight React 3D Component Library',
+      },
+    },
+    {
+      tagName: 'meta',
+      attributes: {
+        property: 'og:description',
+        content: 'A lightweight React component library built on Three.js for seamless 3D web experiences.',
+      },
+    },
+    {
+      tagName: 'meta',
+      attributes: {
+        property: 'og:image',
+        content: 'https://r3l.sunquakes.com/images/logo.png',
+      },
+    },
+    {
+      tagName: 'meta',
+      attributes: {
+        name: 'twitter:card',
+        content: 'summary_large_image',
+      },
+    },
+    {
+      tagName: 'meta',
+      attributes: {
+        name: 'twitter:title',
+        content: 'React Three Lite - Lightweight React 3D Component Library',
+      },
+    },
+    {
+      tagName: 'meta',
+      attributes: {
+        name: 'twitter:description',
+        content: 'A lightweight React component library built on Three.js for seamless 3D web experiences.',
+      },
+    },
+    {
+      tagName: 'meta',
+      attributes: {
+        name: 'twitter:image',
+        content: 'https://r3l.sunquakes.com/images/logo.png',
+      },
+    },
+    {
+      tagName: 'link',
+      attributes: {
+        rel: 'canonical',
+        href: 'https://r3l.sunquakes.com',
+      },
+    },
+  ],
+
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
       image: 'images/logo.png',
+      metadata: [
+        { name: 'keywords', content: 'React, Three.js, 3D, WebGL, component library, particle effects, rain, snow, bloom, GLTF, FBX, OBJ' },
+      ],
       navbar: {
         title: 'React Three Lite',
         logo: {
-          alt: 'React Three Lite Logo',
+          alt: 'React Three Lite Logo - Lightweight React 3D Component Library',
           src: 'images/logo.png',
           href: '/',
         },
