@@ -24,7 +24,7 @@ const sidebars = {
       type: 'category',
       label: 'Effect',
       collapsible: true,
-      items: ['effects/bloom', 'effects/rain', 'effects/snow'],
+      items: ['effects/bloom', 'effects/rain', 'effects/snow', 'effects/sweep-light'],
     },
   ],
 };

@@ -66,5 +66,9 @@
   "sidebar.guideSidebar.doc.effects/snow": {
     "message": "下雪效果",
     "description": "The label for doc 'effects/snow' in sidebar 'guideSidebar'"
+  },
+  "sidebar.guideSidebar.doc.effects/sweep-light": {
+    "message": "扫光效果",
+    "description": "The label for doc 'effects/sweep-light' in sidebar 'guideSidebar'"
   }
 }

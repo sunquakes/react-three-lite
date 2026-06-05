@@ -14,6 +14,8 @@ import Animation from './utils/Animation'
 import { SceneContext, useScene } from './context/SceneContext'
 import { GLTFLoader as GLTFLoaderFn, FBXLoader as FBXLoaderFn, OBJLoader as OBJLoaderFn } from './utils/ModelLoader'
 
+import SweepLight from './utils/SweepLight'
+
 // components
 export { Scene, GLTFLoader, FBXLoader, OBJLoader, Bloom, Rain, Snow, SceneContext, useScene }
 
@@ -21,7 +23,7 @@ export { Scene, GLTFLoader, FBXLoader, OBJLoader, Bloom, Rain, Snow, SceneContex
 export type { SceneComponents, CallbackFrame } from './context/SceneContext'
 
 // class
-export { SkyBox, Popup, Movable, WaveCircleMesh, FlowLineMesh, Animation }
+export { SkyBox, Popup, Movable, WaveCircleMesh, FlowLineMesh, Animation, SweepLight }
 
 // function - async loaders (no hooks)
 export { GLTFLoaderFn as GLTFLoaderAsync, FBXLoaderFn as FBXLoaderAsync, OBJLoaderFn as OBJLoaderAsync }
