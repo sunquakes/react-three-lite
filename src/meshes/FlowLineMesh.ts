@@ -194,6 +194,7 @@ export default class FlowLineMesh extends Mesh {
   private flowMaterial!: ShaderMaterial
   private speed: number = 1
   private startTime: number = Date.now()
+  private animationId: number | null = null
 
   constructor(options: FlowLineMeshOptions = {}) {
     const points = options.points ?? [
@@ -219,11 +220,23 @@ export default class FlowLineMesh extends Mesh {
   private startAnimation() {
     this.startTime = Date.now()
     const animate = () => {
+      this.animationId = requestAnimationFrame(animate)
       const now = Date.now()
       const time = ((now - this.startTime) / 1000) * this.speed
       this.flowMaterial.uniforms.time.value = time
-      requestAnimationFrame(animate)
     }
     animate()
+  }
+
+  /**
+   * Dispose flow line mesh and release resources.
+   */
+  dispose(): void {
+    if (this.animationId !== null) {
+      cancelAnimationFrame(this.animationId)
+      this.animationId = null
+    }
+    this.geometry.dispose()
+    this.flowMaterial.dispose()
   }
 }

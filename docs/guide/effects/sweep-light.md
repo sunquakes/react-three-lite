@@ -15,54 +15,30 @@ import SweepLightComponent from '@site/src/components/effects/SweepLight'
 
 ```tsx
 import { useRef, useEffect } from 'react'
-import { Scene, GLTFLoader, useScene, SweepLight } from 'react-three-lite'
+import { Scene, GLTFLoaderAsync, SweepLight } from 'react-three-lite'
+import type * as THREE from 'three'
 
 export default function App() {
-  const modelRef = useRef(null)
-  const sweepLightsRef = useRef([])
-  const { scene, addBeforeFrame } = useScene()
+  const sweepLightRef = useRef<SweepLight | null>(null)
 
-  const handleLoaded = (model) => {
-    modelRef.current = model
+  const handleCreated = async (scene: THREE.Scene) => {
+    const model = await GLTFLoaderAsync('/models/perseverance-draco.glb', true)
+    model.scale.set(0.8, 0.8, 0.8)
+    scene.add(model)
 
-    // Collect all meshes from the model
-    const meshes = []
-    model.traverse((child) => {
-      if (child.isMesh) {
-        meshes.push(child)
-      }
-    })
-
-    // Create sweep light for each mesh
-    meshes.forEach((mesh) => {
-      const sweepLight = new SweepLight(scene, mesh, addBeforeFrame, {
-        color: 0x00ffff,
-        speed: 1.0,
-        width: 0.5,
-        intensity: 2.0,
-        direction: 0,
-      })
-      sweepLightsRef.current.push(sweepLight)
-    })
+    sweepLightRef.current = new SweepLight(model)
   }
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      sweepLightsRef.current.forEach((sweepLight) => {
-        sweepLight.dispose(scene)
-      })
+      sweepLightRef.current?.dispose()
+      sweepLightRef.current = null
     }
   }, [])
 
   return (
-    <Scene>
-      <GLTFLoader
-        modelUrl="/models/perseverance-draco.glb"
-        onLoaded={handleLoaded}
-        scale={[0.01, 0.01, 0.01]}
-      />
-    </Scene>
+    <Scene bgColor="#0a0a0a" onCreated={handleCreated} />
   )
 }
 ```
@@ -76,10 +52,22 @@ export default function App() {
 | width | number | 0.3 | Sweep band width (0-1) |
 | intensity | number | 1.5 | Light glow intensity |
 | direction | number | 0 | Sweep direction axis: 0=X, 1=Y, 2=Z |
-| side | FrontSide \| DoubleSide | FrontSide | Which side of the mesh to render |
+| loop | LoopOnce \| LoopRepeat \| LoopPingPong | LoopRepeat | Animation loop type |
 
 ## Methods
 
-### dispose(scene: Scene)
+### play()
+
+Play or resume the animation. If paused, resumes from the paused position. If stopped, starts from the beginning.
+
+### pause()
+
+Pause the animation at the current frame. Call `play()` to resume.
+
+### stop()
+
+Stop the animation and reset to the initial state. Call `play()` to restart from the beginning.
+
+### dispose()
 
 Dispose sweep light and remove from scene. Should be called on component unmount to prevent memory leaks.

@@ -15,54 +15,30 @@ import SweepLightComponent from '@site/src/components/effects/SweepLight'
 
 ```tsx
 import { useRef, useEffect } from 'react'
-import { Scene, GLTFLoader, useScene, SweepLight } from 'react-three-lite'
+import { Scene, GLTFLoaderAsync, SweepLight } from 'react-three-lite'
+import type * as THREE from 'three'
 
 export default function App() {
-  const modelRef = useRef(null)
-  const sweepLightsRef = useRef([])
-  const { scene, addBeforeFrame } = useScene()
+  const sweepLightRef = useRef<SweepLight | null>(null)
 
-  const handleLoaded = (model) => {
-    modelRef.current = model
+  const handleCreated = async (scene: THREE.Scene) => {
+    const model = await GLTFLoaderAsync('/models/perseverance-draco.glb', true)
+    model.scale.set(0.8, 0.8, 0.8)
+    scene.add(model)
 
-    // 收集模型中的所有网格
-    const meshes = []
-    model.traverse((child) => {
-      if (child.isMesh) {
-        meshes.push(child)
-      }
-    })
-
-    // 为每个网格创建扫光效果
-    meshes.forEach((mesh) => {
-      const sweepLight = new SweepLight(scene, mesh, addBeforeFrame, {
-        color: 0x00ffff,
-        speed: 1.0,
-        width: 0.5,
-        intensity: 2.0,
-        direction: 0,
-      })
-      sweepLightsRef.current.push(sweepLight)
-    })
+    sweepLightRef.current = new SweepLight(model)
   }
 
   // 卸载时清理
   useEffect(() => {
     return () => {
-      sweepLightsRef.current.forEach((sweepLight) => {
-        sweepLight.dispose(scene)
-      })
+      sweepLightRef.current?.dispose()
+      sweepLightRef.current = null
     }
   }, [])
 
   return (
-    <Scene>
-      <GLTFLoader
-        modelUrl="/models/perseverance-draco.glb"
-        onLoaded={handleLoaded}
-        scale={[0.01, 0.01, 0.01]}
-      />
-    </Scene>
+    <Scene bgColor="#0a0a0a" onCreated={handleCreated} />
   )
 }
 ```
@@ -76,10 +52,22 @@ export default function App() {
 | width | number | 0.3 | 扫光带宽度（0-1） |
 | intensity | number | 1.5 | 光晕强度 |
 | direction | number | 0 | 扫光方向轴：0=X, 1=Y, 2=Z |
-| side | FrontSide \| DoubleSide | FrontSide | 渲染网格的哪一面 |
+| loop | LoopOnce \| LoopRepeat \| LoopPingPong | LoopRepeat | 动画循环类型 |
 
 ## 方法
 
-### dispose(scene: Scene)
+### play()
+
+播放或继续动画。如果处于暂停状态，则从暂停位置继续；如果已停止，则从头开始播放。
+
+### pause()
+
+暂停在当前帧。调用 `play()` 可继续播放。
+
+### stop()
+
+停止动画并重置到初始状态。调用 `play()` 可从头开始播放。
+
+### dispose()
 
 销毁扫光效果并从场景中移除。应在组件卸载时调用以防止内存泄漏。

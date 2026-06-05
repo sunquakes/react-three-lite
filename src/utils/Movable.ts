@@ -41,6 +41,11 @@ export default class Movable {
    */
   private position: Position
 
+  /**
+   * Animation frame ID
+   */
+  private animationId: number | null = null
+
   constructor(scene: Group, position: Position) {
     this.scene = scene
     this.duration = 0
@@ -66,7 +71,7 @@ export default class Movable {
     this.position = position
     if (this.state === false) {
       this.state = true
-      requestAnimationFrame(this.update)
+      this.animationId = requestAnimationFrame(this.update)
     }
   }
 
@@ -101,7 +106,7 @@ export default class Movable {
     }
 
     if (this.duration > 0) {
-      requestAnimationFrame(this.update)
+      this.animationId = requestAnimationFrame(this.update)
     } else {
       this.state = false
     }
@@ -144,5 +149,16 @@ export default class Movable {
     } else {
       return Math.atan(a / b)
     }
+  }
+
+  /**
+   * Dispose movable and release resources.
+   */
+  dispose(): void {
+    if (this.animationId !== null) {
+      cancelAnimationFrame(this.animationId)
+      this.animationId = null
+    }
+    this.state = false
   }
 }
