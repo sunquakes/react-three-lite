@@ -50,6 +50,8 @@ export default class Animation {
    */
   isAnimating: boolean = false
 
+  private animationId: number | null = null
+
   constructor(obj: Mesh | Group | Object3D, animations?: AnimationClip[]) {
     this.mixer = new AnimationMixer(obj)
     if (animations) {
@@ -174,7 +176,7 @@ export default class Animation {
    */
   animate() {
     const animate = () => {
-      requestAnimationFrame(animate)
+      this.animationId = requestAnimationFrame(animate)
       this.mixer.update(this.deltaTime)
     }
     if (!this.isAnimating) {
@@ -221,5 +223,20 @@ export default class Animation {
         action.paused = true
       })
     }
+  }
+
+  /**
+   * Dispose animation and release resources.
+   */
+  dispose(): void {
+    if (this.animationId !== null) {
+      cancelAnimationFrame(this.animationId)
+      this.animationId = null
+    }
+    this.isAnimating = false
+    this.stopAll()
+    this.mixer.stopAllAction()
+    this.clipActions = []
+    this.clipAction = null
   }
 }

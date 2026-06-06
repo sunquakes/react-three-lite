@@ -64,10 +64,14 @@ function getMaterial(radius?: number, color?: Array4): ShaderMaterial {
 }
 
 export default class WaveCircleMesh extends Mesh {
+  private material: ShaderMaterial
+  private animationId: number | null = null
+
   constructor(options: WaveCircleMeshOptions = {}) {
     const geometry = getGeometry(options.verticalAxis ?? AxisType.Y, options.radius ?? 1)
     const material = getMaterial(options.radius, options.color)
     super(geometry, material)
+    this.material = material
     this.create(geometry, material, options.speed ?? 1)
   }
 
@@ -78,10 +82,22 @@ export default class WaveCircleMesh extends Mesh {
   ) {
     const circle = new Mesh(geometry, material)
     circle.updateMatrix()
-    function animate() {
-      requestAnimationFrame(animate)
+    const animate = () => {
+      this.animationId = requestAnimationFrame(animate)
       material.uniforms.time.value += 0.005 * speed
     }
     animate()
+  }
+
+  /**
+   * Dispose wave circle mesh and release resources.
+   */
+  dispose(): void {
+    if (this.animationId !== null) {
+      cancelAnimationFrame(this.animationId)
+      this.animationId = null
+    }
+    this.geometry.dispose()
+    this.material.dispose()
   }
 }

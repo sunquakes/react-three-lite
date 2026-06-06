@@ -14,6 +14,7 @@ export default class Popup {
   private state: Boolean
   private position: Position
   private root: Root | undefined
+  private animationId: number | null = null
 
   constructor(position: Position, component: ReactNode, props: object) {
     this.id = 'popup-' + generateUUID()
@@ -51,7 +52,7 @@ export default class Popup {
     this.position = position
     if (this.state === false) {
       this.state = true
-      requestAnimationFrame(this.update)
+      this.animationId = requestAnimationFrame(this.update)
     }
   }
 
@@ -79,7 +80,7 @@ export default class Popup {
     }
 
     if (this.duration > 0) {
-      requestAnimationFrame(this.update)
+      this.animationId = requestAnimationFrame(this.update)
     } else {
       this.state = false
     }
@@ -87,5 +88,24 @@ export default class Popup {
 
   lerp(start: number, end: number, time: number) {
     return start + (end - start) * time
+  }
+
+  /**
+   * Dispose popup and release resources.
+   */
+  dispose(): void {
+    if (this.animationId !== null) {
+      cancelAnimationFrame(this.animationId)
+      this.animationId = null
+    }
+    this.state = false
+    if (this.root) {
+      this.root.unmount()
+      this.root = undefined
+    }
+    const containerElement = document.getElementById(this.id)
+    if (containerElement && containerElement.parentNode) {
+      containerElement.parentNode.removeChild(containerElement)
+    }
   }
 }

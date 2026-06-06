@@ -231,3 +231,108 @@ Run docs locally:
 cd docs
 pnpm start
 ```
+
+## Documentation Format
+
+All documentation pages MUST follow this structure:
+
+### English Docs (`docs/guide/`)
+
+```markdown
+---
+id: <component-name>
+lang: en-US
+title: <Component Name>
+---
+
+import <ComponentName> from '@site/src/components/<ComponentName>'
+
+## Type
+
+<Component | Class>
+
+## Default Usage
+
+<<ComponentName> />
+
+```tsx
+import { Scene, <ComponentName> } from 'react-three-lite'
+
+function App() {
+  return (
+    <Scene style={{ marginTop: '10px', width: '100%', height: '300px' }}>
+      <<ComponentName> />
+    </Scene>
+  )
+}
+```
+
+## Options (if applicable)
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| name | type | default | Description |
+
+## Props (for components)
+
+| Name | Type | Default | Description |
+|------|------|---------|-------------|
+| name | type | default | Description |
+
+## Methods (for classes)
+
+| Name | Parameters | Description |
+|------|------------|-------------|
+| constructor | (param1: type, param2?: type) => void | Constructor description |
+| methodName | (param: type) => returnType | Method description |
+
+## Events (for components)
+
+| Name | Parameters | Description |
+|------|------------|-------------|
+| onEvent | (params) => void | Description |
+```
+
+### Chinese Docs (`docs/i18n/zh-CN/docusaurus-plugin-content-docs/current/`)
+
+```markdown
+---
+lang: zh-CN
+title: <组件名称>
+---
+
+import <ComponentName> from '@site/src/components/<ComponentName>'
+
+## 类型
+
+<组件 | 类>
+
+## 默认用法
+
+<<ComponentName> />
+
+```tsx
+// same code as English version
+```
+
+## 配置项（如适用）
+
+| 属性 | 类型 | 默认值 | 描述 |
+|------|------|--------|------|
+| name | type | default | 描述 |
+
+## 方法（如适用）
+
+| 名称 | 参数 | 描述 |
+|------|------|------|
+| constructor | (param1: type, param2?: type) => void | 构造函数描述 |
+| methodName | (param: type) => returnType | 方法描述 |
+```
+
+### Key Rules
+- English docs use `id`, `lang: en-US`, and `title` in frontmatter
+- Chinese docs use only `lang: zh-CN` and `title` (no `id`)
+- Always import demo component with `@site/src/components/` alias
+- Code examples should use `style={{ marginTop: '10px', width: '100%', height: '300px' }}` for Scene containers
+- Options/Props tables use consistent column names
+- Chinese docs for effects go under `current/effects/`, not `current/guide/effects/`

@@ -25,7 +25,7 @@ const GLTFLoader = ({
   scale = [1, 1, 1],
   cache = true,
   dracoDecoderPath,
-  useDraco,
+  useDraco = true,
   onProgress,
   onLoaded
 }: GLTFLoaderProps) => {
