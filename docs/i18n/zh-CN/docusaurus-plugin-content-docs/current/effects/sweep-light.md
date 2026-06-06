@@ -38,7 +38,11 @@ export default function App() {
   }, [])
 
   return (
-    <Scene bgColor="#0a0a0a" onCreated={handleCreated} />
+    <Scene
+      bgColor="#0a0a0a"
+      onCreated={handleCreated}
+      style={{ marginTop: '10px', width: '100%', height: '300px' }}
+    />
   )
 }
 ```
@@ -56,18 +60,10 @@ export default function App() {
 
 ## 方法
 
-### play()
-
-播放或继续动画。如果处于暂停状态，则从暂停位置继续；如果已停止，则从头开始播放。
-
-### pause()
-
-暂停在当前帧。调用 `play()` 可继续播放。
-
-### stop()
-
-停止动画并重置到初始状态。调用 `play()` 可从头开始播放。
-
-### dispose()
-
-销毁扫光效果并从场景中移除。应在组件卸载时调用以防止内存泄漏。
+| 名称 | 参数 | 描述 |
+|------|------|------|
+| constructor | (model: THREE.Object3D, options?: SweepLightOptions) | 在模型上创建扫光效果 |
+| play | () => void | 播放或继续动画。如果处于暂停状态，则从暂停位置继续；如果已停止，则从头开始播放。 |
+| pause | () => void | 暂停在当前帧。调用 `play()` 可继续播放。 |
+| stop | () => void | 停止动画并重置到初始状态。调用 `play()` 可从头开始播放。 |
+| dispose | () => void | 销毁扫光效果并从场景中移除。应在组件卸载时调用以防止内存泄漏。 |

@@ -1,4 +1,5 @@
 ---
+id: sweep-light
 lang: en-US
 title: Sweep Light
 ---
@@ -38,7 +39,11 @@ export default function App() {
   }, [])
 
   return (
-    <Scene bgColor="#0a0a0a" onCreated={handleCreated} />
+    <Scene
+      bgColor="#0a0a0a"
+      onCreated={handleCreated}
+      style={{ marginTop: '10px', width: '100%', height: '300px' }}
+    />
   )
 }
 ```
@@ -56,18 +61,10 @@ export default function App() {
 
 ## Methods
 
-### play()
-
-Play or resume the animation. If paused, resumes from the paused position. If stopped, starts from the beginning.
-
-### pause()
-
-Pause the animation at the current frame. Call `play()` to resume.
-
-### stop()
-
-Stop the animation and reset to the initial state. Call `play()` to restart from the beginning.
-
-### dispose()
-
-Dispose sweep light and remove from scene. Should be called on component unmount to prevent memory leaks.
+| Name | Parameters | Description |
+|------|------------|-------------|
+| constructor | (model: THREE.Object3D, options?: SweepLightOptions) | Create a sweep light effect on the model |
+| play | () => void | Play or resume the animation. If paused, resumes from the paused position. If stopped, starts from the beginning. |
+| pause | () => void | Pause the animation at the current frame. Call `play()` to resume. |
+| stop | () => void | Stop the animation and reset to the initial state. Call `play()` to restart from the beginning. |
+| dispose | () => void | Dispose sweep light and remove from scene. Should be called on component unmount to prevent memory leaks. |

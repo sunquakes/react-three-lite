@@ -31,9 +31,9 @@
     "lint": "eslint . --ext .js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore",
     "format": "prettier --write src/",
     "release": "node scripts/release.js",
-    "release:patch": "npm version patch && git push origin --tags",
-    "release:minor": "npm version minor && git push origin --tags",
-    "release:major": "npm version major && git push origin --tags"
+    "release:patch": "node scripts/release.js patch",
+    "release:minor": "node scripts/release.js minor",
+    "release:major": "node scripts/release.js major"
   },
   "peerDependencies": {
     "react": ">=18.0.0",
