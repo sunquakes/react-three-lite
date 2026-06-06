@@ -1,3 +1,22 @@
+## [0.3.0] - 2026-06-06
+
+### Added
+
+- Add SweepLight effect component for model sweep light animation.
+- Add sweep light configuration options (color, speed, width, intensity, direction, loop).
+- Add sweep light methods (play, pause, stop, dispose).
+- Add sweep light documentation with examples in English and Chinese.
+
+### Changed
+
+- Update SweepLight document examples and configuration items.
+- Fix the usage example code of SweepLight in the documentation.
+- Add `id` field to English documentation frontmatter for Docusaurus compatibility.
+- Update Scene container style in documentation examples with consistent dimensions.
+- Refactor Methods section in documentation to use table format.
+
+---
+
 ## [0.2.0] - 2026-05-30
 
 ### Added
