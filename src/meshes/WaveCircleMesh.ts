@@ -64,14 +64,12 @@ function getMaterial(radius?: number, color?: Array4): ShaderMaterial {
 }
 
 export default class WaveCircleMesh extends Mesh {
-  private material: ShaderMaterial
   private animationId: number | null = null
 
   constructor(options: WaveCircleMeshOptions = {}) {
     const geometry = getGeometry(options.verticalAxis ?? AxisType.Y, options.radius ?? 1)
     const material = getMaterial(options.radius, options.color)
     super(geometry, material)
-    this.material = material
     this.create(geometry, material, options.speed ?? 1)
   }
 
@@ -98,6 +96,6 @@ export default class WaveCircleMesh extends Mesh {
       this.animationId = null
     }
     this.geometry.dispose()
-    this.material.dispose()
+    ;(this.material as ShaderMaterial).dispose()
   }
 }
