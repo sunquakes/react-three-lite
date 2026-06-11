@@ -5,6 +5,11 @@ on:
     tags:
       - '*.*.*'
 
+# Required for OIDC trusted publishing
+permissions:
+  id-token: write
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -17,7 +22,8 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 20
+          node-version: 24
+          registry-url: https://registry.npmjs.org
 
       - name: Install Pnpm
         run: |
@@ -79,10 +85,7 @@ jobs:
 
       - name: Publish to NPM
         run: |
-          pnpm config set '//registry.npmjs.org/:_authToken' "${NODE_AUTH_TOKEN}"
-          pnpm publish --no-git-checks --access=public
-        env:
-          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
+          pnpm publish --provenance --access public --no-git-checks
 
       - name: Install Docusaurus and Build Docs
         run: |
