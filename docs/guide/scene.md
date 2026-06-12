@@ -4,7 +4,7 @@ lang: en-US
 title: Scene
 ---
 
-import SceneComponent from '@site/src/components/Scene'
+import Scene from '@site/src/components/Scene'
 import SceneBgColor from '@site/src/components/SceneBgColor'
 import SceneBgImage from '@site/src/components/SceneBgImage'
 
@@ -14,7 +14,7 @@ Component
 
 ## Default Usage
 
-<SceneComponent />
+<Scene />
 
 ```tsx
 import { Scene } from 'react-three-lite'

@@ -6,6 +6,7 @@ import type { SceneComponents } from 'react-three-lite'
 export default function LightGradientComponent() {
   const cleanupRef = useRef<(() => void) | null>(null)
   const meshRef = useRef<THREE.Mesh | null>(null)
+  const isBrightRef = useRef(true)
 
   const handleCreated = (scene: THREE.Scene, components: SceneComponents) => {
     const { camera, light } = components
@@ -14,21 +15,41 @@ export default function LightGradientComponent() {
     camera.position.set(0, 0, 4)
     camera.lookAt(0, 0, 0)
 
-    // Add a sphere to show the lighting effect
-    const geometry = new THREE.SphereGeometry(1, 32, 32)
+    // Add a cube to show the lighting effect
+    const geometry = new THREE.BoxGeometry(1.5, 1.5, 1.5)
     const material = new THREE.MeshStandardMaterial({
       color: 0xffffff,
       roughness: 0.5,
       metalness: 0.5
     })
     meshRef.current = new THREE.Mesh(geometry, material)
+    meshRef.current.position.y = 0.75
     scene.add(meshRef.current)
 
-    cleanupRef.current = lightGradient(light, {
-      color: '#ff6600',
-      intensity: 15,
-      duration: 3000
-    })
+    // Loop brightness change
+    const loopGradient = () => {
+      if (isBrightRef.current) {
+        cleanupRef.current = lightGradient(light, {
+          intensity: 20,
+          duration: 4000,
+          onComplete: () => {
+            isBrightRef.current = false
+            loopGradient()
+          }
+        })
+      } else {
+        cleanupRef.current = lightGradient(light, {
+          intensity: 2,
+          duration: 4000,
+          onComplete: () => {
+            isBrightRef.current = true
+            loopGradient()
+          }
+        })
+      }
+    }
+
+    loopGradient()
   }
 
   // Cleanup on unmount

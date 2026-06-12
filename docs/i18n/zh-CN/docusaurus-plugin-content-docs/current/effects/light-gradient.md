@@ -14,14 +14,14 @@ import LightGradient from '@site/src/components/effects/LightGradient'
 <LightGradient />
 
 ```tsx
-import { Scene, lightGradient } from 'react-three-lite'
+import { Scene } from 'react-three-lite'
 import { useRef, useEffect } from 'react'
 import type { SceneComponents } from 'react-three-lite'
 import type * as THREE from 'three'
 
-function LightGradientComponent() {
-  const cleanupRef = useRef<(() => void) | null>(null)
+function App() {
   const meshRef = useRef<THREE.Mesh | null>(null)
+  const animFrameRef = useRef<number | null>(null)
 
   const handleCreated = (scene: THREE.Scene, components: SceneComponents) => {
     const { camera, light } = components
@@ -30,26 +30,37 @@ function LightGradientComponent() {
     camera.position.set(0, 0, 4)
     camera.lookAt(0, 0, 0)
 
-    const geometry = new THREE.SphereGeometry(1, 32, 32)
+    const geometry = new THREE.BoxGeometry(1.5, 1.5, 1.5)
     const material = new THREE.MeshStandardMaterial({
       color: 0xffffff,
       roughness: 0.5,
       metalness: 0.5
     })
     meshRef.current = new THREE.Mesh(geometry, material)
+    meshRef.current.position.y = 0.75
     scene.add(meshRef.current)
 
-    cleanupRef.current = lightGradient(light, {
-      color: '#ff6600',
-      intensity: 15,
-      duration: 3000
-    })
+    const minIntensity = 2
+    const maxIntensity = 20
+    const duration = 8000
+
+    const startTime = performance.now()
+    const animate = () => {
+      const elapsed = performance.now() - startTime
+      const t = Math.sin((elapsed / duration) * Math.PI * 2)
+      light.intensity = (minIntensity + maxIntensity) / 2 + t * (maxIntensity - minIntensity) / 2
+      animFrameRef.current = requestAnimationFrame(animate)
+    }
+
+    animFrameRef.current = requestAnimationFrame(animate)
   }
 
   useEffect(() => {
     return () => {
-      cleanupRef.current?.()
-      cleanupRef.current = null
+      if (animFrameRef.current !== null) {
+        cancelAnimationFrame(animFrameRef.current)
+        animFrameRef.current = null
+      }
       if (meshRef.current) {
         meshRef.current.geometry.dispose()
         ;(meshRef.current.material as THREE.Material).dispose()
@@ -59,7 +70,7 @@ function LightGradientComponent() {
   }, [])
 
   return (
-    <Scene bgColor="#0a0a0a" style={{ marginTop: '10px', width: '100%', height: '300px' }} onCreated={handleCreated} />
+    <Scene style={{ marginTop: '10px', width: '100%', height: '300px' }} onCreated={handleCreated} />
   )
 }
 ```

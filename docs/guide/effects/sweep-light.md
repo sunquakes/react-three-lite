@@ -8,11 +8,11 @@ title: Sweep Light
 
 Class
 
-import SweepLightComponent from '@site/src/components/effects/SweepLight'
+import SweepLight from '@site/src/components/effects/SweepLight'
 
 ## Default Usage
 
-<SweepLightComponent />
+<SweepLight />
 
 ```tsx
 import { useRef, useEffect } from 'react'

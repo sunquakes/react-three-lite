@@ -99,26 +99,30 @@ useEffect(() => {
 ```
 
 **Note on Demo Components**: When creating demo components for visual effects:
-- Use `export default function ComponentName()` format (not arrow functions)
+- Use `export default function App()` format (not arrow functions)
 - Import from `react-three-lite` directly (not relative paths like `../../..`)
-- Import type definitions: `import type { SceneComponents } from 'react-three-lite'`
-- Import THREE types: `import type * as THREE from 'three'`
+- Import THREE: `import * as THREE from 'three'` (not `import type`, needs runtime access)
 - Use `onCreated` callback on `<Scene>` to initialize effects (not `useScene()` hook)
 - Set camera position in `handleCreated`: `camera.position.set(0, 0, 4)`
 - Use `camera.lookAt(0, 0, 0)` to ensure proper orientation
-- Choose `bgColor` with good contrast against effect colors
 - Set demo container style: `style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '300px' }}`
 - Add cleanup in `useEffect` return function and set refs to `null`
 - Use `// Cleanup on unmount` comment before useEffect
 
+**Note on Documentation Code Examples**: 
+- Use `function App()` for code examples in documentation (NOT `XxxComponent`)
+- Import demo components in docs using the feature name WITHOUT `Component` suffix (e.g., `import SkyBox from '@site/src/components/SkyBox'`, NOT `import SkyBoxComponent`)
+- For multiple demos in one doc, use `App`, `AppOptions`, `AppCustom`, etc.
+- The JSX usage tag should match the import name (e.g., `<SkyBox />`, `<App />`)
+
 Example structure:
 ```tsx
 import { useRef, useEffect } from 'react'
+import * as THREE from 'three'
 import { Scene, YourEffect } from 'react-three-lite'
 import type { SceneComponents } from 'react-three-lite'
-import type * as THREE from 'three'
 
-export default function YourEffectComponent() {
+export default function App() {
   const effectRef = useRef<YourEffect | null>(null)
 
   const handleCreated = (scene: THREE.Scene, components: SceneComponents) => {
@@ -140,7 +144,7 @@ export default function YourEffectComponent() {
   }, [])
 
   return (
-    <Scene bgColor="#0a0a0a" style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '300px' }} onCreated={handleCreated} />
+    <Scene style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '300px' }} onCreated={handleCreated} />
   )
 }
 ```
