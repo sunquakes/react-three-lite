@@ -7,21 +7,22 @@ import LightGradient from '@site/src/components/effects/LightGradient'
 
 ## 类型
 
-函数
+类
 
 ## 默认用法
 
 <LightGradient />
 
 ```tsx
-import { Scene } from 'react-three-lite'
+import { Scene, LightGradient } from 'react-three-lite'
 import { useRef, useEffect } from 'react'
 import type { SceneComponents } from 'react-three-lite'
-import type * as THREE from 'three'
+import * as THREE from 'three'
 
 function App() {
+  const gradientRef = useRef<LightGradient | null>(null)
   const meshRef = useRef<THREE.Mesh | null>(null)
-  const animFrameRef = useRef<number | null>(null)
+  const isBrightRef = useRef(true)
 
   const handleCreated = (scene: THREE.Scene, components: SceneComponents) => {
     const { camera, light } = components
@@ -40,27 +41,35 @@ function App() {
     meshRef.current.position.y = 0.75
     scene.add(meshRef.current)
 
-    const minIntensity = 2
-    const maxIntensity = 20
-    const duration = 8000
-
-    const startTime = performance.now()
-    const animate = () => {
-      const elapsed = performance.now() - startTime
-      const t = Math.sin((elapsed / duration) * Math.PI * 2)
-      light.intensity = (minIntensity + maxIntensity) / 2 + t * (maxIntensity - minIntensity) / 2
-      animFrameRef.current = requestAnimationFrame(animate)
+    const loopGradient = () => {
+      if (isBrightRef.current) {
+        gradientRef.current = new LightGradient(light, {
+          intensity: 20,
+          duration: 4000,
+          onComplete: () => {
+            isBrightRef.current = false
+            loopGradient()
+          }
+        })
+      } else {
+        gradientRef.current = new LightGradient(light, {
+          intensity: 2,
+          duration: 4000,
+          onComplete: () => {
+            isBrightRef.current = true
+            loopGradient()
+          }
+        })
+      }
     }
 
-    animFrameRef.current = requestAnimationFrame(animate)
+    loopGradient()
   }
 
   useEffect(() => {
     return () => {
-      if (animFrameRef.current !== null) {
-        cancelAnimationFrame(animFrameRef.current)
-        animFrameRef.current = null
-      }
+      gradientRef.current?.dispose()
+      gradientRef.current = null
       if (meshRef.current) {
         meshRef.current.geometry.dispose()
         ;(meshRef.current.material as THREE.Material).dispose()
@@ -84,8 +93,14 @@ function App() {
 | duration | number | 1000 | 渐变动画持续时间（毫秒） |
 | onComplete | () => void | - | 动画完成时的回调函数 |
 
-## 函数签名
+## 构造函数
 
 | 名称 | 参数 | 描述 |
 |------|------|------|
-| lightGradient | (light: Light, options: LightGradientOptions) => () => void | 将灯光属性从当前值渐变到目标值。返回一个清理函数用于取消动画 |
+| constructor | (light: Light, options?: LightGradientOptions) | 创建 LightGradient 实例并开始动画 |
+
+## 方法
+
+| 名称 | 参数 | 描述 |
+|------|------|------|
+| dispose | () => void | 停止渐变动画并释放资源 |
