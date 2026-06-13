@@ -7,11 +7,11 @@ title: Popup
 
 Class
 
-import PopupComponent from '@site/src/components/Popup'
+import Popup from '@site/src/components/Popup'
 
 ## Default Usage
 
-<PopupComponent />
+<Popup />
 
 ```tsx
 import { Scene, Popup } from 'react-three-lite'

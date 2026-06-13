@@ -17,7 +17,7 @@ import Bloom from '@site/src/components/effects/Bloom'
 import * as THREE from 'three'
 import { Scene, Bloom } from 'react-three-lite'
 
-export default function BloomComponent() {
+export default function App() {
   const handleCreated = (scene: THREE.Scene, { camera }: any) => {
     camera.position.set(0, 1.5, 3)
 

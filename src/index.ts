@@ -16,14 +16,17 @@ import { GLTFLoader as GLTFLoaderFn, FBXLoader as FBXLoaderFn, OBJLoader as OBJL
 
 import SweepLight from './utils/SweepLight'
 
+import { LightGradient, LightGradientOptions } from './utils/Light'
+
 // components
 export { Scene, GLTFLoader, FBXLoader, OBJLoader, Bloom, Rain, Snow, SceneContext, useScene }
 
 // types
 export type { SceneComponents, CallbackFrame } from './context/SceneContext'
+export type { LightGradientOptions }
 
 // class
-export { SkyBox, Popup, Movable, WaveCircleMesh, FlowLineMesh, Animation, SweepLight }
+export { SkyBox, Popup, Movable, WaveCircleMesh, FlowLineMesh, Animation, SweepLight, LightGradient }
 
 // function - async loaders (no hooks)
 export { GLTFLoaderFn as GLTFLoaderAsync, FBXLoaderFn as FBXLoaderAsync, OBJLoaderFn as OBJLoaderAsync }

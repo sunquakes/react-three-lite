@@ -70,5 +70,9 @@
   "sidebar.guideSidebar.doc.effects/sweep-light": {
     "message": "扫光效果",
     "description": "The label for doc 'effects/sweep-light' in sidebar 'guideSidebar'"
+  },
+  "sidebar.guideSidebar.doc.effects/light-gradient": {
+    "message": "灯光渐变",
+    "description": "The label for doc 'effects/light-gradient' in sidebar 'guideSidebar'"
   }
 }

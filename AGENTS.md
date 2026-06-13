@@ -99,10 +99,55 @@ useEffect(() => {
 ```
 
 **Note on Demo Components**: When creating demo components for visual effects:
-- Set camera position for front-facing view: `camera.position.set(0, 0, 4)`
+- Use `export default function App()` format (not arrow functions)
+- Import from `react-three-lite` directly (not relative paths like `../../..`)
+- Import THREE: `import * as THREE from 'three'` (not `import type`, needs runtime access)
+- Use `onCreated` callback on `<Scene>` to initialize effects (not `useScene()` hook)
+- Set camera position in `handleCreated`: `camera.position.set(0, 0, 4)`
 - Use `camera.lookAt(0, 0, 0)` to ensure proper orientation
-- Choose `bgColor` with good contrast against particle colors
-- Adjust camera Z distance to make particles clearly visible
+- Set demo container style: `style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '300px' }}`
+- Add cleanup in `useEffect` return function and set refs to `null`
+- Use `// Cleanup on unmount` comment before useEffect
+
+**Note on Documentation Code Examples**: 
+- Use `function App()` for code examples in documentation (NOT `XxxComponent`)
+- Import demo components in docs using the feature name WITHOUT `Component` suffix (e.g., `import SkyBox from '@site/src/components/SkyBox'`, NOT `import SkyBoxComponent`)
+- For multiple demos in one doc, use `App`, `AppOptions`, `AppCustom`, etc.
+- The JSX usage tag should match the import name (e.g., `<SkyBox />`, `<App />`)
+
+Example structure:
+```tsx
+import { useRef, useEffect } from 'react'
+import * as THREE from 'three'
+import { Scene, YourEffect } from 'react-three-lite'
+import type { SceneComponents } from 'react-three-lite'
+
+export default function App() {
+  const effectRef = useRef<YourEffect | null>(null)
+
+  const handleCreated = (scene: THREE.Scene, components: SceneComponents) => {
+    const { camera } = components
+    if (!camera) return
+
+    camera.position.set(0, 0, 4)
+    camera.lookAt(0, 0, 0)
+
+    effectRef.current = new YourEffect(...)
+  }
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      effectRef.current?.dispose()
+      effectRef.current = null
+    }
+  }, [])
+
+  return (
+    <Scene style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '300px' }} onCreated={handleCreated} />
+  )
+}
+```
 
 ### Shader Development
 - Use `ShaderMaterial` with custom vertex/fragment shaders
@@ -257,12 +302,32 @@ import <ComponentName> from '@site/src/components/<ComponentName>'
 
 ```tsx
 import { Scene, <ComponentName> } from 'react-three-lite'
+import { useRef, useEffect } from 'react'
+import type { SceneComponents } from 'react-three-lite'
+import type * as THREE from 'three'
 
-function App() {
+function <ComponentName>Component() {
+  const effectRef = useRef<...>(null)
+
+  const handleCreated = (scene: THREE.Scene, components: SceneComponents) => {
+    const { camera } = components
+    if (!camera) return
+
+    camera.position.set(0, 0, 4)
+    camera.lookAt(0, 0, 0)
+
+    // Initialize effect here
+  }
+
+  useEffect(() => {
+    return () => {
+      effectRef.current?.dispose()
+      effectRef.current = null
+    }
+  }, [])
+
   return (
-    <Scene style={{ marginTop: '10px', width: '100%', height: '300px' }}>
-      <<ComponentName> />
-    </Scene>
+    <Scene bgColor="#0a0a0a" style={{ marginTop: '10px', width: '100%', height: '300px' }} onCreated={handleCreated} />
   )
 }
 ```

@@ -19,7 +19,7 @@ import { useRef } from 'react'
 import { Scene, FlowLineMesh, AxisType } from 'react-three-lite'
 import * as THREE from 'three'
 
-export default function FlowLineMeshComponent() {
+export default function App() {
   const sceneRef = useRef<THREE.Scene>()
 
   const handleCreated = (scene: THREE.Scene, { camera }: any) => {
@@ -79,7 +79,7 @@ import { useRef } from 'react'
 import { Scene, FlowLineMesh, AxisType } from 'react-three-lite'
 import * as THREE from 'three'
 
-export default function FlowLineMeshOptionsComponent() {
+export default function App() {
   const sceneRef = useRef<THREE.Scene>()
 
   const handleCreated = (scene: THREE.Scene, { camera }: any) => {
