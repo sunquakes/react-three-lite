@@ -89,7 +89,7 @@ function createLineGeometry(
     const next = i < smoothPoints.length - 1 ? smoothPoints[i + 1] : smoothPoints[i]
     const prev = i > 0 ? smoothPoints[i - 1] : smoothPoints[i]
 
-    let tangent = new Vector3().subVectors(next, prev).normalize()
+    const tangent = new Vector3().subVectors(next, prev).normalize()
     let normal: Vector3
 
     if (axis === AxisType.X) {

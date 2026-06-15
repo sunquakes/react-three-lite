@@ -34,7 +34,7 @@ export default class Movable {
   /**
    * The state of element movement.
    */
-  private state: Boolean
+  private state: boolean
 
   /**
    * Position of element window display

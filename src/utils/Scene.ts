@@ -1,18 +1,18 @@
-import { WebGLRenderer, Scene, AxesHelper, GridHelper } from 'three'
+import * as THREE from 'three'
 import { OrbitControls } from 'three-stdlib'
 import CSS2DRenderer from './CSS2DRenderer'
 import type { SceneComponents, CallbackFrame } from '../context/SceneContext'
 
 export default function (
-  renderer: WebGLRenderer,
+  renderer: THREE.WebGLRenderer,
   container: HTMLElement,
   components: SceneComponents,
   frame: CallbackFrame,
   beforeFrame?: CallbackFrame,
   afterFrame?: CallbackFrame
-): { scene: Scene; dispose: () => void } {
+): { scene: THREE.Scene; dispose: () => void } {
   const camera = components.camera
-  const scene = new Scene()
+  const scene = new THREE.Scene()
   
   if (components.light) {
     scene.add(components.light)
@@ -46,11 +46,11 @@ export default function (
   }
   animate()
 
-  if (components.axesHelper instanceof AxesHelper) {
+  if (components.axesHelper instanceof THREE.AxesHelper) {
     scene.add(components.axesHelper)
   }
 
-  if (components.gridHelper instanceof GridHelper) {
+  if (components.gridHelper instanceof THREE.GridHelper) {
     scene.add(components.gridHelper)
   }
 
@@ -74,20 +74,17 @@ export default function (
         css2DRenderer.domElement.parentNode.removeChild(css2DRenderer.domElement)
       }
       // 清理场景中的所有对象
-      scene.traverse((child) => {
-        if ('geometry' in child) {
-          (child as any).geometry?.dispose()
+      scene.traverse((child: THREE.Object3D) => {
+        const obj = child as THREE.Object3D & { geometry?: THREE.BufferGeometry; material?: THREE.Material | THREE.Material[] }
+        if (obj.geometry) {
+          obj.geometry.dispose()
         }
-        if ('material' in child) {
-          const material = (child as any).material
-          if (Array.isArray(material)) {
-            material.forEach((m: any) => m?.dispose())
+        if (obj.material) {
+          if (Array.isArray(obj.material)) {
+            obj.material.forEach((m) => m.dispose())
           } else {
-            material?.dispose()
+            obj.material.dispose()
           }
-        }
-        if ('dispose' in child && typeof (child as any).dispose === 'function') {
-          (child as any).dispose()
         }
       })
     }
