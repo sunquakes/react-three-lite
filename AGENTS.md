@@ -70,6 +70,28 @@ Components for loading 3D models (GLTF, FBX, OBJ) with caching support via Index
 - Use functional components with hooks
 - Follow existing naming conventions (PascalCase for components, camelCase for utilities)
 
+### Three.js Import Convention
+**ALWAYS use namespace import for Three.js**: `import * as THREE from 'three'`
+
+- **DO NOT** use named imports like `import { Scene, WebGLRenderer } from 'three'`
+- **DO NOT** mix named imports with namespace imports
+- Access types via `THREE.` prefix (e.g., `THREE.Scene`, `THREE.WebGLRenderer`, `THREE.Object3D`)
+- This ensures consistency across all files and avoids duplicate imports
+
+**Good:**
+```ts
+import * as THREE from 'three'
+
+const scene = new THREE.Scene()
+const renderer = new THREE.WebGLRenderer()
+```
+
+**Bad:**
+```ts
+import { Scene, WebGLRenderer } from 'three'
+import * as THREE from 'three'  // Don't mix both
+```
+
 ### Adding New Components
 1. Create component in `src/components/`
 2. Export from `src/index.ts`
