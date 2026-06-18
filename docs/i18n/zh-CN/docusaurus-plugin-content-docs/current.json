@@ -47,6 +47,10 @@
     "message": "动画",
     "description": "The label for doc 'animation' in sidebar 'guideSidebar'"
   },
+  "sidebar.guideSidebar.doc.model-rotator": {
+    "message": "模型旋转器",
+    "description": "The label for doc 'model-rotator' in sidebar 'guideSidebar'"
+  },
   "sidebar.guideSidebar.doc.meshes/wave-circle-mesh": {
     "message": "波浪圆环网格",
     "description": "The label for doc 'meshes/wave-circle-mesh' in sidebar 'guideSidebar'"

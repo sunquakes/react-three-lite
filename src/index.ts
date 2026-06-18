@@ -15,6 +15,7 @@ import { SceneContext, useScene } from './context/SceneContext'
 import { GLTFLoader as GLTFLoaderFn, FBXLoader as FBXLoaderFn, OBJLoader as OBJLoaderFn } from './utils/ModelLoader'
 
 import SweepLight from './utils/SweepLight'
+import ModelRotator from './utils/ModelRotator'
 
 import { LightGradient, LightGradientOptions } from './utils/Light'
 
@@ -26,7 +27,7 @@ export type { SceneComponents, CallbackFrame } from './context/SceneContext'
 export type { LightGradientOptions }
 
 // class
-export { SkyBox, Popup, Movable, WaveCircleMesh, FlowLineMesh, Animation, SweepLight, LightGradient }
+export { SkyBox, Popup, Movable, WaveCircleMesh, FlowLineMesh, Animation, SweepLight, LightGradient, ModelRotator }
 
 // function - async loaders (no hooks)
 export { GLTFLoaderFn as GLTFLoaderAsync, FBXLoaderFn as FBXLoaderAsync, OBJLoaderFn as OBJLoaderAsync }

@@ -14,6 +14,7 @@ const sidebars = {
     'popup',
     'movable-element',
     'animation',
+    'model-rotator',
     {
       type: 'category',
       label: 'Mesh',
