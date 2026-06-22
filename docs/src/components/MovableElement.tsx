@@ -27,6 +27,7 @@ export default function MovableElementComponent() {
   return (
     <Scene 
       style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '300px' }} 
+      bgColor="#1a1a2e"
       onCreated={handleCreated} 
     />
   )

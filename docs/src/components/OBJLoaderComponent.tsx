@@ -18,7 +18,7 @@ export default function OBJLoaderComponentComponent() {
   }, [])
 
   return (
-    <Scene style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '300px', border: '1px solid #eee', borderRadius: '4px', overflow: 'hidden' }} onCreated={handleCreated}>
+    <Scene style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '300px', border: '1px solid #eee', borderRadius: '4px', overflow: 'hidden' }} bgColor="#1a1a2e" onCreated={handleCreated}>
       {OBJLoader && (
         <OBJLoader
           modelUrl="/models/obj/perseverance.obj"
