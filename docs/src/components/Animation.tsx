@@ -20,6 +20,6 @@ export default function AnimationComponent() {
   }
 
   return (
-    <Scene style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '300px' }} bgColor="#FAEBD7" onCreated={handleCreated} />
+    <Scene style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '300px' }} bgColor="#1a1a2e" onCreated={handleCreated} />
   )
 }
