@@ -7,6 +7,7 @@ import Rain from './components/Rain'
 import Snow from './components/Snow'
 import SkyBox from './utils/SkyBox'
 import Popup from './utils/Popup'
+import Callout from './utils/Callout'
 import Movable from './utils/Movable'
 import WaveCircleMesh from './meshes/WaveCircleMesh'
 import FlowLineMesh from './meshes/FlowLineMesh'
@@ -18,16 +19,17 @@ import SweepLight from './utils/SweepLight'
 import ModelRotator from './utils/ModelRotator'
 
 import { LightGradient, LightGradientOptions } from './utils/Light'
+import type { CalloutOptions, LineShape, BendAxis, LabelAnchor } from './utils/Callout'
 
 // components
 export { Scene, GLTFLoader, FBXLoader, OBJLoader, Bloom, Rain, Snow, SceneContext, useScene }
 
 // types
 export type { SceneComponents, CallbackFrame } from './context/SceneContext'
-export type { LightGradientOptions }
+export type { LightGradientOptions, CalloutOptions, LineShape, BendAxis, LabelAnchor }
 
 // class
-export { SkyBox, Popup, Movable, WaveCircleMesh, FlowLineMesh, Animation, SweepLight, LightGradient, ModelRotator }
+export { SkyBox, Popup, Callout, Movable, WaveCircleMesh, FlowLineMesh, Animation, SweepLight, LightGradient, ModelRotator }
 
 // function - async loaders (no hooks)
 export { GLTFLoaderFn as GLTFLoaderAsync, FBXLoaderFn as FBXLoaderAsync, OBJLoaderFn as OBJLoaderAsync }

@@ -39,6 +39,10 @@
     "message": "弹窗",
     "description": "The label for doc 'popup' in sidebar 'guideSidebar'"
   },
+  "sidebar.guideSidebar.doc.callout": {
+    "message": "引线注释",
+    "description": "The label for doc 'callout' in sidebar 'guideSidebar'"
+  },
   "sidebar.guideSidebar.doc.movable-element": {
     "message": "可移动元素",
     "description": "The label for doc 'movable-element' in sidebar 'guideSidebar'"
