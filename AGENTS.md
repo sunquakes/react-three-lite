@@ -127,6 +127,7 @@ useEffect(() => {
 - Use `onCreated` callback on `<Scene>` to initialize effects (not `useScene()` hook)
 - Set camera position in `handleCreated`: `camera.position.set(0, 0, 4)`
 - Use `camera.lookAt(0, 0, 0)` to ensure proper orientation
+- **Default Scene background color: `bgColor="#1a1a2e"`** — use this for all demo Scenes unless a specific contrasting color is required by the visual effect (e.g. dark themes for Rain/Snow).
 - Set demo container style: `style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '300px' }}`
 - Add cleanup in `useEffect` return function and set refs to `null`
 - Use `// Cleanup on unmount` comment before useEffect
@@ -166,7 +167,7 @@ export default function App() {
   }, [])
 
   return (
-    <Scene style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '300px' }} onCreated={handleCreated} />
+    <Scene bgColor="#1a1a2e" style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '300px' }} onCreated={handleCreated} />
   )
 }
 ```
@@ -204,7 +205,7 @@ When creating particle effects like Rain or Snow, follow this workflow:
 **5. Create Demo Component**
 - Set front-facing camera: `camera.position.set(0, 0, 4)`
 - Use `camera.lookAt(0, 0, 0)` to ensure proper orientation
-- Choose contrasting background color
+- Default Scene background color: `bgColor="#1a1a2e"` — only use a contrasting color if the visual effect requires it (e.g. lighter/darker to show effect clearly)
 - Adjust camera distance for visibility
 - Set demo container style: `style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '300px' }}`
 
@@ -349,7 +350,7 @@ function <ComponentName>Component() {
   }, [])
 
   return (
-    <Scene bgColor="#0a0a0a" style={{ marginTop: '10px', width: '100%', height: '300px' }} onCreated={handleCreated} />
+    <Scene bgColor="#1a1a2e" style={{ marginTop: '10px', width: '100%', height: '300px' }} onCreated={handleCreated} />
   )
 }
 ```
