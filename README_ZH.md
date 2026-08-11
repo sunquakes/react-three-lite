@@ -17,6 +17,22 @@
 
 访问 [r3l.sunquakes.com](https://r3l.sunquakes.com).
 
+## 功能
+
+- **Scene** — 核心 3D 场景容器，集成相机、渲染器、灯光和控制器
+- **Model Loaders** — GLTF / FBX / OBJ 模型加载器，支持 Draco 压缩
+- **Bloom** — 后处理辉光效果
+- **Rain / Snow** — 基于 GLSL 着色器的粒子效果
+- **SweepLight** — 模型扫描光线动画
+- **LightGradient** — 动态光照渐变效果
+- **Callout** — 引线注释，支持自动锚点跟随相机
+- **ModelRotator** — 模型自动旋转工具
+- **SkyBox** — 天空盒背景
+- **Popup** — 3D 交互弹窗
+- **Movable** — 可拖拽场景元素
+- **Animation** — 模型动画播放
+- **WaveCircleMesh / FlowLineMesh** — 自定义可视化网格
+
 ## 安装
 
 ### 安装 `Three.js`
