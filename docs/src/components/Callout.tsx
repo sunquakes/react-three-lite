@@ -66,7 +66,7 @@ export default function App() {
 
   return (
     <Scene
-      bgColor="#000000"
+      bgColor="#1a1a2e"
       style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '360px' }}
       onCreated={handleCreated}
     />
