@@ -17,10 +17,9 @@ export default [
         'warn',
         { allowConstantExport: true },
       ],
-      'react-hooks/refs': 'off',
     },
   },
   {
-    ignores: ['dist', '.eslintrc.cjs', 'scripts/**', 'docs/**', 'node_modules/**'],
+    ignores: ['dist', '.eslintrc.cjs'],
   },
 ];
