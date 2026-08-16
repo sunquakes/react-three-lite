@@ -27,7 +27,13 @@ export default function LightGradientComponent() {
 
     // Loop gradient animation
     const loopGradient = () => {
-      light.intensity = 2
+      // Reset all lights in the group to base intensity before starting
+      // a new gradient cycle. light is a Group (AmbientLight + DirectionalLight).
+      light.traverse((child) => {
+        if ((child as THREE.Light).isLight) {
+          ;(child as THREE.Light).intensity = 2
+        }
+      })
       gradientRef.current?.dispose()
       gradientRef.current = new LightGradient(light, {
         intensity: 20,

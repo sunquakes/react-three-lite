@@ -1,4 +1,4 @@
-import { Group, AnimationClip, Mesh, MeshBasicMaterial, MeshStandardMaterial } from 'three'
+import * as THREE from 'three'
 import { GLTFLoader as THREEGLTFLoader, FBXLoader as THREEFBXLoader, OBJLoader as THREEOBJLoader, MTLLoader as THREEMTLLoader, DRACOLoader } from 'three-stdlib'
 
 interface LoadEvent {
@@ -22,6 +22,90 @@ function isValidModelData(buffer: ArrayBuffer): boolean {
   }
   
   return true
+}
+
+/**
+ * Walk a loaded model and normalize common PBR issues that otherwise lead to
+ * models rendering "black" on fresh scenes:
+ *   1. Mark base color / emission textures as SRGB so they decode correctly
+ *      under ACESFilmic tone mapping.
+ *   2. Prevent MeshStandard/Physical from reaching metalness = 1.0 combined
+ *      with roughness = 0.0: that surface would be 100% reflective mirror
+ *      and resolve to pure black without a high-quality HDRI environment.
+ *   3. Upgrade legacy MeshLambert/Phong to MeshStandard so they receive
+ *      lighting from the default envMap (Lambert/Phong ignore envMap).
+ */
+function normalizeMaterials(model: THREE.Group): void {
+  model.traverse((child) => {
+    const mesh = child as THREE.Mesh
+    if (!mesh.isMesh || !mesh.material) return
+
+    const mats: THREE.Material[] = Array.isArray(mesh.material) ? mesh.material : [mesh.material]
+
+    for (let i = 0; i < mats.length; i++) {
+      const src = mats[i]
+
+      // --- Color-space tagging ----------------------------------------------
+      const tagSRGB = (tex: THREE.Texture | null | undefined) => {
+        if (tex) tex.colorSpace = THREE.SRGBColorSpace
+      }
+      const asPBR = src as unknown as {
+        map?: THREE.Texture | null
+        emissiveMap?: THREE.Texture | null
+        metalness?: number
+        roughness?: number
+        color?: THREE.Color
+        emissive?: THREE.Color
+      }
+      tagSRGB(asPBR.map ?? null)
+      tagSRGB(asPBR.emissiveMap ?? null)
+
+      // --- Lambert/Phong -> Standard ---------------------------------------
+      // MeshLambertMaterial / MeshPhongMaterial don't sample scene.environment
+      // and therefore appear flat / overly dark compared to PBR siblings.
+      if (
+        (src as THREE.MeshLambertMaterial).isMeshLambertMaterial ||
+        (src as THREE.MeshPhongMaterial).isMeshPhongMaterial
+      ) {
+        const legacy = src as THREE.MeshLambertMaterial
+        mats[i] = new THREE.MeshStandardMaterial({
+          color: legacy.color?.clone() ?? 0xffffff,
+          map: (legacy as unknown as { map?: THREE.Texture | null }).map ?? null,
+          roughness: 0.85,
+          metalness: 0.05
+        })
+        // Dispose the original only after we've read every field we need.
+        src.dispose()
+        continue
+      }
+
+      // --- Clamp extreme PBR parameters ------------------------------------
+      if (
+        (src as THREE.MeshStandardMaterial).isMeshStandardMaterial ||
+        (src as THREE.MeshPhysicalMaterial).isMeshPhysicalMaterial
+      ) {
+        if (typeof asPBR.roughness === 'number' && asPBR.roughness < 0.08) {
+          asPBR.roughness = 0.08
+        }
+        if (
+          typeof asPBR.metalness === 'number' &&
+          typeof asPBR.roughness === 'number' &&
+          asPBR.metalness > 0.95 &&
+          asPBR.roughness < 0.25
+        ) {
+          // Mirror-like surface without proper HDRI = pure black. Nudge it
+          // towards "brushed metal" so the default PMREM env is visible.
+          asPBR.roughness = Math.max(asPBR.roughness, 0.25)
+        }
+      }
+    }
+
+    if (Array.isArray(mesh.material)) {
+      mesh.material = mats as THREE.Material[]
+    } else {
+      mesh.material = mats[0]
+    }
+  })
 }
 
 export default function fileLoader(
@@ -155,7 +239,7 @@ export async function GLTFLoader(
   dracoDecoderPath?: string,
   cache?: boolean,
   onProgress?: (event: LoadEvent) => void
-): Promise<Group> {
+): Promise<THREE.Group> {
   const data = await fileLoader(url, cache, onProgress)
   const loader = new THREEGLTFLoader()
   if (useDraco) {
@@ -164,8 +248,9 @@ export async function GLTFLoader(
   return new Promise((resolve) => {
     onProgress?.({ type: 'parse', progress: 0 })
     loader.parse(data, '', (gltf) => {
-      const model = gltf.scene as Group
-      model.animations = gltf.animations as AnimationClip[]
+      const model = gltf.scene as THREE.Group
+      model.animations = gltf.animations as THREE.AnimationClip[]
+      normalizeMaterials(model)
       onProgress?.({ type: 'parse', progress: 100 })
       resolve(model)
     })
@@ -176,28 +261,15 @@ export async function FBXLoader(
   url: string,
   cache?: boolean,
   onProgress?: (event: LoadEvent) => void
-): Promise<Group> {
+): Promise<THREE.Group> {
   const data = await fileLoader(url, cache)
   const loader = new THREEFBXLoader()
   return new Promise((resolve) => {
     onProgress?.({ type: 'parse', progress: 0 })
-    const model = loader.parse(data, '') as Group
+    const model = loader.parse(data, '') as THREE.Group
+    normalizeMaterials(model)
     onProgress?.({ type: 'parse', progress: 100 })
     resolve(model)
-  })
-}
-
-function fixOBJMaterials(model: Group): void {
-  model.traverse((child) => {
-    if (child instanceof Mesh) {
-      if (child.material instanceof MeshBasicMaterial) {
-        child.material = new MeshStandardMaterial({
-          color: child.material.color,
-          roughness: 0.8,
-          metalness: 0.2
-        })
-      }
-    }
   })
 }
 
@@ -206,7 +278,7 @@ export async function OBJLoader(
   mtlUrl: string,
   cache?: boolean,
   onProgress?: (event: LoadEvent) => void
-): Promise<Group> {
+): Promise<THREE.Group> {
   const data = await fileLoader(url, cache, onProgress)
   const mtlData = await fileLoader(mtlUrl, cache)
   const decoder = new TextDecoder('utf-8')
@@ -218,8 +290,8 @@ export async function OBJLoader(
   loader.setMaterials(mtl)
   return new Promise((resolve) => {
     onProgress?.({ type: 'parse', progress: 0 })
-    const model = loader.parse(text) as Group
-    fixOBJMaterials(model)
+    const model = loader.parse(text) as THREE.Group
+    normalizeMaterials(model)
     onProgress?.({ type: 'parse', progress: 100 })
     resolve(model)
   })

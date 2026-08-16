@@ -1,13 +1,15 @@
-import { CanvasTexture, RepeatWrapping, Vector3, BufferGeometry, Float32BufferAttribute, ShaderMaterial, Mesh, AdditiveBlending, DoubleSide, Texture, CatmullRomCurve3 } from 'three'
+import * as THREE from 'three'
+import { NodeMaterial } from 'three/webgpu'
+import { Fn, uniform, float, vec2, vec4, uv, texture, varying, abs, smoothstep, mix, max, fract, oneMinus } from 'three/tsl'
 import { AxisType } from '../enums/AxisType'
 
-function createArrowTexture(arrowColor: [number, number, number]): CanvasTexture {
+function createArrowTexture(arrowColor: [number, number, number]): THREE.CanvasTexture {
   const canvas = document.createElement('canvas')
   canvas.width = 512
   canvas.height = 256
 
   const ctx = canvas.getContext('2d')
-  if (!ctx) return new CanvasTexture(canvas)
+  if (!ctx) return new THREE.CanvasTexture(canvas)
 
   ctx.clearRect(0, 0, canvas.width, canvas.height)
 
@@ -39,18 +41,18 @@ function createArrowTexture(arrowColor: [number, number, number]): CanvasTexture
   ctx.closePath()
   ctx.fill()
 
-  const texture = new CanvasTexture(canvas)
-  texture.wrapS = RepeatWrapping
-  texture.wrapT = RepeatWrapping
+  const texture = new THREE.CanvasTexture(canvas)
+  texture.wrapS = THREE.RepeatWrapping
+  texture.wrapT = THREE.RepeatWrapping
 
   return texture
 }
 
-function createSmoothPoints(points: Vector3[], segments: number = 100): Vector3[] {
+function createSmoothPoints(points: THREE.Vector3[], segments: number = 100): THREE.Vector3[] {
   if (points.length < 2) return points
 
-  const smoothPoints: Vector3[] = []
-  const curve = new CatmullRomCurve3(points)
+  const smoothPoints: THREE.Vector3[] = []
+  const curve = new THREE.CatmullRomCurve3(points)
   curve.curveType = 'catmullrom'
   curve.tension = 0.5
 
@@ -62,11 +64,11 @@ function createSmoothPoints(points: Vector3[], segments: number = 100): Vector3[
 }
 
 function createLineGeometry(
-  points: Vector3[],
+  points: THREE.Vector3[],
   width: number,
   axis: AxisType
-): { geometry: BufferGeometry; totalLength: number } {
-  const geometry = new BufferGeometry()
+): { geometry: THREE.BufferGeometry; totalLength: number } {
+  const geometry = new THREE.BufferGeometry()
 
   const positions: number[] = []
   const uvs: number[] = []
@@ -80,7 +82,7 @@ function createLineGeometry(
   for (let i = 1; i < smoothPoints.length; i++) {
     const prev = smoothPoints[i - 1]
     const curr = smoothPoints[i]
-    totalLength += new Vector3().subVectors(curr, prev).length()
+    totalLength += new THREE.Vector3().subVectors(curr, prev).length()
     lengths.push(totalLength)
   }
 
@@ -89,15 +91,15 @@ function createLineGeometry(
     const next = i < smoothPoints.length - 1 ? smoothPoints[i + 1] : smoothPoints[i]
     const prev = i > 0 ? smoothPoints[i - 1] : smoothPoints[i]
 
-    const tangent = new Vector3().subVectors(next, prev).normalize()
-    let normal: Vector3
+    const tangent = new THREE.Vector3().subVectors(next, prev).normalize()
+    let normal: THREE.Vector3
 
     if (axis === AxisType.X) {
-      normal = new Vector3(0, tangent.z, -tangent.y).normalize()
+      normal = new THREE.Vector3(0, tangent.z, -tangent.y).normalize()
     } else if (axis === AxisType.Y) {
-      normal = new Vector3(-tangent.z, 0, tangent.x).normalize()
+      normal = new THREE.Vector3(-tangent.z, 0, tangent.x).normalize()
     } else {
-      normal = new Vector3(-tangent.y, tangent.x, 0).normalize()
+      normal = new THREE.Vector3(-tangent.y, tangent.x, 0).normalize()
     }
 
     const offset = normal.clone().multiplyScalar(width / 2)
@@ -117,8 +119,8 @@ function createLineGeometry(
     }
   }
 
-  geometry.setAttribute('position', new Float32BufferAttribute(positions, 3))
-  geometry.setAttribute('uv', new Float32BufferAttribute(uvs, 2))
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3))
+  geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2))
   geometry.setIndex(indices)
 
   return { geometry, totalLength }
@@ -128,79 +130,61 @@ function getLineMaterial(
   color: [number, number, number, number],
   arrowColor: [number, number, number],
   textureRepeat?: number
-): { material: ShaderMaterial; texture: Texture } {
+): { material: NodeMaterial; texture: THREE.Texture; timeUniform: ReturnType<typeof uniform> } {
   const arrowTexture = createArrowTexture(arrowColor)
-  
-  const material = new ShaderMaterial({
-    transparent: true,
-    blending: AdditiveBlending,
-    depthWrite: false,
-    side: DoubleSide,
-    uniforms: {
-      time: { value: 0 },
-      lineColor: { value: color },
-      arrowColor: { value: arrowColor },
-      arrowTexture: { value: arrowTexture },
-      textureRepeat: { value: textureRepeat ?? 10 }
-    },
-    vertexShader: `
-      varying vec2 vUv;
-      
-      void main() {
-        vUv = uv;
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-      }
-    `,
-    fragmentShader: `
-      uniform float time;
-      uniform vec4 lineColor;
-      uniform vec3 arrowColor;
-      uniform sampler2D arrowTexture;
-      uniform float textureRepeat;
-      varying vec2 vUv;
 
-      void main() {
-        vec2 uv = vUv;
-        uv.x = fract(uv.x * textureRepeat - time);
+  const uTime = uniform(0)
+  const uLineColor = uniform(new THREE.Vector4().fromArray(color))
+  const uArrowColor = uniform(new THREE.Vector3().fromArray(arrowColor))
+  const uTextureRepeat = uniform(textureRepeat ?? 10)
 
-        vec4 texColor = texture2D(arrowTexture, uv);
+  const material = new NodeMaterial()
+  material.transparent = true
+  material.blending = THREE.AdditiveBlending
+  material.depthWrite = false
+  material.side = THREE.DoubleSide
 
-        float centerDist = abs(vUv.y - 0.5) * 2.0;
+  const vUv = varying(uv())
 
-        float core = 1.0 - smoothstep(0.0, 0.5, centerDist);
+  material.fragmentNode = Fn(() => {
+    const scrolledX = fract(vUv.x.mul(uTextureRepeat).sub(uTime))
+    const sampleUv = vec2(scrolledX, vUv.y)
+    const texColor = texture(arrowTexture, sampleUv)
 
-        float glowGradient = 1.0 - smoothstep(0.3, 1.2, centerDist);
+    const centerDist = abs(vUv.y.sub(float(0.5))).mul(2.0)
 
-        float glowAlpha = glowGradient * (1.0 - centerDist / 1.5);
+    const core = oneMinus(smoothstep(float(0), float(0.5), centerDist))
 
-        float glow = core + glowAlpha * 0.8;
+    const glowGradient = oneMinus(smoothstep(float(0.3), float(1.2), centerDist))
 
-        float arrowBrightness = max(max(texColor.r, texColor.g), texColor.b);
+    const glowAlpha = glowGradient.mul(oneMinus(centerDist.div(float(1.5))))
 
-        vec3 glowColor = lineColor.rgb * (1.2 + glowGradient * 0.3);
+    const glow = core.add(glowAlpha.mul(0.8))
 
-        vec3 finalColor = mix(glowColor, arrowColor * 1.3, arrowBrightness);
-        float finalAlpha = glow * lineColor.a * (0.85 + 0.15 * arrowBrightness);
+    const arrowBrightness = max(max(texColor.r, texColor.g), texColor.b)
 
-        gl_FragColor = vec4(finalColor, finalAlpha);
-      }
-    `
-  })
-  
-  return { material, texture: arrowTexture }
+    const glowColor = uLineColor.rgb.mul(float(1.2).add(glowGradient.mul(0.3)))
+
+    const finalColor = mix(glowColor, uArrowColor.mul(1.3), arrowBrightness)
+    const finalAlpha = glow.mul(uLineColor.a).mul(float(0.85).add(float(0.15).mul(arrowBrightness)))
+
+    return vec4(finalColor, finalAlpha)
+  })()
+
+  return { material, texture: arrowTexture, timeUniform: uTime }
 }
 
-export default class FlowLineMesh extends Mesh {
-  private flowMaterial!: ShaderMaterial
+export default class FlowLineMesh extends THREE.Mesh {
+  private timeUniform: ReturnType<typeof uniform>
   private speed: number = 1
   private startTime: number = Date.now()
   private animationId: number | null = null
 
   constructor(options: FlowLineMeshOptions = {}) {
     const points = options.points ?? [
-      new Vector3(-1, 0, 0),
-      new Vector3(0, 0.5, 0),
-      new Vector3(1, 0, 0)
+      new THREE.Vector3(-1, 0, 0),
+      new THREE.Vector3(0, 0.5, 0),
+      new THREE.Vector3(1, 0, 0)
     ]
     const width = options.width ?? 0.05
     const color = options.color ?? [0.086, 0.467, 1, 0.5]
@@ -208,11 +192,11 @@ export default class FlowLineMesh extends Mesh {
     const axis = options.axis ?? AxisType.Z
     const textureRepeat = options.textureRepeat ?? 20
     const speed = options.speed ?? 4.0
-    
+
     const { geometry } = createLineGeometry(points, width, axis)
-    const { material } = getLineMaterial(color, arrowColor, textureRepeat)
+    const { material, timeUniform } = getLineMaterial(color, arrowColor, textureRepeat)
     super(geometry, material)
-    this.flowMaterial = material as ShaderMaterial
+    this.timeUniform = timeUniform
     this.speed = speed
     this.startAnimation()
   }
@@ -223,7 +207,7 @@ export default class FlowLineMesh extends Mesh {
       this.animationId = requestAnimationFrame(animate)
       const now = Date.now()
       const time = ((now - this.startTime) / 1000) * this.speed
-      this.flowMaterial.uniforms.time.value = time
+      ;(this.timeUniform as { value: number }).value = time
     }
     animate()
   }
@@ -237,6 +221,6 @@ export default class FlowLineMesh extends Mesh {
       this.animationId = null
     }
     this.geometry.dispose()
-    this.flowMaterial.dispose()
+    ;(this.material as NodeMaterial).dispose()
   }
 }

@@ -1,19 +1,29 @@
-import { useEffect, useRef, useCallback } from 'react'
+import { useEffect, useRef } from 'react'
+import * as THREE from 'three'
+import { NodeMaterial } from 'three/webgpu'
 import {
-  Points,
-  BufferGeometry,
-  ShaderMaterial,
-  Color,
-  UniformsLib,
-  Float32BufferAttribute,
-  AdditiveBlending,
-  CanvasTexture
-} from 'three'
+  Fn,
+  uniform,
+  float,
+  vec4,
+  uv,
+  attribute,
+  positionLocal,
+  modelViewMatrix,
+  cameraProjectionMatrix,
+  varying,
+  mod,
+  smoothstep,
+  oneMinus,
+  sin,
+  cos,
+  texture
+} from 'three/tsl'
 import { useScene } from '../context/SceneContext'
 
 interface SnowProps {
   count?: number
-  color?: string | number | Color
+  color?: string | number | THREE.Color
   speed?: number
   range?: number
   height?: number
@@ -22,60 +32,6 @@ interface SnowProps {
   opacity?: number
   size?: number
 }
-
-const vertexShader = `
-  uniform float uTime;
-  uniform float uSpeed;
-  uniform float uHeightRange;
-  uniform float uWindX;
-  uniform float uWindZ;
-
-  attribute float aSpeed;
-  attribute vec3 aInitialPos;
-  attribute float aPhase;
-  attribute float aSize;
-
-  varying float vAlpha;
-
-  void main() {
-    float t = mod(aInitialPos.y + uTime * aSpeed * uSpeed * 0.15, 1.0);
-
-    vec3 pos = aInitialPos;
-    pos.y = (1.0 - t) * uHeightRange - (uHeightRange * 0.5);
-    
-    float sway = sin(uTime * aSpeed + aPhase) * 0.3;
-    float sway2 = cos(uTime * aSpeed * 0.7 + aPhase * 2.0) * 0.2;
-    pos.x += uWindX * t * 2.0 + sway;
-    pos.z += uWindZ * t * 2.0 + sway2;
-
-    vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
-
-    float baseSize = 1.5 + aSize * 2.0;
-    gl_PointSize = baseSize * (10.0 / -mvPosition.z);
-
-    gl_Position = projectionMatrix * mvPosition;
-
-    vAlpha = 1.0 - smoothstep(0.0, 0.05, t) * 0.3 - smoothstep(0.95, 1.0, t) * 0.3;
-  }
-`
-
-const fragmentShader = `
-  uniform vec3 uColor;
-  uniform float uOpacity;
-  uniform sampler2D uTexture;
-
-  varying float vAlpha;
-
-  void main() {
-    vec4 texColor = texture2D(uTexture, gl_PointCoord);
-
-    float alpha = texColor.a * vAlpha * uOpacity;
-
-    if (alpha < 0.01) discard;
-
-    gl_FragColor = vec4(uColor * texColor.rgb, alpha);
-  }
-`
 
 const Snow = ({
   count = 3000,
@@ -89,55 +45,92 @@ const Snow = ({
   size = 1
 }: SnowProps) => {
   const sceneContext = useScene()
-  const pointsRef = useRef<Points | null>(null)
-  const materialRef = useRef<ShaderMaterial | null>(null)
-  const clockRef = useRef(0)
-
-  const animate = useCallback(() => {
-    const material = materialRef.current
-    if (!material) return
-    clockRef.current += 0.016
-    material.uniforms.uTime.value = clockRef.current
-  }, [])
+  const meshRef = useRef<THREE.Mesh | null>(null)
+  const materialRef = useRef<NodeMaterial | null>(null)
+  const geometryRef = useRef<THREE.BufferGeometry | null>(null)
+  const timeUniformRef = useRef<ReturnType<typeof uniform> | null>(null)
+  const animationIdRef = useRef<number | null>(null)
 
   useEffect(() => {
-    const { scene, sceneComponents, addBeforeFrame } = sceneContext
+    const { scene, sceneComponents } = sceneContext
     if (!scene || !sceneComponents?.camera) {
       return
     }
 
-    const geometry = new BufferGeometry()
+    // Quad-based particle geometry: 4 vertices per particle, 6 indices per
+    // particle. Each particle is a billboard quad; per-particle attributes are
+    // repeated once per quad vertex so the vertex shader can read them.
+    const quadCorners = [
+      [-0.5, -0.5],
+      [0.5, -0.5],
+      [-0.5, 0.5],
+      [0.5, 0.5]
+    ]
+    const quadUVs = [
+      [0, 0],
+      [1, 0],
+      [0, 1],
+      [1, 1]
+    ]
 
-    const positions = new Float32Array(count * 3)
-    const speedArr = new Float32Array(count)
-    const initialPosArr = new Float32Array(count * 3)
-    const phaseArr = new Float32Array(count)
-    const sizeArr = new Float32Array(count)
+    const positions = new Float32Array(count * 4 * 3)
+    const uvs = new Float32Array(count * 4 * 2)
+    const initialPosArr = new Float32Array(count * 4 * 3)
+    const speedArr = new Float32Array(count * 4)
+    const phaseArr = new Float32Array(count * 4)
+    const sizeArr = new Float32Array(count * 4)
 
     for (let i = 0; i < count; i++) {
       const x = (Math.random() - 0.5) * range
       const z = (Math.random() - 0.5) * range
       const y = Math.random()
+      const particleSpeed = 0.3 + Math.random() * 0.7
+      const phase = Math.random() * 6.28318
+      const particleSize = Math.random()
 
-      positions[i * 3] = x
-      positions[i * 3 + 1] = 0
-      positions[i * 3 + 2] = z
-
-      initialPosArr[i * 3] = x
-      initialPosArr[i * 3 + 1] = y
-      initialPosArr[i * 3 + 2] = z
-
-      speedArr[i] = 0.3 + Math.random() * 0.7
-      phaseArr[i] = Math.random() * 6.28318
-      sizeArr[i] = Math.random()
+      for (let j = 0; j < 4; j++) {
+        const vIdx = i * 4 + j
+        // Quad corner position
+        positions[vIdx * 3] = quadCorners[j][0]
+        positions[vIdx * 3 + 1] = quadCorners[j][1]
+        positions[vIdx * 3 + 2] = 0
+        // UV
+        uvs[vIdx * 2] = quadUVs[j][0]
+        uvs[vIdx * 2 + 1] = quadUVs[j][1]
+        // Per-particle data (same for all 4 vertices of the quad)
+        initialPosArr[vIdx * 3] = x
+        initialPosArr[vIdx * 3 + 1] = y
+        initialPosArr[vIdx * 3 + 2] = z
+        speedArr[vIdx] = particleSpeed
+        phaseArr[vIdx] = phase
+        sizeArr[vIdx] = particleSize
+      }
     }
 
-    geometry.setAttribute('position', new Float32BufferAttribute(positions, 3))
-    geometry.setAttribute('aSpeed', new Float32BufferAttribute(speedArr, 1))
-    geometry.setAttribute('aInitialPos', new Float32BufferAttribute(initialPosArr, 3))
-    geometry.setAttribute('aPhase', new Float32BufferAttribute(phaseArr, 1))
-    geometry.setAttribute('aSize', new Float32BufferAttribute(sizeArr, 1))
+    // Indices: two triangles per quad
+    const indices = new Uint32Array(count * 6)
+    for (let i = 0; i < count; i++) {
+      const base = i * 4
+      const idx = i * 6
+      indices[idx] = base
+      indices[idx + 1] = base + 1
+      indices[idx + 2] = base + 2
+      indices[idx + 3] = base + 1
+      indices[idx + 4] = base + 3
+      indices[idx + 5] = base + 2
+    }
 
+    const geometry = new THREE.BufferGeometry()
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3))
+    geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2))
+    geometry.setAttribute('aInitialPos', new THREE.Float32BufferAttribute(initialPosArr, 3))
+    geometry.setAttribute('aSpeed', new THREE.Float32BufferAttribute(speedArr, 1))
+    geometry.setAttribute('aPhase', new THREE.Float32BufferAttribute(phaseArr, 1))
+    geometry.setAttribute('aSize', new THREE.Float32BufferAttribute(sizeArr, 1))
+    geometry.setIndex(new THREE.BufferAttribute(indices, 1))
+    geometryRef.current = geometry
+
+    // Hexagonal snowflake CanvasTexture
     const canvas = document.createElement('canvas')
     canvas.width = 128
     canvas.height = 128
@@ -157,11 +150,11 @@ const Snow = ({
     for (let i = 0; i < 6; i++) {
       const angle = (i * Math.PI) / 3 - Math.PI / 2
       const cos = Math.cos(angle)
-      const sin = Math.sin(angle)
+      const sinVal = Math.sin(angle)
 
       ctx.beginPath()
-      ctx.moveTo(cx + innerRadius * cos, cy + innerRadius * sin)
-      ctx.lineTo(cx + outerRadius * cos, cy + outerRadius * sin)
+      ctx.moveTo(cx + innerRadius * cos, cy + innerRadius * sinVal)
+      ctx.lineTo(cx + outerRadius * cos, cy + outerRadius * sinVal)
       ctx.stroke()
 
       const branchAngle1 = angle - Math.PI / 6
@@ -170,12 +163,12 @@ const Snow = ({
       const branchEnd = outerRadius * 0.9
 
       ctx.beginPath()
-      ctx.moveTo(cx + branchStart * cos, cy + branchStart * sin)
+      ctx.moveTo(cx + branchStart * cos, cy + branchStart * sinVal)
       ctx.lineTo(cx + branchEnd * Math.cos(branchAngle1), cy + branchEnd * Math.sin(branchAngle1))
       ctx.stroke()
 
       ctx.beginPath()
-      ctx.moveTo(cx + branchStart * cos, cy + branchStart * sin)
+      ctx.moveTo(cx + branchStart * cos, cy + branchStart * sinVal)
       ctx.lineTo(cx + branchEnd * Math.cos(branchAngle2), cy + branchEnd * Math.sin(branchAngle2))
       ctx.stroke()
     }
@@ -185,47 +178,112 @@ const Snow = ({
     ctx.arc(cx, cy, 6, 0, Math.PI * 2)
     ctx.fill()
 
-    const texture = new CanvasTexture(canvas)
+    const snowTexture = new THREE.CanvasTexture(canvas)
 
-    const material = new ShaderMaterial({
-      uniforms: {
-        ...UniformsLib.lights,
-        uTime: { value: 0 },
-        uSpeed: { value: speed },
-        uHeightRange: { value: height },
-        uWindX: { value: windX },
-        uWindZ: { value: windZ },
-        uColor: { value: new Color(color) },
-        uOpacity: { value: opacity },
-        uTexture: { value: texture }
-      },
-      vertexShader,
-      fragmentShader,
-      transparent: true,
-      depthWrite: false,
-      blending: AdditiveBlending
-    })
+    // TSL uniforms
+    const uTime = uniform(0)
+    const uHeightRange = uniform(height)
+    const uWindX = uniform(windX)
+    const uWindZ = uniform(windZ)
+    const uColor = uniform(new THREE.Color(color))
+    const uOpacity = uniform(opacity)
+    timeUniformRef.current = uTime
+
+    // vAlpha varying shared between vertex and fragment
+    const vAlpha = varying(float(0))
+
+    const material = new NodeMaterial()
+    material.transparent = true
+    material.depthWrite = false
+    material.blending = THREE.AdditiveBlending
+    material.alphaTest = 0.01
+    material.side = THREE.DoubleSide
+
+    // Vertex shader: animate particle center with sway, billboard quad in view space
+    material.vertexNode = Fn(() => {
+      const aInitialPos = attribute<'vec3'>('aInitialPos', 'vec3')
+      const aSpeed = attribute<'float'>('aSpeed', 'float')
+      const aPhase = attribute<'float'>('aPhase', 'float')
+      const aSize = attribute<'float'>('aSize', 'float')
+
+      const t = mod(aInitialPos.y.add(uTime.mul(aSpeed.mul(aSpeed).mul(0.15))), 1.0)
+
+      // Sway
+      const sway = sin(uTime.mul(aSpeed).add(aPhase)).mul(0.3)
+      const sway2 = cos(uTime.mul(aSpeed).mul(0.7).add(aPhase.mul(2.0))).mul(0.2)
+
+      // Particle center
+      const centerX = aInitialPos.x.add(uWindX.mul(t).mul(2.0)).add(sway)
+      const centerY = oneMinus(t).mul(uHeightRange).sub(uHeightRange.mul(0.5))
+      const centerZ = aInitialPos.z.add(uWindZ.mul(t).mul(2.0)).add(sway2)
+
+      // View space center
+      const centerView = modelViewMatrix.mul(vec4(centerX, centerY, centerZ, 1.0))
+
+      // Size with distance attenuation
+      const baseSize = float(1.5).add(aSize.mul(2.0))
+      const pSize = baseSize.mul(float(10.0).div(centerView.z.negate()))
+
+      // Billboard offset
+      const offsetX = positionLocal.x.mul(pSize)
+      const offsetY = positionLocal.y.mul(pSize)
+
+      // vAlpha: fade in/out at top and bottom of travel
+      vAlpha.assign(
+        oneMinus(smoothstep(0.0, 0.05, t).mul(0.3)).sub(smoothstep(0.95, 1.0, t).mul(0.3))
+      )
+
+      return cameraProjectionMatrix.mul(
+        vec4(centerView.x.add(offsetX), centerView.y.add(offsetY), centerView.z, centerView.w)
+      )
+    })()
+
+    // Fragment shader: sample snowflake texture using UV coordinates
+    material.fragmentNode = Fn(() => {
+      const texColor = texture(snowTexture, uv())
+      const alpha = texColor.a.mul(vAlpha).mul(uOpacity)
+      return vec4(uColor.rgb.mul(texColor.rgb), alpha)
+    })()
+
     materialRef.current = material
 
-    const points = new Points(geometry, material)
-    points.name = 'Snow'
-    pointsRef.current = points
+    const mesh = new THREE.Mesh(geometry, material)
+    mesh.name = 'Snow'
+    mesh.frustumCulled = false
+    meshRef.current = mesh
 
-    scene.add(points)
+    scene.add(mesh)
 
-    const removeBeforeFrame = addBeforeFrame?.(animate)
+    // Use a dedicated requestAnimationFrame loop instead of addBeforeFrame to
+    // avoid triggering the Scene's beforeFrameSetRef render path (which skips
+    // renderer.clear() and background — problematic on WebGPU).
+    const animate = () => {
+      const uTime = timeUniformRef.current
+      if (uTime) {
+        ;(uTime as { value: number }).value += 0.016 * speed
+      }
+      animationIdRef.current = requestAnimationFrame(animate)
+    }
+    animationIdRef.current = requestAnimationFrame(animate)
 
+    // Cleanup on unmount
     return () => {
-      removeBeforeFrame?.()
+      if (animationIdRef.current !== null) {
+        cancelAnimationFrame(animationIdRef.current)
+        animationIdRef.current = null
+      }
       geometry.dispose()
       material.dispose()
-      texture.dispose()
-      if (pointsRef.current) {
-        scene.remove(pointsRef.current)
-        pointsRef.current = null
+      snowTexture.dispose()
+      if (meshRef.current) {
+        scene.remove(meshRef.current)
+        meshRef.current = null
       }
+      geometryRef.current = null
+      materialRef.current = null
+      timeUniformRef.current = null
     }
-  }, [sceneContext, count, color, speed, range, height, windX, windZ, opacity, size, animate])
+  }, [sceneContext, count, color, speed, range, height, windX, windZ, opacity, size])
 
   return null
 }

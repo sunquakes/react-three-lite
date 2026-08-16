@@ -1,15 +1,22 @@
+import * as THREE from 'three'
+import { NodeMaterial } from 'three/webgpu'
 import {
-  ShaderMaterial,
-  Mesh,
-  AdditiveBlending,
-  DoubleSide,
-  Color,
-  Object3D,
-  Group,
-  LoopOnce,
-  LoopRepeat,
-  LoopPingPong,
-} from 'three'
+  Fn,
+  uniform,
+  float,
+  vec4,
+  positionLocal,
+  varying,
+  abs,
+  smoothstep,
+  pow,
+  clamp,
+  max,
+  min,
+  mod,
+  floor,
+  If,
+} from 'three/tsl'
 
 export interface SweepLightOptions {
   /** Sweep light color, default: 0x00ffff (cyan) */
@@ -23,82 +30,117 @@ export interface SweepLightOptions {
   /** Sweep direction axis: 0=X, 1=Y, 2=Z, default: 0 (X axis) */
   direction?: number
   /** Animation loop type, default: LoopRepeat */
-  loop?: typeof LoopOnce | typeof LoopRepeat | typeof LoopPingPong
+  loop?: typeof THREE.LoopOnce | typeof THREE.LoopRepeat | typeof THREE.LoopPingPong
 }
 
-const vertexShader = `
-  varying vec3 vLocalPosition;
+type SweepTarget = THREE.Mesh | THREE.Group | THREE.Object3D
 
-  void main() {
-    vLocalPosition = position;
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-  }
-`
+interface SweepMaterialOptions {
+  color: number
+  speed: number
+  width: number
+  intensity: number
+  direction: number
+  minPos: number
+  maxPos: number
+  loopType: number
+}
 
-const fragmentShader = `
-  uniform float uTime;
-  uniform vec3 uColor;
-  uniform float uSpeed;
-  uniform float uWidth;
-  uniform float uIntensity;
-  uniform int uDirection;
-  uniform float uMinPos;
-  uniform float uMaxPos;
-  uniform int uLoopType;
+function createSweepMaterial(
+  options: SweepMaterialOptions
+): { material: NodeMaterial; timeUniform: ReturnType<typeof uniform> } {
+  const {
+    color,
+    speed,
+    width,
+    intensity,
+    direction,
+    minPos,
+    maxPos,
+    loopType,
+  } = options
 
-  varying vec3 vLocalPosition;
+  const uTime = uniform(0)
+  const uColor = uniform(new THREE.Color(color))
+  const uSpeed = uniform(speed)
+  const uWidth = uniform(width)
+  const uIntensity = uniform(intensity)
+  const uDirection = uniform(direction)
+  const uMinPos = uniform(minPos)
+  const uMaxPos = uniform(maxPos)
+  const uLoopType = uniform(loopType)
 
-  void main() {
-    float pos;
-    if (uDirection == 0) {
-      pos = vLocalPosition.x;
-    } else if (uDirection == 2) {
-      pos = vLocalPosition.z;
-    } else {
-      pos = vLocalPosition.y;
-    }
+  // Varying: pass local position from vertex to fragment stage.
+  const vLocalPos = varying(positionLocal)
 
-    float range = uMaxPos - uMinPos;
-    float normalizedPos = (pos - uMinPos) / range;
-    
-    float cycleTime = 2.0 / uSpeed;
-    float t;
-    
-    if (uLoopType == 0) {
-      // LoopOnce: play once and stop
-      t = min(uTime / cycleTime, 1.0);
-    } else if (uLoopType == 2) {
-      // LoopPingPong: forward then backward
-      float cycleCount = floor(uTime / cycleTime);
-      float cycleProgress = mod(uTime, cycleTime) / cycleTime;
-      t = mod(cycleCount, 2.0) < 1.0 ? cycleProgress : 1.0 - cycleProgress;
-    } else {
-      // LoopRepeat: continuous loop
-      t = mod(uTime, cycleTime) / cycleTime;
-    }
-    
-    float dist = abs(normalizedPos - t);
-    
-    float bandWidth = uWidth;
-    float band = 1.0 - smoothstep(0.0, bandWidth, dist);
-    band = pow(band, 1.5);
-    
-    float trailWidth = bandWidth * 3.0;
-    float trail = max(0.0, 1.0 - dist / trailWidth);
-    trail = pow(trail, 2.0) * 0.4;
-    
-    float alpha = (band + trail) * uIntensity;
-    alpha = clamp(alpha, 0.0, 1.0);
+  const material = new NodeMaterial()
+  material.transparent = true
+  material.depthWrite = false
+  material.blending = THREE.AdditiveBlending
+  material.side = THREE.DoubleSide
 
-    gl_FragColor = vec4(uColor, alpha);
-  }
-`
+  material.fragmentNode = Fn(() => {
+    // Select position component based on direction axis.
+    const pos = float(0).toVar()
+    If(uDirection.equal(0), () => {
+      pos.assign(vLocalPos.x)
+    })
+      .ElseIf(uDirection.equal(2), () => {
+        pos.assign(vLocalPos.z)
+      })
+      .Else(() => {
+        pos.assign(vLocalPos.y)
+      })
 
-type SweepTarget = Mesh | Group | Object3D
+    const range = uMaxPos.sub(uMinPos)
+    const normalizedPos = pos.sub(uMinPos).div(range)
+
+    const cycleTime = float(2.0).div(uSpeed)
+    const t = float(0).toVar()
+
+    If(uLoopType.equal(0), () => {
+      // LoopOnce: play once and stop at end.
+      t.assign(min(uTime.div(cycleTime), float(1.0)))
+    })
+      .ElseIf(uLoopType.equal(2), () => {
+        // LoopPingPong: forward then backward.
+        const cycleCount = floor(uTime.div(cycleTime))
+        const cycleProgress = mod(uTime, cycleTime).div(cycleTime)
+        const isForward = mod(cycleCount, float(2.0)).lessThan(float(1.0))
+        t.assign(isForward.select(cycleProgress, float(1.0).sub(cycleProgress)))
+      })
+      .Else(() => {
+        // LoopRepeat: continuous loop.
+        t.assign(mod(uTime, cycleTime).div(cycleTime))
+      })
+
+    const dist = abs(normalizedPos.sub(t))
+
+    const bandWidth = uWidth
+    const band = pow(float(1.0).sub(smoothstep(float(0.0), bandWidth, dist)), float(1.5))
+
+    const trailWidth = bandWidth.mul(3.0)
+    const trail = pow(
+      max(float(0.0), float(1.0).sub(dist.div(trailWidth))),
+      float(2.0)
+    ).mul(0.4)
+
+    const alpha = clamp(
+      band.add(trail).mul(uIntensity),
+      float(0.0),
+      float(1.0)
+    )
+
+    return vec4(uColor.rgb, alpha)
+  })()
+
+  return { material, timeUniform: uTime }
+}
 
 class SweepLight {
-  private meshes: Mesh[] = []
-  private materials: ShaderMaterial[] = []
+  private meshes: THREE.Mesh[] = []
+  private materials: NodeMaterial[] = []
+  private timeUniforms: ReturnType<typeof uniform>[] = []
   private startTime: number
   private pausedTime: number = 0
   private isAnimating: boolean = false
@@ -115,17 +157,19 @@ class SweepLight {
       width = 0.3,
       intensity = 1.5,
       direction = 0,
-      loop = LoopRepeat,
+      loop = THREE.LoopRepeat,
     } = options
 
+    const loopType = loop === THREE.LoopOnce ? 0 : loop === THREE.LoopPingPong ? 2 : 1
+
     // Collect meshes from target
-    const targetMeshes: Mesh[] = []
-    if ((target as Mesh).isMesh) {
-      targetMeshes.push(target as Mesh)
+    const targetMeshes: THREE.Mesh[] = []
+    if ((target as THREE.Mesh).isMesh) {
+      targetMeshes.push(target as THREE.Mesh)
     } else {
       target.traverse((child) => {
-        if ((child as Mesh).isMesh) {
-          targetMeshes.push(child as Mesh)
+        if ((child as THREE.Mesh).isMesh) {
+          targetMeshes.push(child as THREE.Mesh)
         }
       })
     }
@@ -153,27 +197,18 @@ class SweepLight {
       minPos -= range * 0.2
       maxPos += range * 0.2
 
-      const material = new ShaderMaterial({
-        vertexShader,
-        fragmentShader,
-        uniforms: {
-          uTime: { value: 0 },
-          uColor: { value: new Color(color) },
-          uSpeed: { value: speed },
-          uWidth: { value: width },
-          uIntensity: { value: intensity },
-          uDirection: { value: direction },
-          uMinPos: { value: minPos },
-          uMaxPos: { value: maxPos },
-          uLoopType: { value: loop === LoopOnce ? 0 : loop === LoopPingPong ? 2 : 1 },
-        },
-        transparent: true,
-        depthWrite: false,
-        blending: AdditiveBlending,
-        side: DoubleSide,
+      const { material, timeUniform } = createSweepMaterial({
+        color,
+        speed,
+        width,
+        intensity,
+        direction,
+        minPos,
+        maxPos,
+        loopType,
       })
 
-      const sweepMesh = new Mesh(mesh.geometry.clone(), material)
+      const sweepMesh = new THREE.Mesh(mesh.geometry.clone(), material)
       sweepMesh.renderOrder = 999
       sweepMesh.frustumCulled = false
 
@@ -181,6 +216,7 @@ class SweepLight {
 
       this.meshes.push(sweepMesh)
       this.materials.push(material)
+      this.timeUniforms.push(timeUniform)
     })
 
     this.startTime = performance.now()
@@ -193,8 +229,8 @@ class SweepLight {
       this.animationId = requestAnimationFrame(loop)
       if (!this.isPaused) {
         const elapsed = (performance.now() - this.startTime) / 1000
-        this.materials.forEach((material) => {
-          material.uniforms.uTime.value = elapsed
+        this.timeUniforms.forEach((u) => {
+          ;(u as { value: number }).value = elapsed
         })
       }
     }
@@ -235,8 +271,8 @@ class SweepLight {
     this.isPaused = false
     this.pausedTime = 0
     this.startTime = performance.now()
-    this.materials.forEach((material) => {
-      material.uniforms.uTime.value = 0
+    this.timeUniforms.forEach((u) => {
+      ;(u as { value: number }).value = 0
     })
   }
 
@@ -253,6 +289,7 @@ class SweepLight {
     })
     this.meshes = []
     this.materials = []
+    this.timeUniforms = []
   }
 }
 
