@@ -1,10 +1,10 @@
 import { useRef, useEffect } from 'react'
-import { Scene, GLTFLoaderAsync, SweepLight } from 'react-three-lite'
+import { Scene, ModelRotator, GLTFLoaderAsync } from 'react-three-lite'
 import type { SceneComponents } from 'react-three-lite'
 import type * as THREE from 'three'
 
-export default function SweepLightComponent() {
-  const sweepLightRef = useRef<SweepLight | null>(null)
+export default function ModelRotatorComponent() {
+  const rotatorRef = useRef<ModelRotator | null>(null)
 
   const handleCreated = async (scene: THREE.Scene, components: SceneComponents) => {
     const { camera } = components
@@ -14,21 +14,25 @@ export default function SweepLightComponent() {
     camera.lookAt(0, 0, 0)
 
     const model = await GLTFLoaderAsync('/models/perseverance-draco.glb', true)
-    model.scale.set(0.8, 0.8, 0.8)
+    model.position.set(0, 0, 0)
     scene.add(model)
 
-    sweepLightRef.current = new SweepLight(model)
+    rotatorRef.current = new ModelRotator(model, {
+      axis: 'y',
+      speed: 0.5,
+      autoStart: true,
+    })
   }
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      sweepLightRef.current?.dispose()
-      sweepLightRef.current = null
+      rotatorRef.current?.dispose()
+      rotatorRef.current = null
     }
   }, [])
 
   return (
-    <Scene bgColor="#1a1a2e" style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '300px' }} onCreated={handleCreated} />
+    <Scene style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '300px' }} bgColor="#1a1a2e" onCreated={handleCreated} />
   )
 }

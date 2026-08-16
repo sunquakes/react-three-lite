@@ -12,8 +12,10 @@ const sidebars = {
       items: ['model-loader-component', 'model-loader-function'],
     },
     'popup',
+    'callout',
     'movable-element',
     'animation',
+    'model-rotator',
     {
       type: 'category',
       label: 'Mesh',

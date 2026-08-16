@@ -11,12 +11,12 @@ export default class Popup {
   private deltaX: number
   private deltaY: number
   private deltaZ: number
-  private state: Boolean
+  private state: boolean
   private position: Position
   private root: Root | undefined
   private animationId: number | null = null
 
-  constructor(position: Position, component: ReactNode, props: object) {
+  constructor(position: Position, component: ReactNode) {
     this.id = 'popup-' + generateUUID()
     this.duration = 0
     this.deltaX = 0.0
@@ -24,11 +24,11 @@ export default class Popup {
     this.deltaZ = 0.0
     this.state = false
     this.position = position
-    this.create(position, component, props)
+    this.create(position, component)
     this.update = this.update.bind(this)
   }
 
-  create(position: Position, component: ReactNode, _props: object | {}): void {
+  create(position: Position, component: ReactNode): void {
     if (this.root) {
       return
     }

@@ -351,10 +351,12 @@ function App() {
         <section style={{
           background: 'linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%)',
           padding: '4rem 2rem',
-          borderRadius: '20px',
           marginBottom: '4rem',
           textAlign: 'center',
-          color: '#fff'
+          color: '#fff',
+          width: '100vw',
+          marginLeft: 'calc(-50vw + 50%)',
+          marginRight: 'calc(-50vw + 50%)',
         }}>
           <h2 style={{
             fontSize: '2.5rem',
@@ -400,8 +402,10 @@ function App() {
         <section style={{
           background: 'linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%)',
           padding: '3rem 2rem',
-          borderRadius: '16px',
-          marginBottom: '4rem'
+          marginBottom: '4rem',
+          width: '100vw',
+          marginLeft: 'calc(-50vw + 50%)',
+          marginRight: 'calc(-50vw + 50%)',
         }}>
           <div style={{
             display: 'grid',

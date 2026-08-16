@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, createElement } from 'react'
-import { Scene, WebGLRenderer, Light, AxesHelper, GridHelper, Color, TextureLoader, PerspectiveCamera } from 'three'
+import * as THREE from 'three'
 import { OrbitControls } from 'three-stdlib'
 import { generateUUID } from '../utils/UUID'
 import createScene from '../utils/Scene'
@@ -10,16 +10,16 @@ import AxesHelperUtil from '../utils/AxesHelper'
 import { SceneContext, SceneComponents, CallbackFrame, SceneSlotProps } from '../context/SceneContext'
 
 interface SceneProps {
-  modelValue?: Scene
-  renderer?: WebGLRenderer
+  modelValue?: THREE.Scene
+  renderer?: THREE.WebGLRenderer
   bgColor?: string
   bgImage?: string
-  camera?: PerspectiveCamera
-  light?: Light
-  axesHelper?: AxesHelper | boolean
-  gridHelper?: GridHelper | boolean
+  camera?: THREE.PerspectiveCamera
+  light?: THREE.Light
+  axesHelper?: THREE.AxesHelper | boolean
+  gridHelper?: THREE.GridHelper | boolean
   controls?: OrbitControls
-  onCreated?: (scene: Scene, components: SceneComponents) => void
+  onCreated?: (scene: THREE.Scene, components: SceneComponents) => void
   onBeforeFrame?: CallbackFrame
   onFrame?: CallbackFrame
   onAfterFrame?: CallbackFrame
@@ -29,7 +29,6 @@ interface SceneProps {
 }
 
 const SceneComponent = ({
-  modelValue: _modelValue,
   renderer: propRenderer,
   bgColor,
   bgImage,
@@ -40,13 +39,12 @@ const SceneComponent = ({
   controls: propControls,
   onCreated,
   onBeforeFrame,
-  onFrame: _onFrame,
   onAfterFrame,
   children,
   style,
   className
 }: SceneProps): JSX.Element => {
-  const UUIDRef = useRef<string>(generateUUID())
+  const [containerId] = useState(() => generateUUID())
   const containerRef = useRef<HTMLDivElement>(null)
   const [showSlot, setShowSlot] = useState(false)
   
@@ -58,7 +56,7 @@ const SceneComponent = ({
   const frameCallbackSetRef = useRef(false)
   const beforeFrameSetRef = useRef(false)
   const callbackFrameRef = useRef<CallbackFrame>(
-    (renderer: WebGLRenderer, scene: Scene, components: SceneComponents) => {
+    (renderer: THREE.WebGLRenderer, scene: THREE.Scene, components: SceneComponents) => {
       if (frameCallbackSetRef.current) return
       
       const camera = components.camera
@@ -85,40 +83,40 @@ const SceneComponent = ({
       return
     }
 
-    let currentRenderer = propRenderer || Renderer()
-    let currentCamera = propCamera || CameraUtil(container)
-    let currentLight = propLight || LightUtil()
-    let currentAxesHelper: AxesHelper | undefined
+    const currentRenderer = propRenderer || Renderer()
+    const currentCamera = propCamera || CameraUtil(container)
+    const currentLight = propLight || LightUtil()
+    let currentAxesHelper: THREE.AxesHelper | undefined
     if (propAxesHelper === false) {
       currentAxesHelper = undefined
-    } else if (propAxesHelper instanceof AxesHelper) {
+    } else if (propAxesHelper instanceof THREE.AxesHelper) {
       currentAxesHelper = propAxesHelper
     } else {
       currentAxesHelper = AxesHelperUtil()
     }
-    let currentGridHelper: GridHelper | undefined
+    let currentGridHelper: THREE.GridHelper | undefined
     if (propGridHelper === false) {
       currentGridHelper = undefined
-    } else if (propGridHelper instanceof GridHelper) {
+    } else if (propGridHelper instanceof THREE.GridHelper) {
       currentGridHelper = propGridHelper
     } else {
-      currentGridHelper = new GridHelper(20, 20, 0xbbbbbb, 0xdddddd)
+      currentGridHelper = new THREE.GridHelper(20, 20, 0xbbbbbb, 0xdddddd)
       currentGridHelper.position.y = 0.01
     }
-    let currentControls = propControls || new OrbitControls(currentCamera, container)
+    const currentControls = propControls || new OrbitControls(currentCamera, container)
 
-    const frame = (renderer: WebGLRenderer, scene: Scene, components: SceneComponents) => {
+    const frame = (renderer: THREE.WebGLRenderer, scene: THREE.Scene, components: SceneComponents) => {
       callbackFrameRef.current(renderer, scene, components)
     }
 
-    const beforeFrame = (renderer: WebGLRenderer, scene: Scene, components: SceneComponents) => {
+    const beforeFrame = (renderer: THREE.WebGLRenderer, scene: THREE.Scene, components: SceneComponents) => {
       onBeforeFrame?.(renderer, scene, components)
       beforeFrameChildrenRef.current?.forEach((beforeFrameChild) => {
         beforeFrameChild?.(renderer, scene, components)
       })
     }
 
-    const afterFrame = (renderer: WebGLRenderer, scene: Scene, components: SceneComponents) => {
+    const afterFrame = (renderer: THREE.WebGLRenderer, scene: THREE.Scene, components: SceneComponents) => {
       onAfterFrame?.(renderer, scene, components)
       afterFrameChildrenRef.current?.forEach((afterFrameChild) => {
         afterFrameChild?.(renderer, scene, components)
@@ -136,7 +134,7 @@ const SceneComponent = ({
     const { scene, dispose: disposeScene } = createScene(currentRenderer, container, sceneComponents, frame, beforeFrame, afterFrame)
 
     if (bgImage != undefined) {
-      const textureLoader = new TextureLoader()
+      const textureLoader = new THREE.TextureLoader()
       textureLoader.load(
         bgImage,
         (texture) => {
@@ -146,11 +144,11 @@ const SceneComponent = ({
         undefined,
         (error) => {
           console.error('Failed to load background image:', bgImage, error)
-          scene.background = new Color('#98F5F9') // fallback color
+          scene.background = new THREE.Color('#98F5F9') // fallback color
         }
       )
     } else if (bgColor != undefined) {
-      scene.background = new Color(bgColor)
+      scene.background = new THREE.Color(bgColor)
     }
 
     // Update context value with useState to trigger child component re-render
@@ -191,23 +189,20 @@ const SceneComponent = ({
       disposeScene()
       // 清理背景纹理
       if (scene.background && 'dispose' in scene.background) {
-        (scene.background as any).dispose()
+        ;(scene.background as THREE.Texture).dispose()
       }
       // 清理场景中的所有对象
-      scene.traverse((child) => {
-        if ('geometry' in child) {
-          (child as any).geometry?.dispose()
+      scene.traverse((child: THREE.Object3D) => {
+        const obj = child as THREE.Object3D & { geometry?: THREE.BufferGeometry; material?: THREE.Material | THREE.Material[] }
+        if (obj.geometry) {
+          obj.geometry.dispose()
         }
-        if ('material' in child) {
-          const material = (child as any).material
-          if (Array.isArray(material)) {
-            material.forEach((m: any) => m?.dispose())
+        if (obj.material) {
+          if (Array.isArray(obj.material)) {
+            obj.material.forEach((m) => m.dispose())
           } else {
-            material?.dispose()
+            obj.material.dispose()
           }
-        }
-        if ('dispose' in child && typeof (child as any).dispose === 'function') {
-          (child as any).dispose()
         }
       })
       currentRenderer.dispose()
@@ -221,7 +216,7 @@ const SceneComponent = ({
     value: sceneSlotProps  // Use useState value
   }, createElement('div', {
     ref: containerRef,
-    id: UUIDRef.current,
+    id: containerId,
     className: className,
     style: { position: 'relative', width: '100%', height: '100%', ...style }
   }, showSlot ? children : null))

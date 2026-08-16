@@ -70,6 +70,28 @@ Components for loading 3D models (GLTF, FBX, OBJ) with caching support via Index
 - Use functional components with hooks
 - Follow existing naming conventions (PascalCase for components, camelCase for utilities)
 
+### Three.js Import Convention
+**ALWAYS use namespace import for Three.js**: `import * as THREE from 'three'`
+
+- **DO NOT** use named imports like `import { Scene, WebGLRenderer } from 'three'`
+- **DO NOT** mix named imports with namespace imports
+- Access types via `THREE.` prefix (e.g., `THREE.Scene`, `THREE.WebGLRenderer`, `THREE.Object3D`)
+- This ensures consistency across all files and avoids duplicate imports
+
+**Good:**
+```ts
+import * as THREE from 'three'
+
+const scene = new THREE.Scene()
+const renderer = new THREE.WebGLRenderer()
+```
+
+**Bad:**
+```ts
+import { Scene, WebGLRenderer } from 'three'
+import * as THREE from 'three'  // Don't mix both
+```
+
 ### Adding New Components
 1. Create component in `src/components/`
 2. Export from `src/index.ts`
@@ -99,26 +121,31 @@ useEffect(() => {
 ```
 
 **Note on Demo Components**: When creating demo components for visual effects:
-- Use `export default function ComponentName()` format (not arrow functions)
+- Use `export default function App()` format (not arrow functions)
 - Import from `react-three-lite` directly (not relative paths like `../../..`)
-- Import type definitions: `import type { SceneComponents } from 'react-three-lite'`
-- Import THREE types: `import type * as THREE from 'three'`
+- Import THREE: `import * as THREE from 'three'` (not `import type`, needs runtime access)
 - Use `onCreated` callback on `<Scene>` to initialize effects (not `useScene()` hook)
 - Set camera position in `handleCreated`: `camera.position.set(0, 0, 4)`
 - Use `camera.lookAt(0, 0, 0)` to ensure proper orientation
-- Choose `bgColor` with good contrast against effect colors
+- **Default Scene background color: `bgColor="#1a1a2e"`** — use this for all demo Scenes unless a specific contrasting color is required by the visual effect (e.g. dark themes for Rain/Snow).
 - Set demo container style: `style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '300px' }}`
 - Add cleanup in `useEffect` return function and set refs to `null`
 - Use `// Cleanup on unmount` comment before useEffect
 
+**Note on Documentation Code Examples**: 
+- Use `function App()` for code examples in documentation (NOT `XxxComponent`)
+- Import demo components in docs using the feature name WITHOUT `Component` suffix (e.g., `import SkyBox from '@site/src/components/SkyBox'`, NOT `import SkyBoxComponent`)
+- For multiple demos in one doc, use `App`, `AppOptions`, `AppCustom`, etc.
+- The JSX usage tag should match the import name (e.g., `<SkyBox />`, `<App />`)
+
 Example structure:
 ```tsx
 import { useRef, useEffect } from 'react'
+import * as THREE from 'three'
 import { Scene, YourEffect } from 'react-three-lite'
 import type { SceneComponents } from 'react-three-lite'
-import type * as THREE from 'three'
 
-export default function YourEffectComponent() {
+export default function App() {
   const effectRef = useRef<YourEffect | null>(null)
 
   const handleCreated = (scene: THREE.Scene, components: SceneComponents) => {
@@ -140,7 +167,7 @@ export default function YourEffectComponent() {
   }, [])
 
   return (
-    <Scene bgColor="#0a0a0a" style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '300px' }} onCreated={handleCreated} />
+    <Scene bgColor="#1a1a2e" style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '300px' }} onCreated={handleCreated} />
   )
 }
 ```
@@ -178,7 +205,7 @@ When creating particle effects like Rain or Snow, follow this workflow:
 **5. Create Demo Component**
 - Set front-facing camera: `camera.position.set(0, 0, 4)`
 - Use `camera.lookAt(0, 0, 0)` to ensure proper orientation
-- Choose contrasting background color
+- Default Scene background color: `bgColor="#1a1a2e"` — only use a contrasting color if the visual effect requires it (e.g. lighter/darker to show effect clearly)
 - Adjust camera distance for visibility
 - Set demo container style: `style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '300px' }}`
 
@@ -323,7 +350,7 @@ function <ComponentName>Component() {
   }, [])
 
   return (
-    <Scene bgColor="#0a0a0a" style={{ marginTop: '10px', width: '100%', height: '300px' }} onCreated={handleCreated} />
+    <Scene bgColor="#1a1a2e" style={{ marginTop: '10px', width: '100%', height: '300px' }} onCreated={handleCreated} />
   )
 }
 ```

@@ -17,6 +17,22 @@ English | [🇨🇳中文](https://github.com/sunquakes/react-three-lite/blob/ma
 
 Visit [r3l.sunquakes.com](https://r3l.sunquakes.com).
 
+## Features
+
+- **Scene** — Core 3D scene container with camera, renderer, lights, and controls
+- **Model Loaders** — GLTF / FBX / OBJ loaders with Draco compression support
+- **Bloom** — Post-processing glow effect
+- **Rain / Snow** — Particle effects with custom GLSL shaders
+- **SweepLight** — Model sweep light animation
+- **LightGradient** — Dynamic lighting gradient effect
+- **Callout** — Leader line annotation with auto-anchor camera tracking
+- **ModelRotator** — Automatic model rotation utility
+- **SkyBox** — Skybox background support
+- **Popup** — Interactive 3D popup dialogs
+- **Movable** — Draggable scene elements
+- **Animation** — Model animation playback
+- **WaveCircleMesh / FlowLineMesh** — Custom visualization meshes
+
 ## Install
 
 ### Install `Three.js`

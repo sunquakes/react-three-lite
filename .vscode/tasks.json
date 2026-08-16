@@ -79,6 +79,16 @@
       "detail": "Step 7: Start Docusaurus development server"
     },
     {
+      "label": "8. Sync CodeGraph Index",
+      "type": "shell",
+      "command": "codegraph sync",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "detail": "Step 8: Sync CodeGraph index with latest code changes"
+    },
+    {
       "label": "Full Setup: Install + Build + Start Docs",
       "dependsOn": [
         "1. Install Root Dependencies",
@@ -87,7 +97,8 @@
         "4. Clean Docs node_modules",
         "5. Clean Docs Cache",
         "6. Install Docs Dependencies",
-        "7. Start Docs Dev Server"
+        "7. Start Docs Dev Server",
+        "8. Sync CodeGraph Index"
       ],
       "dependsOrder": "sequence",
       "problemMatcher": [],
@@ -95,7 +106,7 @@
         "kind": "build",
         "isDefault": true
       },
-      "detail": "Complete workflow: Install dependencies -> Build project -> Kill port -> Clean docs -> Install docs deps -> Start Docusaurus dev server"
+      "detail": "Complete workflow: Install dependencies -> Build project -> Kill port -> Clean docs -> Install docs deps -> Start Docusaurus dev server -> Sync CodeGraph index"
     }
   ]
 }

@@ -22,75 +22,83 @@ export interface LightGradientOptions {
 
 /**
  * Animate light properties from current values to target values.
- * @param light - The Three.js Light to animate
- * @param options - Target values and animation options
- * @returns Cleanup function to cancel the animation
  *
  * @example
  * ```tsx
- * import { lightGradient } from 'react-three-lite'
+ * import { LightGradient } from 'react-three-lite'
  *
- * const { sceneComponents } = useScene()
- * const cleanup = lightGradient(sceneComponents.light, {
+ * const gradient = new LightGradient(light, {
  *   color: '#ff0000',
  *   intensity: 10,
  *   duration: 2000
  * })
  *
  * // Later, to cancel:
- * cleanup()
+ * gradient.dispose()
  * ```
  */
-export function lightGradient(
-  light: Light,
-  options: LightGradientOptions
-): () => void {
-  const {
-    color: targetColor,
-    intensity: targetIntensity,
-    duration = 1000,
-    onComplete
-  } = options
+export class LightGradient {
+  private light: Light
+  private startColor: Color
+  private endColor: Color
+  private startIntensity: number
+  private endIntensity: number
+  private duration: number
+  private startTime: number
+  private animationId: number | null = null
+  private completed = false
+  private onComplete?: () => void
 
-  const startColor = light.color.clone()
-  const startIntensity = light.intensity
+  constructor(light: Light, options: LightGradientOptions = {}) {
+    const {
+      color: targetColor,
+      intensity: targetIntensity,
+      duration = 1000,
+      onComplete
+    } = options
 
-  const endColor = targetColor ? new Color(targetColor) : startColor.clone()
-  const endIntensity = targetIntensity ?? startIntensity
+    this.light = light
+    this.startColor = light.color.clone()
+    this.startIntensity = light.intensity
+    this.endColor = targetColor ? new Color(targetColor) : this.startColor.clone()
+    this.endIntensity = targetIntensity ?? this.startIntensity
+    this.duration = duration
+    this.startTime = performance.now()
+    this.onComplete = onComplete
 
-  const startTime = performance.now()
-  let animationId: number | null = null
-  let completed = false
+    this.animate()
+  }
 
-  const animate = (currentTime: number) => {
-    const elapsed = currentTime - startTime
-    const progress = Math.min(elapsed / duration, 1)
+  private animate = () => {
+    const elapsed = performance.now() - this.startTime
+    const progress = Math.min(elapsed / this.duration, 1)
 
     // Ease out cubic for smooth transition
     const easedProgress = 1 - Math.pow(1 - progress, 3)
 
     // Interpolate color
-    light.color.copy(startColor).lerp(endColor, easedProgress)
+    this.light.color.copy(this.startColor).lerp(this.endColor, easedProgress)
 
     // Interpolate intensity
-    light.intensity = startIntensity + (endIntensity - startIntensity) * easedProgress
+    this.light.intensity =
+      this.startIntensity + (this.endIntensity - this.startIntensity) * easedProgress
 
     if (progress < 1) {
-      animationId = requestAnimationFrame(animate)
+      this.animationId = requestAnimationFrame(this.animate)
     } else {
-      completed = true
-      animationId = null
-      onComplete?.()
+      this.completed = true
+      this.animationId = null
+      this.onComplete?.()
     }
   }
 
-  animationId = requestAnimationFrame(animate)
-
-  // Return cleanup function
-  return () => {
-    if (animationId !== null && !completed) {
-      cancelAnimationFrame(animationId)
-      animationId = null
+  /**
+   * Stop the gradient animation and release resources.
+   */
+  dispose(): void {
+    if (this.animationId !== null && !this.completed) {
+      cancelAnimationFrame(this.animationId)
+      this.animationId = null
     }
   }
 }

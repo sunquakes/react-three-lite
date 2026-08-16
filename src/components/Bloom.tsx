@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { Vector2, WebGLRenderer, Scene } from 'three'
 import { EffectComposer, RenderPass, UnrealBloomPass } from 'three-stdlib'
 import { useScene } from '../context/SceneContext'
+import type { SceneComponents } from '../context/SceneContext'
 
 interface BloomProps {
   layer?: number
@@ -52,7 +53,7 @@ const Bloom = ({
     if (layer === 0) {
       // layer 0: Apply bloom to all objects
       setFrame?.(
-        (renderer: WebGLRenderer, _scene: Scene, components: any) => {
+        (renderer: WebGLRenderer, _scene: Scene, components: SceneComponents) => {
           renderer.clear()
           components.camera.layers.set(layer)
           bloomComposer.render()
@@ -61,7 +62,7 @@ const Bloom = ({
     } else {
       // layer > 0: Apply bloom only to objects in that layer
       removeBeforeFrame = addBeforeFrame?.(
-        (renderer: WebGLRenderer, _scene: Scene, components: any) => {
+        (renderer: WebGLRenderer, _scene: Scene, components: SceneComponents) => {
           renderer.clear()
           components.camera.layers.set(layer)
           bloomComposer.render()

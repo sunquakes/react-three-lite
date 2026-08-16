@@ -56,8 +56,8 @@ export default class Animation {
     this.mixer = new AnimationMixer(obj)
     if (animations) {
       this.animations = animations
-    } else if ('animations' in obj && Array.isArray((obj as any).animations)) {
-      this.animations = (obj as any).animations
+    } else if ('animations' in obj && Array.isArray(obj.animations)) {
+      this.animations = obj.animations as AnimationClip[]
     } else {
       this.animations = []
     }
@@ -118,16 +118,16 @@ export default class Animation {
    * @param propertyName - Name of the property to set.
    * @param value - Value to set for the property.
    */
-  setProperty(propertyName: string, value: any): void {
+  setProperty(propertyName: string, value: unknown): void {
     if (this.clipAction) {
       if (propertyName in this.clipAction) {
-        ;(this.clipAction as any)[propertyName] = value
+        ;(this.clipAction as unknown as Record<string, unknown>)[propertyName] = value
       }
     }
     if (this.clipActions.length > 0) {
       this.clipActions.forEach((action) => {
         if (propertyName in action) {
-          ;(action as any)[propertyName] = value
+          ;(action as unknown as Record<string, unknown>)[propertyName] = value
         }
       })
     }

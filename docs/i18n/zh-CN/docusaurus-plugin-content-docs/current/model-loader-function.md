@@ -17,15 +17,16 @@ import OBJLoaderFunction from '@site/src/components/OBJLoaderFunction'
 <GLTFLoaderFunction />
 
 ```tsx
-import { Scene, GLTFLoader } from 'react-three-lite'
+import { Scene, GLTFLoaderAsync } from 'react-three-lite'
 import type * as THREE from 'three'
 
 function App() {
   const handleCreated = async (scene: THREE.Scene, { camera }: { camera: THREE.Camera }) => {
     camera.position.set(0, 1.5, 3)
+    camera.lookAt(0, 0, 0)
 
     // 加载模型到场景
-    const model = await GLTFLoader('/models/perseverance-draco.glb', true)
+    const model = await GLTFLoaderAsync('/models/perseverance-draco.glb', true)
     model.scale.set(0.8, 0.8, 0.8)
     scene.add(model)
   }
@@ -56,15 +57,16 @@ function App() {
 <FBXLoaderFunction />
 
 ```tsx
-import { Scene, FBXLoader } from 'react-three-lite'
+import { Scene, FBXLoaderAsync } from 'react-three-lite'
 import type * as THREE from 'three'
 
 function App() {
   const handleCreated = async (scene: THREE.Scene, { camera }: { camera: THREE.Camera }) => {
     camera.position.set(0, 1.5, 3)
+    camera.lookAt(0, 0, 0)
 
     // 加载模型到场景
-    const model = await FBXLoader('/models/perseverance.fbx')
+    const model = await FBXLoaderAsync('/models/perseverance.fbx')
     model.scale.set(0.8, 0.8, 0.8)
     scene.add(model)
   }
@@ -93,15 +95,16 @@ function App() {
 <OBJLoaderFunction />
 
 ```tsx
-import { Scene, OBJLoader } from 'react-three-lite'
+import { Scene, OBJLoaderAsync } from 'react-three-lite'
 import type * as THREE from 'three'
 
 function App() {
   const handleCreated = async (scene: THREE.Scene, { camera }: { camera: THREE.Camera }) => {
     camera.position.set(0, 1.5, 3)
+    camera.lookAt(0, 0, 0)
 
     // 加载模型到场景
-    const model = await OBJLoader('/models/obj/perseverance.obj', '/models/obj/perseverance.mtl')
+    const model = await OBJLoaderAsync('/models/obj/perseverance.obj', '/models/obj/perseverance.mtl')
     model.scale.set(0.8, 0.8, 0.8)
     scene.add(model)
   }

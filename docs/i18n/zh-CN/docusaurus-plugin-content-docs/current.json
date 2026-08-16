@@ -39,6 +39,10 @@
     "message": "弹窗",
     "description": "The label for doc 'popup' in sidebar 'guideSidebar'"
   },
+  "sidebar.guideSidebar.doc.callout": {
+    "message": "引线注释",
+    "description": "The label for doc 'callout' in sidebar 'guideSidebar'"
+  },
   "sidebar.guideSidebar.doc.movable-element": {
     "message": "可移动元素",
     "description": "The label for doc 'movable-element' in sidebar 'guideSidebar'"
@@ -46,6 +50,10 @@
   "sidebar.guideSidebar.doc.animation": {
     "message": "动画",
     "description": "The label for doc 'animation' in sidebar 'guideSidebar'"
+  },
+  "sidebar.guideSidebar.doc.model-rotator": {
+    "message": "模型旋转器",
+    "description": "The label for doc 'model-rotator' in sidebar 'guideSidebar'"
   },
   "sidebar.guideSidebar.doc.meshes/wave-circle-mesh": {
     "message": "波浪圆环网格",

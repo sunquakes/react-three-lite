@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { Scene, Group } from 'three'
+import * as THREE from 'three'
 import { FBXLoader as FBXLoaderUtil } from '../utils/ModelLoader'
 import { useScene } from '../context/SceneContext'
 
@@ -10,11 +10,11 @@ interface LoadEvent {
 
 interface FBXLoaderProps {
   modelUrl: string
-  scene?: Scene
+  scene?: THREE.Scene
   scale?: [number, number, number]
   cache?: boolean
   onProgress?: (event: LoadEvent) => void
-  onLoaded?: (model: Group) => void
+  onLoaded?: (model: THREE.Group) => void
 }
 
 const FBXLoader = ({
@@ -26,7 +26,7 @@ const FBXLoader = ({
   onLoaded
 }: FBXLoaderProps) => {
   const sceneContext = useScene()
-  const modelRef = useRef<Group | null>(null)
+  const modelRef = useRef<THREE.Group | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -55,15 +55,15 @@ const FBXLoader = ({
           scene.remove(modelRef.current)
         }
         modelRef.current.traverse((child) => {
-          if ('geometry' in child) {
-            ;(child as any).geometry?.dispose()
+          const obj = child as THREE.Object3D & { geometry?: THREE.BufferGeometry; material?: THREE.Material | THREE.Material[] }
+          if (obj.geometry) {
+            obj.geometry.dispose()
           }
-          if ('material' in child) {
-            const material = (child as any).material
-            if (Array.isArray(material)) {
-              material.forEach((m: any) => m?.dispose())
+          if (obj.material) {
+            if (Array.isArray(obj.material)) {
+              obj.material.forEach((m) => m.dispose())
             } else {
-              material?.dispose()
+              obj.material.dispose()
             }
           }
         })

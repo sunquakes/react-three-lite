@@ -1,3 +1,31 @@
+## [0.4.0] - 2026-08-11
+
+### Added
+
+- Add Callout annotation component with leader line (straight/broken shapes), anchor dot, React-rendered label, and `autoAnchor` mode that slides the connection point along the label's bottom edge based on camera direction.
+- Add ModelRotator utility class for automatic model rotation with configurable speed, axis, and easing.
+- Add LightGradient effect class for dynamic lighting gradient animation with `dispose()` method.
+- Add Callout documentation with examples in English and Chinese.
+- Add ModelRotator documentation with examples in English and Chinese.
+- Add LightGradient documentation with examples in English and Chinese.
+- Add Three.js namespace import convention guidelines to AGENTS.md.
+- Add unified demo scene background color standard (`#1a1a2e`) to AGENTS.md.
+
+### Changed
+
+- Unify Three.js import convention to namespace import (`import * as THREE from 'three'`) across all source files.
+- Migrate ESLint configuration from `.eslintrc.cjs` to flat config `eslint.config.js`.
+- Unify all documentation example scene background colors to `#1a1a2e`.
+- Refactor documentation component naming: remove `Component` suffix, unify to `App` naming format.
+- Refactor mesh resource cleanup logic with stricter type-safe handling.
+- Update dependency versions (@types/react, @types/three, eslint, etc.).
+
+### Fixed
+
+- Fix mesh material attribute cleanup and dispose calls with proper type assertions.
+
+---
+
 ## [0.3.0] - 2026-06-06
 
 ### Added

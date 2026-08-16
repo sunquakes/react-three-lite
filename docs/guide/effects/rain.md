@@ -7,11 +7,11 @@ title: Rain
 
 Component
 
-import RainComponent from '@site/src/components/effects/Rain'
+import Rain from '@site/src/components/effects/Rain'
 
 ## Default Usage
 
-<RainComponent />
+<Rain />
 
 ```tsx
 import { Scene, Rain } from 'react-three-lite'

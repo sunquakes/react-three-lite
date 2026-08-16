@@ -19,7 +19,7 @@ import { useRef } from 'react'
 import { Scene, WaveCircleMesh } from 'react-three-lite'
 import type * as THREE from 'three'
 
-export default function WaveCircleMeshComponent() {
+export default function App() {
   const sceneRef = useRef<THREE.Scene>()
 
   const handleCreated = (scene: THREE.Scene, { camera }: any) => {
@@ -47,7 +47,7 @@ import { useRef } from 'react'
 import { Scene, WaveCircleMesh, AxisType } from 'react-three-lite'
 import type * as THREE from 'three'
 
-export default function WaveCircleMeshOptionsComponent() {
+export default function App() {
   const sceneRef = useRef<THREE.Scene>()
 
   const handleCreated = (scene: THREE.Scene, { camera }: any) => {

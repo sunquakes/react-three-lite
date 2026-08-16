@@ -7,11 +7,11 @@ title: Snow
 
 Component
 
-import SnowComponent from '@site/src/components/effects/Snow'
+import Snow from '@site/src/components/effects/Snow'
 
 ## Default Usage
 
-<SnowComponent />
+<Snow />
 
 ```tsx
 import { Scene, Snow } from 'react-three-lite'

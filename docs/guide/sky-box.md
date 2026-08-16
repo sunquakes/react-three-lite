@@ -7,18 +7,18 @@ title: SkyBox
 
 Class
 
-import SkyBoxComponent from '@site/src/components/SkyBox'
+import SkyBox from '@site/src/components/SkyBox'
 
 ## Default Usage
 
-<SkyBoxComponent />
+<SkyBox />
 
 ```tsx
 import { useEffect, useRef } from 'react'
 import { Scene, SkyBox } from 'react-three-lite'
 import type * as THREE from 'three'
 
-export default function SkyBoxComponent() {
+export default function App() {
   const sceneRef = useRef<THREE.Scene>()
 
   const handleCreated = (scene: THREE.Scene, { camera }: { camera: THREE.Camera }) => {
