@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { GLTFLoader as THREEGLTFLoader, FBXLoader as THREEFBXLoader, OBJLoader as THREEOBJLoader, MTLLoader as THREEMTLLoader, DRACOLoader } from 'three-stdlib'
+import { GLTFLoader as THREEGLTFLoader, FBXLoader as THREEFBXLoader, OBJLoader as THREEOBJLoader, MTLLoader as THREEMTLLoader, DRACOLoader, mergeVertices } from 'three-stdlib'
 
 interface LoadEvent {
   type: 'cache' | 'fetch' | 'parse'
@@ -41,6 +41,7 @@ function normalizeMaterials(model: THREE.Group): void {
     if (!mesh.isMesh || !mesh.material) return
 
     const mats: THREE.Material[] = Array.isArray(mesh.material) ? mesh.material : [mesh.material]
+    let needsSmoothNormals = false
 
     for (let i = 0; i < mats.length; i++) {
       const src = mats[i]
@@ -67,15 +68,31 @@ function normalizeMaterials(model: THREE.Group): void {
         (src as THREE.MeshLambertMaterial).isMeshLambertMaterial ||
         (src as THREE.MeshPhongMaterial).isMeshPhongMaterial
       ) {
-        const legacy = src as THREE.MeshLambertMaterial
+        const legacy = src as THREE.MeshPhongMaterial
         mats[i] = new THREE.MeshStandardMaterial({
           color: legacy.color?.clone() ?? 0xffffff,
-          map: (legacy as unknown as { map?: THREE.Texture | null }).map ?? null,
+          map: legacy.map ?? null,
+          bumpMap: legacy.bumpMap ?? null,
+          bumpScale: legacy.bumpScale,
+          normalMap: legacy.normalMap ?? null,
+          normalScale: legacy.normalScale,
+          emissive: legacy.emissive?.clone() ?? new THREE.Color(0x000000),
+          emissiveMap: legacy.emissiveMap ?? null,
+          emissiveIntensity: legacy.emissiveIntensity,
+          alphaMap: legacy.alphaMap ?? null,
+          transparent: legacy.transparent,
+          opacity: legacy.opacity,
+          // OBJ/MTL models from DCC tools often have inconsistent winding, so
+          // force double-sided to avoid back-face culling holes.
+          side: THREE.DoubleSide,
+          // We recompute smooth normals below, so force smooth interpolation.
+          flatShading: false,
           roughness: 0.85,
           metalness: 0.05
         })
         // Dispose the original only after we've read every field we need.
         src.dispose()
+        needsSmoothNormals = true
         continue
       }
 
@@ -104,6 +121,28 @@ function normalizeMaterials(model: THREE.Group): void {
       mesh.material = mats as THREE.Material[]
     } else {
       mesh.material = mats[0]
+    }
+
+    // OBJ/MTL exports often carry per-face (split) normals that make curved
+    // surfaces look faceted/lined. Re-weld shared vertices and recompute smooth
+    // normals so cylinders and other curved parts render smoothly.
+    //
+    // Note: mergeVertices() hashes EVERY attribute (position + normal + uv),
+    // so vertices that share a position but carry different split normals are
+    // never welded, leaving the geometry effectively non-indexed. In that case
+    // computeVertexNormals() assigns each vertex the normal of its single
+    // triangle, which turns curved surfaces into flat-shaded facets with
+    // visible "lines". Normals are recomputed below anyway, so drop the normal
+    // attribute before welding to merge shared positions (UV is kept, so
+    // texture seams stay intact).
+    if (needsSmoothNormals && mesh.geometry) {
+      const geometry = mesh.geometry
+      const clean = geometry.clone()
+      clean.deleteAttribute('normal')
+      const welded = mergeVertices(clean)
+      welded.computeVertexNormals()
+      mesh.geometry = welded
+      geometry.dispose()
     }
   })
 }
@@ -273,6 +312,47 @@ export async function FBXLoader(
   })
 }
 
+/**
+ * three-stdlib's OBJLoader marks an entire `o`/`g` object as line geometry the
+ * moment it contains a single `l`/`p` element, so every face of that object is
+ * then rendered as white LineSegments pairs (the "missing surfaces / white
+ * wireframe" artifact). Some DCC exports mix `f` and `l` inside one object.
+ * Split such mixed objects: line/point elements are moved into synthetic
+ * objects so faces stay faces and lines stay lines.
+ */
+function splitMixedLineObjects(text: string): string {
+  const lines = text.split(/\r?\n/)
+  let currentObjectHasFaces = false
+  let currentObjectHasLines = false
+  const out: string[] = []
+  for (const line of lines) {
+    if (/^[og](\s|$)/.test(line)) {
+      currentObjectHasFaces = false
+      currentObjectHasLines = false
+      out.push(line)
+    } else if (/^f\s/.test(line)) {
+      if (currentObjectHasLines) {
+        // Faces after lines: move them into a synthetic face object.
+        out.push('o __r3l_face_split')
+        currentObjectHasLines = false
+      }
+      currentObjectHasFaces = true
+      out.push(line)
+    } else if (/^[lp]\s/.test(line)) {
+      if (currentObjectHasFaces) {
+        // Detach line/point elements so the faces keep rendering as mesh.
+        out.push('o __r3l_line_split')
+        currentObjectHasFaces = false
+      }
+      currentObjectHasLines = true
+      out.push(line)
+    } else {
+      out.push(line)
+    }
+  }
+  return out.join('\n')
+}
+
 export async function OBJLoader(
   url: string,
   mtlUrl: string,
@@ -290,7 +370,7 @@ export async function OBJLoader(
   loader.setMaterials(mtl)
   return new Promise((resolve) => {
     onProgress?.({ type: 'parse', progress: 0 })
-    const model = loader.parse(text) as THREE.Group
+    const model = loader.parse(splitMixedLineObjects(text)) as THREE.Group
     normalizeMaterials(model)
     onProgress?.({ type: 'parse', progress: 100 })
     resolve(model)

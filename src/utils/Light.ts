@@ -3,8 +3,10 @@ import * as THREE from 'three'
 export default function (): THREE.Group {
   const group = new THREE.Group()
 
-  // AmbientLight provides base illumination for PBR materials.
-  const ambient = new THREE.AmbientLight(0xffffff, 5)
+  // AmbientLight provides base illumination for PBR materials. Keep it low
+  // since the scene already provides an IBL environment; a high value here
+  // doubles up on the environment light and blows out PBR surfaces.
+  const ambient = new THREE.AmbientLight(0xffffff, 1)
   group.add(ambient)
 
   // DirectionalLight provides specular highlights and normal-map detail.

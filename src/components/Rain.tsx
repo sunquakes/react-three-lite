@@ -16,7 +16,8 @@ import {
   mod,
   smoothstep,
   oneMinus,
-  length
+  length,
+  viewportSize
 } from 'three/tsl'
 import { useScene } from '../context/SceneContext'
 
@@ -138,12 +139,12 @@ const Rain = ({
     material.alphaTest = 0.01
     material.side = THREE.DoubleSide
 
-    // Vertex shader: animate particle center, billboard quad in view space
+    // Vertex shader: animate particle center, billboard quad in clip space
     material.vertexNode = Fn(() => {
       const aInitialPos = attribute<'vec3'>('aInitialPos', 'vec3')
       const aSpeed = attribute<'float'>('aSpeed', 'float')
 
-      const t = mod(aInitialPos.y.add(uTime.mul(aSpeed.mul(aSpeed).mul(0.3))), 1.0)
+      const t = mod(aInitialPos.y.add(uTime.mul(aSpeed).mul(0.3)), 1.0)
 
       // Particle center in local space
       const centerX = aInitialPos.x.add(uWindX.mul(t).mul(2.0))
@@ -152,22 +153,31 @@ const Rain = ({
 
       // Transform center to view space
       const centerView = modelViewMatrix.mul(vec4(centerX, centerY, centerZ, 1.0))
+      // Clip space center
+      const centerClip = cameraProjectionMatrix.mul(centerView)
 
-      // Distance-based size (matches original gl_PointSize attenuation)
+      // Point size in physical pixels with distance attenuation
+      // (matches the original gl_PointSize semantics)
       const baseSize = float(4.0).add(aSpeed.mul(3.0))
-      const size = baseSize.mul(float(10.0).div(centerView.z.negate()))
+      const pointSize = baseSize.mul(float(10.0).div(centerView.z.negate()))
 
-      // Billboard offset in view space (quad corner * size)
-      const offsetX = positionLocal.x.mul(size)
-      const offsetY = positionLocal.y.mul(size)
+      // Billboard offset in clip space: convert pixel size to NDC per axis,
+      // then compensate for the perspective divide (multiply by clip w).
+      const ndcSizeX = pointSize.div(viewportSize.x.div(2.0))
+      const ndcSizeY = pointSize.div(viewportSize.y.div(2.0))
+      const offsetX = positionLocal.x.mul(ndcSizeX).mul(centerClip.w)
+      const offsetY = positionLocal.y.mul(ndcSizeY).mul(centerClip.w)
 
       // vAlpha varying: fade in/out at top and bottom of travel
       vAlpha.assign(
         oneMinus(smoothstep(0.0, 0.05, t).mul(0.5)).sub(smoothstep(0.95, 1.0, t).mul(0.5))
       )
 
-      return cameraProjectionMatrix.mul(
-        vec4(centerView.x.add(offsetX), centerView.y.add(offsetY), centerView.z, centerView.w)
+      return vec4(
+        centerClip.x.add(offsetX),
+        centerClip.y.add(offsetY),
+        centerClip.z,
+        centerClip.w
       )
     })()
 

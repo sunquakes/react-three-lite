@@ -54,7 +54,10 @@ export default async function (
   try {
     const envScene = new THREE.Scene()
     envScene.background = new THREE.Color(0xcccccc)
-    const hemi = new THREE.HemisphereLight(0xffffff, 0xaaaaaa, 5.0)
+    // Keep the default IBL environment modest. A strong value here becomes a
+    // fixed, un-animatable base light that drowns out runtime light changes
+    // (e.g. LightGradient) and blows out PBR surfaces.
+    const hemi = new THREE.HemisphereLight(0xffffff, 0xaaaaaa, 2.0)
     envScene.add(hemi)
 
     const isNodeRenderer =

@@ -4,25 +4,29 @@ import type { SceneComponents } from 'react-three-lite'
 import type * as THREE from 'three'
 
 export default function SkyBoxComponent() {
-  const sceneRef = useRef<THREE.Scene>()
+  const skyBoxRef = useRef<SkyBox | null>(null)
 
   const handleCreated = (scene: THREE.Scene, components: SceneComponents) => {
     const { camera } = components
-    sceneRef.current = scene
     camera.position.set(0, 0, 3)
+
+    const skyBox = new SkyBox([
+      '/images/examples/skybox/right.jpg',
+      '/images/examples/skybox/left.jpg',
+      '/images/examples/skybox/top.jpg',
+      '/images/examples/skybox/bottom.jpg',
+      '/images/examples/skybox/front.jpg',
+      '/images/examples/skybox/back.jpg'
+    ])
+    skyBoxRef.current = skyBox
+    scene.background = skyBox.scene
   }
 
+  // Cleanup on unmount
   useEffect(() => {
-    if (sceneRef.current) {
-      const skyBox = new SkyBox([
-        '/images/examples/skybox/right.jpg',
-        '/images/examples/skybox/left.jpg',
-        '/images/examples/skybox/top.jpg',
-        '/images/examples/skybox/bottom.jpg',
-        '/images/examples/skybox/front.jpg',
-        '/images/examples/skybox/back.jpg'
-      ])
-      sceneRef.current.background = skyBox.scene
+    return () => {
+      skyBoxRef.current?.scene.dispose()
+      skyBoxRef.current = null
     }
   }, [])
 

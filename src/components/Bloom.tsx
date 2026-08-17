@@ -60,38 +60,36 @@ const Bloom = ({
 
     if (isWebGPU) {
       // --- WebGPU path: RenderPipeline + TSL BloomNode ---
-      // API: pass(scene, camera) → getTextureNode('output') → bloom(textureNode)
-      // → outputNode = scenePassColor.add(bloomPass)
+      // The RenderPipeline must fully replace the main frame via setFrame.
+      // On WebGPU every render() call performs a full-screen output pass, so
+      // layering a beforeFrame render under the main render would be
+      // overwritten instead of composited.
 
       const scenePass = pass(scene, camera)
+      const scenePassColor = scenePass.getTextureNode('output')
 
-      // For selective bloom (layer > 0), restrict the pass to only render
-      // objects in the bloom layer.
-      if (layer > 0) {
+      let bloomPass
+      if (layer === 0) {
+        // Full-scene bloom: apply bloom to the entire scene.
+        bloomPass = tslBloom(scenePassColor, strength, radius, threshold)
+      } else {
+        // Selective bloom: render the bloom layer into a separate pass,
+        // apply bloom to it, then composite it over the full scene pass.
+        const bloomLayerPass = pass(scene, camera)
         const bloomLayers = new THREE.Layers()
         bloomLayers.set(layer)
-        scenePass.setLayers(bloomLayers)
+        bloomLayerPass.setLayers(bloomLayers)
+        const bloomLayerColor = bloomLayerPass.getTextureNode('output')
+        bloomPass = tslBloom(bloomLayerColor, strength, radius, threshold)
       }
-
-      const scenePassColor = scenePass.getTextureNode('output')
-      const bloomPass = tslBloom(scenePassColor, strength, radius, threshold)
 
       const postProcessing = new RenderPipeline(renderer)
       postProcessing.outputNode = scenePassColor.add(bloomPass)
       postProcessingRef.current = postProcessing
 
-      if (layer === 0) {
-        // layer 0: bloom replaces the main render entirely
-        setFrame?.(() => {
-          postProcessing.render()
-        })
-      } else {
-        // layer > 0: render bloom first, then main scene on top
-        removeBeforeFrame = addBeforeFrame?.(() => {
-          postProcessing.render()
-          renderer.clearDepth()
-        })
-      }
+      setFrame?.(() => {
+        postProcessing.render()
+      })
     } else {
       // --- WebGL path: EffectComposer + UnrealBloomPass (existing) ---
 
