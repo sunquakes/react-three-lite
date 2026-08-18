@@ -1,5 +1,9 @@
 import * as THREE from 'three/webgpu'
 import { PMREMGenerator as NodePMREMGenerator } from 'three/webgpu'
+// The legacy WebGL PMREMGenerator must come from the 'three' build: the
+// node-based three/webgpu one requires renderer.hasInitialized(), which only
+// WebGPURenderer provides, so it cannot be used with a legacy WebGLRenderer.
+import { PMREMGenerator as LegacyPMREMGenerator } from 'three'
 import { OrbitControls } from 'three-stdlib'
 import CSS2DRenderer from './CSS2DRenderer'
 import type { SceneComponents, CallbackFrame, R3LRenderer } from '../context/SceneContext'
@@ -46,11 +50,12 @@ export default async function (
   // Without an envMap, reflective/metallic surfaces appear completely black.
   //
   // Three r184 ships two PMREMGenerator implementations:
-  //   - THREE.PMREMGenerator (three/src/extras/PMREMGenerator.js) — WebGL only
-  //   - three/webgpu PMREMGenerator (renderers/common/extras/PMREMGenerator.js)
-  //     — TSL/node-based, works with both WebGPU and WebGL-fallback backends.
+  //   - 'three' PMREMGenerator (three/src/extras/PMREMGenerator.js) — WebGL only
+  //   - 'three/webgpu' PMREMGenerator (renderers/common/extras/PMREMGenerator.js)
+  //     — TSL/node-based, works with WebGPURenderer (including its WebGL-fallback
+  //     backend) but NOT with a legacy WebGLRenderer.
   // We pick the correct one based on which renderer the user supplied.
-  let defaultEnvTarget: THREE.WebGLRenderTarget | null = null
+  let defaultEnvTarget: { texture: THREE.Texture; dispose: () => void } | null = null
   try {
     const envScene = new THREE.Scene()
     envScene.background = new THREE.Color(0xcccccc)
@@ -66,12 +71,12 @@ export default async function (
     if (isNodeRenderer) {
       // Node-based PMREM — works directly with WebGPURenderer.
       const pmrem = new NodePMREMGenerator(renderer as unknown as ConstructorParameters<typeof NodePMREMGenerator>[0])
-      defaultEnvTarget = pmrem.fromScene(envScene, 0.04) as unknown as THREE.WebGLRenderTarget
+      defaultEnvTarget = pmrem.fromScene(envScene, 0.04)
       scene.environment = defaultEnvTarget.texture
       pmrem.dispose()
     } else {
       // Legacy WebGLRenderer path — use the old PMREMGenerator.
-      const pmrem = new THREE.PMREMGenerator(renderer as unknown as THREE.WebGLRenderer)
+      const pmrem = new LegacyPMREMGenerator(renderer as unknown as ConstructorParameters<typeof LegacyPMREMGenerator>[0])
       pmrem.compileEquirectangularShader()
       defaultEnvTarget = pmrem.fromScene(envScene, 0.04)
       scene.environment = defaultEnvTarget.texture
@@ -106,11 +111,15 @@ export default async function (
   }
   animate()
 
-  if (components.axesHelper instanceof THREE.AxesHelper) {
+  // Use truthiness instead of `instanceof`: helpers are created from the
+  // 'three' build while this module imports 'three/webgpu' (two separate
+  // bundles with distinct class identities), so instanceof would always fail
+  // and the helpers would never be added to the scene.
+  if (components.axesHelper) {
     scene.add(components.axesHelper)
   }
 
-  if (components.gridHelper instanceof THREE.GridHelper) {
+  if (components.gridHelper) {
     scene.add(components.gridHelper)
   }
 
