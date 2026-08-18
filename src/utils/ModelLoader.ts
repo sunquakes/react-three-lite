@@ -69,8 +69,15 @@ function normalizeMaterials(model: THREE.Group): void {
         (src as THREE.MeshPhongMaterial).isMeshPhongMaterial
       ) {
         const legacy = src as THREE.MeshPhongMaterial
+        // FBX exports often set DiffuseColor to (0.8, 0.8, 0.8) as a default
+        // multiplier. When a diffuse map is present the texture already carries
+        // full color information, so using the 0.8 multiplier darkens the result.
+        // Use white instead to display the texture at its intended brightness.
+        const color = legacy.map
+          ? new THREE.Color(0xffffff)
+          : legacy.color?.clone() ?? new THREE.Color(0xffffff)
         mats[i] = new THREE.MeshStandardMaterial({
-          color: legacy.color?.clone() ?? 0xffffff,
+          color,
           map: legacy.map ?? null,
           bumpMap: legacy.bumpMap ?? null,
           bumpScale: legacy.bumpScale,

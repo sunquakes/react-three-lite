@@ -43,10 +43,49 @@ model.traverse((child) => {
     for (let i = 0; i < c; i++) len += Math.hypot(n.getX(i), n.getY(i), n.getZ(i))
     normalInfo = 'avgLen=' + (len / c).toFixed(3)
   }
+  // Normal orientation check: dot(normal, vertex - center)
+  {
+    const pos = child.geometry.getAttribute('position')
+    const nor = child.geometry.getAttribute('normal')
+    if (pos && nor) {
+      let cx = 0, cy = 0, cz = 0
+      for (let i = 0; i < pos.count; i++) { cx += pos.getX(i); cy += pos.getY(i); cz += pos.getZ(i) }
+      cx /= pos.count; cy /= pos.count; cz /= pos.count
+      let posDots = 0, negDots = 0
+      const step = Math.max(1, Math.floor(pos.count / 300))
+      for (let i = 0; i < pos.count; i += step) {
+        const dx = pos.getX(i) - cx, dy = pos.getY(i) - cy, dz = pos.getZ(i) - cz
+        const d = nor.getX(i) * dx + nor.getY(i) * dy + nor.getZ(i) * dz
+        if (d > 0) posDots++; else negDots++
+      }
+      console.log('   orient', child.name, 'outward', posDots, 'inward', negDots)
+    }
+  }
   const uv = child.geometry.getAttribute('uv')
+  const col = child.geometry.getAttribute('color')
+  if (col) {
+    let r = 0, g = 0, b = 0
+    const c = Math.min(col.count, 500)
+    for (let i = 0; i < c; i++) { r += col.getX(i); g += col.getY(i); b += col.getZ(i) }
+    console.log('   !! VERTEX COLOR on', child.name, 'avg', (r / c).toFixed(3), (g / c).toFixed(3), (b / c).toFixed(3), 'mat vertexColors=', Array.isArray(child.material) ? child.material.map((m) => m.vertexColors) : mat.vertexColors)
+  }
   const allMats = Array.isArray(child.material) ? child.material.map((m) => m.name).join(',') : mat ? mat.name : 'none'
   const groups = child.geometry.groups
   console.log('mesh', child.name, '| mats', allMats, '| groups', groups.length, '| verts', child.geometry.getAttribute('position').count, '|', normalInfo, '| uv', uv ? 'yes' : 'NO')
+  if ((child.name === 'Body' || child.name === 'Wheels_objs') && uv && groups.length) {
+    const matNames = Array.isArray(child.material) ? child.material.map((m) => m.name) : []
+    const idx = child.geometry.getIndex()
+    for (const g of groups) {
+      let minU = Infinity, maxU = -Infinity, minV = Infinity, maxV = -Infinity
+      const count = Math.min(g.count, 3000)
+      for (let i = g.start; i < g.start + count; i++) {
+        const vi = idx ? idx.getX(i) : i
+        minU = Math.min(minU, uv.getX(vi)); maxU = Math.max(maxU, uv.getX(vi))
+        minV = Math.min(minV, uv.getY(vi)); maxV = Math.max(maxV, uv.getY(vi))
+      }
+      console.log('   group mat=', matNames[g.materialIndex], 'count', g.count, 'U', minU.toFixed(3), '..', maxU.toFixed(3), 'V', minV.toFixed(3), '..', maxV.toFixed(3))
+    }
+  }
 })
 
 const seen = new Set()

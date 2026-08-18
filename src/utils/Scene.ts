@@ -1,4 +1,4 @@
-import * as THREE from 'three'
+import * as THREE from 'three/webgpu'
 import { PMREMGenerator as NodePMREMGenerator } from 'three/webgpu'
 import { OrbitControls } from 'three-stdlib'
 import CSS2DRenderer from './CSS2DRenderer'

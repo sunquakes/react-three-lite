@@ -21,23 +21,26 @@ function createArrowTexture(arrowColor: [number, number, number]): THREE.CanvasT
 
   const arrowWidth = 240
   const arrowHeight = 100
-  const lineThickness = 24
+  const overlap = 8
   const centerX = 256
   const centerY = 128
 
+  // Upper arrow (right-pointing triangle). Its lower edge crosses the
+  // center line so it overlaps the lower arrow — otherwise a wedge-shaped
+  // gap forms between the two triangles, which renders as a dark line
+  // running through the middle of each arrow.
   ctx.beginPath()
   ctx.moveTo(centerX - arrowWidth / 2, centerY - arrowHeight / 2)
   ctx.lineTo(centerX + arrowWidth / 2, centerY)
-  ctx.lineTo(centerX + arrowWidth / 2 - lineThickness, centerY + lineThickness * 0.5)
-  ctx.lineTo(centerX - arrowWidth / 2, centerY - arrowHeight / 2 + lineThickness)
+  ctx.lineTo(centerX - arrowWidth / 2, centerY + overlap)
   ctx.closePath()
   ctx.fill()
 
+  // Lower arrow (right-pointing triangle), mirrored and overlapping.
   ctx.beginPath()
   ctx.moveTo(centerX - arrowWidth / 2, centerY + arrowHeight / 2)
   ctx.lineTo(centerX + arrowWidth / 2, centerY)
-  ctx.lineTo(centerX + arrowWidth / 2 - lineThickness, centerY - lineThickness * 0.5)
-  ctx.lineTo(centerX - arrowWidth / 2, centerY + arrowHeight / 2 - lineThickness)
+  ctx.lineTo(centerX - arrowWidth / 2, centerY - overlap)
   ctx.closePath()
   ctx.fill()
 

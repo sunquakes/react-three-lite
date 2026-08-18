@@ -1,4 +1,9 @@
-import * as THREE from 'three'
+// Import from 'three/webgpu' so light classes match the classes registered in
+// the WebGPURenderer node library. 'three' and 'three/webgpu' are two separate
+// builds with distinct class identities; lights created from 'three' are never
+// found by LightsNode.setupNodeLights ("Light node not found") and silently
+// have no effect on rendering.
+import * as THREE from 'three/webgpu'
 
 export default function (): THREE.Group {
   const group = new THREE.Group()
