@@ -9,6 +9,67 @@ interface LoadEvent {
 const OBJECT_STORE = 'THREE_VUE_OBJECT_STORE'
 const DB_NAME = 'THREE_VUE_OBJECT_DB'
 
+const TEXTURE_PROPERTIES = [
+  'map',
+  'emissiveMap',
+  'normalMap',
+  'bumpMap',
+  'alphaMap',
+  'aoMap',
+  'roughnessMap',
+  'metalnessMap'
+] as const
+
+/**
+ * Wait until every texture referenced by the model has finished loading.
+ *
+ * FBX embeds its image files as data/blob URLs; FBXLoader feeds them to
+ * TextureLoader, which creates an <img> and loads it asynchronously. If the
+ * model is added to the scene before those images are ready, surfaces with
+ * textures render black for the first frames, then "pop" to normal once the
+ * GPU upload completes. Holding back the model until all textures are loaded
+ * removes that flicker.
+ */
+async function waitForTextures(model: THREE.Group): Promise<void> {
+  const textures = new Set<THREE.Texture>()
+  model.traverse((child) => {
+    const mesh = child as THREE.Mesh
+    if (!mesh.isMesh || !mesh.material) return
+    const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material]
+    for (const mat of mats) {
+      const anyMat = mat as unknown as Record<string, unknown>
+      for (const key of TEXTURE_PROPERTIES) {
+        const tex = anyMat[key]
+        if (tex && (tex as THREE.Texture).isTexture) {
+          textures.add(tex as THREE.Texture)
+        }
+      }
+    }
+  })
+
+  const pending: Promise<void>[] = []
+  textures.forEach((tex) => {
+    const img = tex.image as HTMLImageElement | undefined
+    if (!img || typeof HTMLImageElement === 'undefined' || !(img instanceof HTMLImageElement)) return
+    if (img.complete) return
+    pending.push(
+      new Promise<void>((resolve) => {
+        const done = () => {
+          img.removeEventListener('load', done)
+          img.removeEventListener('error', done)
+          resolve()
+        }
+        img.addEventListener('load', done)
+        img.addEventListener('error', done)
+      })
+    )
+  })
+
+  if (pending.length > 0) {
+    await Promise.all(pending)
+  }
+}
+
 // Helper function to validate if ArrayBuffer contains valid model data (not HTML)
 function isValidModelData(buffer: ArrayBuffer): boolean {
   if (buffer.byteLength < 4) return false
@@ -314,8 +375,12 @@ export async function FBXLoader(
     onProgress?.({ type: 'parse', progress: 0 })
     const model = loader.parse(data, '') as THREE.Group
     normalizeMaterials(model)
-    onProgress?.({ type: 'parse', progress: 100 })
-    resolve(model)
+    // FBX textures load asynchronously (data/blob URLs); wait for them so the
+    // model never appears with black surfaces on the first frames.
+    void waitForTextures(model).then(() => {
+      onProgress?.({ type: 'parse', progress: 100 })
+      resolve(model)
+    })
   })
 }
 
