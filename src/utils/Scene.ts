@@ -2,7 +2,7 @@ import * as THREE from 'three/webgpu'
 import { PMREMGenerator as NodePMREMGenerator } from 'three/webgpu'
 // The legacy WebGL PMREMGenerator must come from the 'three' build: the
 // node-based three/webgpu one requires renderer.hasInitialized(), which only
-// WebGPURenderer provides, so it cannot be used with a legacy WebGLRenderer.
+// WebGPURenderer provides, so it cannot be used with a classic WebGLRenderer.
 import { PMREMGenerator as LegacyPMREMGenerator } from 'three'
 import { OrbitControls } from 'three-stdlib'
 import CSS2DRenderer from './CSS2DRenderer'
@@ -53,7 +53,7 @@ export default async function (
   //   - 'three' PMREMGenerator (three/src/extras/PMREMGenerator.js) — WebGL only
   //   - 'three/webgpu' PMREMGenerator (renderers/common/extras/PMREMGenerator.js)
   //     — TSL/node-based, works with WebGPURenderer (including its WebGL-fallback
-  //     backend) but NOT with a legacy WebGLRenderer.
+  //     backend) but NOT with a classic WebGLRenderer.
   // We pick the correct one based on which renderer the user supplied.
   let defaultEnvTarget: { texture: THREE.Texture; dispose: () => void } | null = null
   try {
@@ -123,19 +123,37 @@ export default async function (
     scene.add(components.gridHelper)
   }
 
-  function onWindowResize() {
-    renderer.setSize(container.clientWidth, container.clientHeight)
-    css2DRenderer.setSize(container.clientWidth, container.clientHeight)
+  // Keeps renderer, CSS2D overlay and camera aspect in sync with the container
+  // size. ResizeObserver also covers the case of a scene mounted inside a
+  // hidden tab (0x0 at mount): when the tab becomes visible the canvas is
+  // resized to the real dimensions automatically.
+  function updateSize() {
+    const width = container.clientWidth
+    const height = container.clientHeight
+    renderer.setSize(width, height)
+    css2DRenderer.setSize(width, height)
+    if (camera && height > 0) {
+      if ((camera as THREE.PerspectiveCamera).isPerspectiveCamera) {
+        ;(camera as THREE.PerspectiveCamera).aspect = width / height
+      }
+      ;(camera as THREE.PerspectiveCamera).updateProjectionMatrix()
+    }
   }
 
-  window.addEventListener('resize', onWindowResize)
+  const resizeObserver = new ResizeObserver(() => {
+    updateSize()
+  })
+  resizeObserver.observe(container)
+
+  window.addEventListener('resize', updateSize)
 
   return {
     scene,
     dispose: () => {
       disposed = true
       cancelAnimationFrame(animationId)
-      window.removeEventListener('resize', onWindowResize)
+      resizeObserver.disconnect()
+      window.removeEventListener('resize', updateSize)
       if (renderer.domElement.parentNode) {
         renderer.domElement.parentNode.removeChild(renderer.domElement as HTMLElement)
       }

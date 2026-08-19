@@ -20,7 +20,7 @@
     "prism-react-renderer": "^2.4.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-three-lite": "file:..",
+    "react-three-lite": "workspace:*",
     "three": "^0.184.0"
   },
   "devDependencies": {

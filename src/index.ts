@@ -25,7 +25,8 @@ import type { CalloutOptions, LineShape, BendAxis, LabelAnchor } from './utils/C
 export { Scene, GLTFLoader, FBXLoader, OBJLoader, Bloom, Rain, Snow, SceneContext, useScene }
 
 // types
-export type { SceneComponents, CallbackFrame } from './context/SceneContext'
+export type { SceneComponents, CallbackFrame, R3LRenderer } from './context/SceneContext'
+export type { RendererType } from './utils/Renderer'
 export type { LightGradientOptions, CalloutOptions, LineShape, BendAxis, LabelAnchor }
 
 // class

@@ -5,9 +5,10 @@ import type { SceneComponents } from 'react-three-lite'
 
 interface SceneBgImageComponentProps {
   style?: React.CSSProperties
+  rendererType?: 'webgpu' | 'webgl'
 }
 
-export default function SceneBgImageComponent({ style }: SceneBgImageComponentProps) {
+export default function SceneBgImageComponent({ style, rendererType }: SceneBgImageComponentProps) {
   const defaultStyle: React.CSSProperties = {
     marginTop: '10px',
     marginBottom: '16px',
@@ -23,6 +24,7 @@ export default function SceneBgImageComponent({ style }: SceneBgImageComponentPr
   return (
     <Scene
       style={{ ...defaultStyle, ...style }}
+      rendererType={rendererType}
       bgImage="/images/examples/bg.jpg"
       gridHelper={false}
       onCreated={handleCreated}

@@ -5,7 +5,7 @@ import { generateUUID } from '../utils/UUID'
 import createScene from '../utils/Scene'
 import CameraUtil from '../utils/Camera'
 import LightUtil from '../utils/Light'
-import Renderer from '../utils/Renderer'
+import Renderer, { RendererType } from '../utils/Renderer'
 import AxesHelperUtil from '../utils/AxesHelper'
 import Controls from '../utils/Controls'
 import {
@@ -19,6 +19,7 @@ import {
 interface SceneProps {
   modelValue?: THREE.Scene
   renderer?: R3LRenderer
+  rendererType?: RendererType
   bgColor?: string
   bgImage?: string
   camera?: THREE.PerspectiveCamera
@@ -37,6 +38,7 @@ interface SceneProps {
 
 const SceneComponent = ({
   renderer: propRenderer,
+  rendererType = 'webgpu',
   bgColor,
   bgImage,
   camera: propCamera,
@@ -99,7 +101,7 @@ const SceneComponent = ({
     let currentCamera: THREE.PerspectiveCamera | null = null
 
     const start = async () => {
-      currentRenderer = propRenderer || Renderer()
+      currentRenderer = propRenderer || Renderer(rendererType)
       currentCamera = propCamera || CameraUtil(container)
       currentLight = propLight || LightUtil()
       let currentAxesHelper: THREE.AxesHelper | undefined
@@ -275,7 +277,7 @@ const SceneComponent = ({
       currentLight = null
       currentCamera = null
     }
-  }, [])
+  }, [rendererType])
 
   return (
     <SceneContext.Provider value={sceneSlotProps}>

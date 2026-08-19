@@ -1,12 +1,13 @@
 import { Scene } from 'react-three-lite'
 import type * as THREE from 'three'
 import type { OrbitControls } from 'three-stdlib'
-import type { SceneComponents, CallbackFrame } from 'react-three-lite'
+import type { SceneComponents, CallbackFrame, R3LRenderer } from 'react-three-lite'
 
 interface SceneComponentProps {
   style?: React.CSSProperties
   modelValue?: THREE.Scene
-  renderer?: THREE.WebGLRenderer
+  renderer?: R3LRenderer
+  rendererType?: 'webgpu' | 'webgl'
   bgColor?: string
   bgImage?: string
   camera?: THREE.PerspectiveCamera
@@ -24,6 +25,7 @@ export default function SceneComponent({
   style,
   modelValue,
   renderer,
+  rendererType,
   bgColor,
   bgImage,
   camera,
@@ -54,6 +56,7 @@ export default function SceneComponent({
       style={{ ...defaultStyle, ...style }}
       modelValue={modelValue}
       renderer={renderer}
+      rendererType={rendererType}
       bgColor={bgColor}
       bgImage={bgImage}
       camera={camera}
