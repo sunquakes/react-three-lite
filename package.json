@@ -3,6 +3,10 @@
   "type": "module",
   "version": "0.3.0",
   "author": "Shing Rui <sunquakes@outlook.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sunquakes/react-three-lite.git"
+  },
   "keywords": [
     "three.js",
     "react",
