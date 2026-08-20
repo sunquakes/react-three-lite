@@ -7,6 +7,9 @@ import {
   vec4,
   positionLocal,
   varying,
+  attribute,
+  modelViewMatrix,
+  cameraProjectionMatrix,
   abs,
   smoothstep,
   pow,
@@ -41,11 +44,15 @@ interface SweepMaterialOptions {
   width: number
   intensity: number
   direction: number
-  minPos: number
-  maxPos: number
   loopType: number
 }
 
+// All sweep meshes share a single NodeMaterial so the model's meshes compile to
+// one program. (A material per mesh would exhaust the WebGL2 uniform buffer
+// binding points in the classic WebGLRenderer - a few dozen at most - which is
+// why the sweep used to silently disappear on the WebGL renderer.) The per-mesh
+// sweep range is therefore supplied through the `aSweepBounds` geometry
+// attribute instead of a per-material uniform.
 function createSweepMaterial(
   options: SweepMaterialOptions
 ): { material: NodeMaterial; timeUniform: ReturnType<typeof uniform> } {
@@ -55,8 +62,6 @@ function createSweepMaterial(
     width,
     intensity,
     direction,
-    minPos,
-    maxPos,
     loopType,
   } = options
 
@@ -66,12 +71,11 @@ function createSweepMaterial(
   const uWidth = uniform(width)
   const uIntensity = uniform(intensity)
   const uDirection = uniform(direction)
-  const uMinPos = uniform(minPos)
-  const uMaxPos = uniform(maxPos)
   const uLoopType = uniform(loopType)
 
-  // Varying: pass local position from vertex to fragment stage.
-  const vLocalPos = varying(positionLocal)
+  // Normalized sweep position (0-1) along the sweep axis, computed in the
+  // vertex stage from the per-mesh aSweepBounds attribute.
+  const vNormalizedPos = varying(float(0))
 
   const material = new NodeMaterial()
   material.transparent = true
@@ -79,22 +83,31 @@ function createSweepMaterial(
   material.blending = THREE.AdditiveBlending
   material.side = THREE.DoubleSide
 
-  material.fragmentNode = Fn(() => {
-    // Select position component based on direction axis.
+  material.vertexNode = Fn(() => {
+    const aBounds = attribute<'vec2'>('aSweepBounds', 'vec2')
+
+    // Select the position component based on the sweep axis.
     const pos = float(0).toVar()
     If(uDirection.equal(0), () => {
-      pos.assign(vLocalPos.x)
+      pos.assign(positionLocal.x)
     })
       .ElseIf(uDirection.equal(2), () => {
-        pos.assign(vLocalPos.z)
+        pos.assign(positionLocal.z)
       })
       .Else(() => {
-        pos.assign(vLocalPos.y)
+        pos.assign(positionLocal.y)
       })
 
-    const range = uMaxPos.sub(uMinPos)
-    const normalizedPos = pos.sub(uMinPos).div(range)
+    const range = aBounds.y.sub(aBounds.x)
+    vNormalizedPos.assign(pos.sub(aBounds.x).div(range))
 
+    // Transform to clip space: the vertex node output must be a vec4
+    // gl_Position (the WebGLNodesHandler assigns the returned node directly
+    // to gl_Position), so apply the model/view/projection transforms.
+    return cameraProjectionMatrix.mul(modelViewMatrix).mul(vec4(positionLocal, 1.0))
+  })()
+
+  material.fragmentNode = Fn(() => {
     const cycleTime = float(2.0).div(uSpeed)
     const t = float(0).toVar()
 
@@ -114,7 +127,7 @@ function createSweepMaterial(
         t.assign(mod(uTime, cycleTime).div(cycleTime))
       })
 
-    const dist = abs(normalizedPos.sub(t))
+    const dist = abs(vNormalizedPos.sub(t))
 
     const bandWidth = uWidth
     const band = pow(float(1.0).sub(smoothstep(float(0.0), bandWidth, dist)), float(1.5))
@@ -139,8 +152,9 @@ function createSweepMaterial(
 
 class SweepLight {
   private meshes: THREE.Mesh[] = []
-  private materials: NodeMaterial[] = []
-  private timeUniforms: ReturnType<typeof uniform>[] = []
+  private geometries: THREE.BufferGeometry[] = []
+  private material: NodeMaterial | null = null
+  private timeUniform: ReturnType<typeof uniform> | null = null
   private startTime: number
   private pausedTime: number = 0
   private isAnimating: boolean = false
@@ -174,49 +188,66 @@ class SweepLight {
       })
     }
 
+    // Create one shared material for every sweep mesh.
+    const { material, timeUniform } = createSweepMaterial({
+      color,
+      speed,
+      width,
+      intensity,
+      direction,
+      loopType,
+    })
+    this.material = material
+    this.timeUniform = timeUniform
+
     // Create sweep light for each mesh
     targetMeshes.forEach((mesh) => {
       mesh.updateMatrixWorld(true)
       mesh.geometry.computeBoundingBox()
       const bbox = mesh.geometry.boundingBox!
-      const worldMatrix = mesh.matrixWorld
 
+      // Sweep range along the sweep axis in LOCAL coordinates, matching the
+      // positionLocal used by the shader. Slightly widen the range so the band
+      // starts and ends outside the geometry.
       let minPos: number, maxPos: number
       if (direction === 0) {
-        minPos = bbox.min.clone().applyMatrix4(worldMatrix).x
-        maxPos = bbox.max.clone().applyMatrix4(worldMatrix).x
+        minPos = bbox.min.x
+        maxPos = bbox.max.x
       } else if (direction === 2) {
-        minPos = bbox.min.clone().applyMatrix4(worldMatrix).z
-        maxPos = bbox.max.clone().applyMatrix4(worldMatrix).z
+        minPos = bbox.min.z
+        maxPos = bbox.max.z
       } else {
-        minPos = bbox.min.clone().applyMatrix4(worldMatrix).y
-        maxPos = bbox.max.clone().applyMatrix4(worldMatrix).y
+        minPos = bbox.min.y
+        maxPos = bbox.max.y
       }
 
       const range = maxPos - minPos
       minPos -= range * 0.2
       maxPos += range * 0.2
 
-      const { material, timeUniform } = createSweepMaterial({
-        color,
-        speed,
-        width,
-        intensity,
-        direction,
-        minPos,
-        maxPos,
-        loopType,
-      })
+      const sweepGeometry = mesh.geometry.clone()
+      // Broadcast the sweep range to every vertex: unlike a uniform, a
+      // BufferAttribute is per-vertex, so a single (minPos, maxPos) value only
+      // applies to vertex 0 and the rest read out-of-bounds (NaN in shaders).
+      const positionCount = mesh.geometry.attributes.position.count
+      const boundsArray = new Float32Array(positionCount * 2)
+      for (let i = 0; i < positionCount; i++) {
+        boundsArray[i * 2] = minPos
+        boundsArray[i * 2 + 1] = maxPos
+      }
+      sweepGeometry.setAttribute(
+        'aSweepBounds',
+        new THREE.BufferAttribute(boundsArray, 2)
+      )
+      this.geometries.push(sweepGeometry)
 
-      const sweepMesh = new THREE.Mesh(mesh.geometry.clone(), material)
+      const sweepMesh = new THREE.Mesh(sweepGeometry, material)
       sweepMesh.renderOrder = 999
       sweepMesh.frustumCulled = false
 
       mesh.add(sweepMesh)
 
       this.meshes.push(sweepMesh)
-      this.materials.push(material)
-      this.timeUniforms.push(timeUniform)
     })
 
     this.startTime = performance.now()
@@ -227,11 +258,9 @@ class SweepLight {
   private animate() {
     const loop = () => {
       this.animationId = requestAnimationFrame(loop)
-      if (!this.isPaused) {
+      if (!this.isPaused && this.timeUniform) {
         const elapsed = (performance.now() - this.startTime) / 1000
-        this.timeUniforms.forEach((u) => {
-          ;(u as { value: number }).value = elapsed
-        })
+        ;(this.timeUniform as { value: number }).value = elapsed
       }
     }
     if (!this.isAnimating) {
@@ -271,9 +300,9 @@ class SweepLight {
     this.isPaused = false
     this.pausedTime = 0
     this.startTime = performance.now()
-    this.timeUniforms.forEach((u) => {
-      ;(u as { value: number }).value = 0
-    })
+    if (this.timeUniform) {
+      ;(this.timeUniform as { value: number }).value = 0
+    }
   }
 
   /** Dispose sweep light and stop animation */
@@ -282,14 +311,15 @@ class SweepLight {
 
     this.meshes.forEach((mesh) => {
       mesh.parent?.remove(mesh)
-      mesh.geometry.dispose()
     })
-    this.materials.forEach((material) => {
-      material.dispose()
+    this.geometries.forEach((geometry) => {
+      geometry.dispose()
     })
+    this.material?.dispose()
     this.meshes = []
-    this.materials = []
-    this.timeUniforms = []
+    this.geometries = []
+    this.material = null
+    this.timeUniform = null
   }
 }
 

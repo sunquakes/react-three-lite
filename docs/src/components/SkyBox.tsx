@@ -3,7 +3,11 @@ import { Scene, SkyBox } from 'react-three-lite'
 import type { SceneComponents } from 'react-three-lite'
 import type * as THREE from 'three'
 
-export default function SkyBoxComponent() {
+interface SkyBoxProps {
+  rendererType?: 'webgpu' | 'webgl'
+}
+
+export default function SkyBoxComponent({ rendererType = 'webgpu' }: SkyBoxProps = {}) {
   const skyBoxRef = useRef<SkyBox | null>(null)
 
   const handleCreated = (scene: THREE.Scene, components: SceneComponents) => {
@@ -31,6 +35,6 @@ export default function SkyBoxComponent() {
   }, [])
 
   return (
-    <Scene style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '300px', border: '1px solid #eee', borderRadius: '4px', overflow: 'hidden' }} gridHelper={false} onCreated={handleCreated} />
+    <Scene rendererType={rendererType} style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '300px', border: '1px solid #eee', borderRadius: '4px', overflow: 'hidden' }} gridHelper={false} onCreated={handleCreated} />
   )
 }

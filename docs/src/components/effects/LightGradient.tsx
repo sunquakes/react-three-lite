@@ -3,7 +3,11 @@ import * as THREE from 'three'
 import { Scene, LightGradient } from 'react-three-lite'
 import type { SceneComponents } from 'react-three-lite'
 
-export default function LightGradientComponent() {
+interface LightGradientProps {
+  rendererType?: 'webgpu' | 'webgl'
+}
+
+export default function LightGradientComponent({ rendererType }: LightGradientProps) {
   const gradientRef = useRef<LightGradient | null>(null)
   const meshRef = useRef<THREE.Mesh | null>(null)
 
@@ -59,6 +63,6 @@ export default function LightGradientComponent() {
   }, [])
 
   return (
-    <Scene style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '300px' }} onCreated={handleCreated} />
+    <Scene rendererType={rendererType} style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '300px' }} onCreated={handleCreated} />
   )
 }

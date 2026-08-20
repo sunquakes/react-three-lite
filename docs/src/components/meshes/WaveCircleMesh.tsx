@@ -2,7 +2,11 @@ import { useRef } from 'react'
 import { Scene, WaveCircleMesh } from 'react-three-lite'
 import type * as THREE from 'three'
 
-export default function WaveCircleMeshComponent() {
+interface WaveCircleMeshProps {
+  rendererType?: 'webgpu' | 'webgl'
+}
+
+export default function WaveCircleMeshComponent({ rendererType }: WaveCircleMeshProps) {
   const sceneRef = useRef<THREE.Scene>()
 
   const handleCreated = (scene: THREE.Scene, { camera }: any) => {
@@ -17,7 +21,7 @@ export default function WaveCircleMeshComponent() {
 
   return (
     <div style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '300px' }}>
-      <Scene onCreated={handleCreated} />
+      <Scene rendererType={rendererType} onCreated={handleCreated} />
     </div>
   )
 }

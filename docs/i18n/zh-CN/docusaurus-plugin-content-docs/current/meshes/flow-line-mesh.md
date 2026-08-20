@@ -2,124 +2,246 @@
 title: 流动线网格
 ---
 
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import FlowLineMesh from '@site/src/components/meshes/FlowLineMesh'
+import FlowLineMeshOptions from '@site/src/components/meshes/FlowLineMeshOptions'
+
 ## 类型
 
 类
 
-import FlowLineMesh from '@site/src/components/meshes/FlowLineMesh'
-import FlowLineMeshOptions from '@site/src/components/meshes/FlowLineMeshOptions'
-
 ## 默认用法
 
-<FlowLineMesh />
+下面的每个示例都可以用 **WebGPU**（默认）或 **WebGL** 渲染器查看 —— 切换标签页进行对比。
 
-```tsx
-import { Scene, FlowLineMesh, AxisType } from 'react-three-lite'
-import * as THREE from 'three'
+<Tabs groupId="renderer">
+  <TabItem value="webgpu" label="WebGPU" default>
+    <FlowLineMesh rendererType="webgpu" />
 
-function App() {
-  const points = [
-    new THREE.Vector3(-2.000000, 0.000000, 0),
-    new THREE.Vector3(-1.975377, 0.312869, 0),
-    new THREE.Vector3(-1.902113, 0.618034, 0),
-    new THREE.Vector3(-1.782013, 0.907981, 0),
-    new THREE.Vector3(-1.618034, 1.175571, 0),
-    new THREE.Vector3(-1.414214, 1.414214, 0),
-    new THREE.Vector3(-1.175571, 1.618034, 0),
-    new THREE.Vector3(-0.907981, 1.782013, 0),
-    new THREE.Vector3(-0.618034, 1.902113, 0),
-    new THREE.Vector3(-0.312869, 1.975377, 0),
-    new THREE.Vector3(-0.000000, 2.000000, 0),
-    new THREE.Vector3(0.312869, 1.975377, 0),
-    new THREE.Vector3(0.618034, 1.902113, 0),
-    new THREE.Vector3(0.907981, 1.782013, 0),
-    new THREE.Vector3(1.175571, 1.618034, 0),
-    new THREE.Vector3(1.414214, 1.414214, 0),
-    new THREE.Vector3(1.618034, 1.175571, 0),
-    new THREE.Vector3(1.782013, 0.907981, 0),
-    new THREE.Vector3(1.902113, 0.618034, 0),
-    new THREE.Vector3(1.975377, 0.312869, 0),
-    new THREE.Vector3(2.000000, 0.000000, 0)
-  ]
+    ```tsx
+    import { Scene, FlowLineMesh, AxisType } from 'react-three-lite'
+    import * as THREE from 'three'
 
-  const handleCreated = (scene, { camera }) => {
-    camera.position.set(0, 0, 3)
-    camera.lookAt(0, 0, 0)
+    function App() {
+      const points = [
+        new THREE.Vector3(-2.000000, 0.000000, 0),
+        new THREE.Vector3(-1.975377, 0.312869, 0),
+        new THREE.Vector3(-1.902113, 0.618034, 0),
+        new THREE.Vector3(-1.782013, 0.907981, 0),
+        new THREE.Vector3(-1.618034, 1.175571, 0),
+        new THREE.Vector3(-1.414214, 1.414214, 0),
+        new THREE.Vector3(-1.175571, 1.618034, 0),
+        new THREE.Vector3(-0.907981, 1.782013, 0),
+        new THREE.Vector3(-0.618034, 1.902113, 0),
+        new THREE.Vector3(-0.312869, 1.975377, 0),
+        new THREE.Vector3(-0.000000, 2.000000, 0),
+        new THREE.Vector3(0.312869, 1.975377, 0),
+        new THREE.Vector3(0.618034, 1.902113, 0),
+        new THREE.Vector3(0.907981, 1.782013, 0),
+        new THREE.Vector3(1.175571, 1.618034, 0),
+        new THREE.Vector3(1.414214, 1.414214, 0),
+        new THREE.Vector3(1.618034, 1.175571, 0),
+        new THREE.Vector3(1.782013, 0.907981, 0),
+        new THREE.Vector3(1.902113, 0.618034, 0),
+        new THREE.Vector3(1.975377, 0.312869, 0),
+        new THREE.Vector3(2.000000, 0.000000, 0)
+      ]
 
-    const mesh = new FlowLineMesh({
-      points,
-      width: 0.3,
-      axis: AxisType.Z,
-      textureRepeat: 8,
-      speed: 16,
-      color: [0.0, 1.0, 1.0, 1]
-    })
-    scene.add(mesh)
-  }
+      const handleCreated = (scene, { camera }) => {
+        camera.position.set(0, 0, 3)
+        camera.lookAt(0, 0, 0)
 
-  return (
-    <div style={{ marginTop: '10px', width: '100%', height: '300px' }}>
-      <Scene onCreated={handleCreated} />
-    </div>
-  )
-}
-```
+        const mesh = new FlowLineMesh({
+          points,
+          width: 0.3,
+          axis: AxisType.Z,
+          textureRepeat: 8,
+          speed: 16,
+          color: [0.0, 1.0, 1.0, 1]
+        })
+        scene.add(mesh)
+      }
+
+      return (
+        <div style={{ marginTop: '10px', width: '100%', height: '300px' }}>
+          <Scene rendererType="webgpu" onCreated={handleCreated} />
+        </div>
+      )
+    }
+    ```
+  </TabItem>
+  <TabItem value="webgl" label="WebGL">
+    <FlowLineMesh rendererType="webgl" />
+
+    ```tsx
+    import { Scene, FlowLineMesh, AxisType } from 'react-three-lite'
+    import * as THREE from 'three'
+
+    function App() {
+      const points = [
+        new THREE.Vector3(-2.000000, 0.000000, 0),
+        new THREE.Vector3(-1.975377, 0.312869, 0),
+        new THREE.Vector3(-1.902113, 0.618034, 0),
+        new THREE.Vector3(-1.782013, 0.907981, 0),
+        new THREE.Vector3(-1.618034, 1.175571, 0),
+        new THREE.Vector3(-1.414214, 1.414214, 0),
+        new THREE.Vector3(-1.175571, 1.618034, 0),
+        new THREE.Vector3(-0.907981, 1.782013, 0),
+        new THREE.Vector3(-0.618034, 1.902113, 0),
+        new THREE.Vector3(-0.312869, 1.975377, 0),
+        new THREE.Vector3(-0.000000, 2.000000, 0),
+        new THREE.Vector3(0.312869, 1.975377, 0),
+        new THREE.Vector3(0.618034, 1.902113, 0),
+        new THREE.Vector3(0.907981, 1.782013, 0),
+        new THREE.Vector3(1.175571, 1.618034, 0),
+        new THREE.Vector3(1.414214, 1.414214, 0),
+        new THREE.Vector3(1.618034, 1.175571, 0),
+        new THREE.Vector3(1.782013, 0.907981, 0),
+        new THREE.Vector3(1.902113, 0.618034, 0),
+        new THREE.Vector3(1.975377, 0.312869, 0),
+        new THREE.Vector3(2.000000, 0.000000, 0)
+      ]
+
+      const handleCreated = (scene, { camera }) => {
+        camera.position.set(0, 0, 3)
+        camera.lookAt(0, 0, 0)
+
+        const mesh = new FlowLineMesh({
+          points,
+          width: 0.3,
+          axis: AxisType.Z,
+          textureRepeat: 8,
+          speed: 16,
+          color: [0.0, 1.0, 1.0, 1]
+        })
+        scene.add(mesh)
+      }
+
+      return (
+        <div style={{ marginTop: '10px', width: '100%', height: '300px' }}>
+          <Scene rendererType="webgl" onCreated={handleCreated} />
+        </div>
+      )
+    }
+    ```
+  </TabItem>
+</Tabs>
 
 ## 自定义选项
 
-<FlowLineMeshOptions />
+<Tabs groupId="renderer">
+  <TabItem value="webgpu" label="WebGPU" default>
+    <FlowLineMeshOptions rendererType="webgpu" />
 
-```tsx
-import { Scene, FlowLineMesh, AxisType } from 'react-three-lite'
-import * as THREE from 'three'
+    ```tsx
+    import { Scene, FlowLineMesh, AxisType } from 'react-three-lite'
+    import * as THREE from 'three'
 
-function App() {
-  const points = [
-    new THREE.Vector3(-2.000000, 0.000000, 0),
-    new THREE.Vector3(-1.975377, 0.312869, 0),
-    new THREE.Vector3(-1.902113, 0.618034, 0),
-    new THREE.Vector3(-1.782013, 0.907981, 0),
-    new THREE.Vector3(-1.618034, 1.175571, 0),
-    new THREE.Vector3(-1.414214, 1.414214, 0),
-    new THREE.Vector3(-1.175571, 1.618034, 0),
-    new THREE.Vector3(-0.907981, 1.782013, 0),
-    new THREE.Vector3(-0.618034, 1.902113, 0),
-    new THREE.Vector3(-0.312869, 1.975377, 0),
-    new THREE.Vector3(-0.000000, 2.000000, 0),
-    new THREE.Vector3(0.312869, 1.975377, 0),
-    new THREE.Vector3(0.618034, 1.902113, 0),
-    new THREE.Vector3(0.907981, 1.782013, 0),
-    new THREE.Vector3(1.175571, 1.618034, 0),
-    new THREE.Vector3(1.414214, 1.414214, 0),
-    new THREE.Vector3(1.618034, 1.175571, 0),
-    new THREE.Vector3(1.782013, 0.907981, 0),
-    new THREE.Vector3(1.902113, 0.618034, 0),
-    new THREE.Vector3(1.975377, 0.312869, 0),
-    new THREE.Vector3(2.000000, 0.000000, 0)
-  ]
+    function App() {
+      const points = [
+        new THREE.Vector3(-2.000000, 0.000000, 0),
+        new THREE.Vector3(-1.975377, 0.312869, 0),
+        new THREE.Vector3(-1.902113, 0.618034, 0),
+        new THREE.Vector3(-1.782013, 0.907981, 0),
+        new THREE.Vector3(-1.618034, 1.175571, 0),
+        new THREE.Vector3(-1.414214, 1.414214, 0),
+        new THREE.Vector3(-1.175571, 1.618034, 0),
+        new THREE.Vector3(-0.907981, 1.782013, 0),
+        new THREE.Vector3(-0.618034, 1.902113, 0),
+        new THREE.Vector3(-0.312869, 1.975377, 0),
+        new THREE.Vector3(-0.000000, 2.000000, 0),
+        new THREE.Vector3(0.312869, 1.975377, 0),
+        new THREE.Vector3(0.618034, 1.902113, 0),
+        new THREE.Vector3(0.907981, 1.782013, 0),
+        new THREE.Vector3(1.175571, 1.618034, 0),
+        new THREE.Vector3(1.414214, 1.414214, 0),
+        new THREE.Vector3(1.618034, 1.175571, 0),
+        new THREE.Vector3(1.782013, 0.907981, 0),
+        new THREE.Vector3(1.902113, 0.618034, 0),
+        new THREE.Vector3(1.975377, 0.312869, 0),
+        new THREE.Vector3(2.000000, 0.000000, 0)
+      ]
 
-  const handleCreated = (scene, { camera }) => {
-    camera.position.set(0, 0, 3)
-    camera.lookAt(0, 0, 0)
+      const handleCreated = (scene, { camera }) => {
+        camera.position.set(0, 0, 3)
+        camera.lookAt(0, 0, 0)
 
-    const mesh = new FlowLineMesh({
-      points,
-      color: [0.0, 1.0, 1.0, 1],
-      speed: 16,
-      width: 0.4,
-      axis: AxisType.Z,
-      textureRepeat: 10
-    })
-    scene.add(mesh)
-  }
+        const mesh = new FlowLineMesh({
+          points,
+          color: [0.0, 1.0, 1.0, 1],
+          speed: 16,
+          width: 0.4,
+          axis: AxisType.Z,
+          textureRepeat: 10
+        })
+        scene.add(mesh)
+      }
 
-  return (
-    <div style={{ marginTop: '10px', width: '100%', height: '300px' }}>
-      <Scene onCreated={handleCreated} />
-    </div>
-  )
-}
-```
+      return (
+        <div style={{ marginTop: '10px', width: '100%', height: '300px' }}>
+          <Scene rendererType="webgpu" onCreated={handleCreated} />
+        </div>
+      )
+    }
+    ```
+  </TabItem>
+  <TabItem value="webgl" label="WebGL">
+    <FlowLineMeshOptions rendererType="webgl" />
+
+    ```tsx
+    import { Scene, FlowLineMesh, AxisType } from 'react-three-lite'
+    import * as THREE from 'three'
+
+    function App() {
+      const points = [
+        new THREE.Vector3(-2.000000, 0.000000, 0),
+        new THREE.Vector3(-1.975377, 0.312869, 0),
+        new THREE.Vector3(-1.902113, 0.618034, 0),
+        new THREE.Vector3(-1.782013, 0.907981, 0),
+        new THREE.Vector3(-1.618034, 1.175571, 0),
+        new THREE.Vector3(-1.414214, 1.414214, 0),
+        new THREE.Vector3(-1.175571, 1.618034, 0),
+        new THREE.Vector3(-0.907981, 1.782013, 0),
+        new THREE.Vector3(-0.618034, 1.902113, 0),
+        new THREE.Vector3(-0.312869, 1.975377, 0),
+        new THREE.Vector3(-0.000000, 2.000000, 0),
+        new THREE.Vector3(0.312869, 1.975377, 0),
+        new THREE.Vector3(0.618034, 1.902113, 0),
+        new THREE.Vector3(0.907981, 1.782013, 0),
+        new THREE.Vector3(1.175571, 1.618034, 0),
+        new THREE.Vector3(1.414214, 1.414214, 0),
+        new THREE.Vector3(1.618034, 1.175571, 0),
+        new THREE.Vector3(1.782013, 0.907981, 0),
+        new THREE.Vector3(1.902113, 0.618034, 0),
+        new THREE.Vector3(1.975377, 0.312869, 0),
+        new THREE.Vector3(2.000000, 0.000000, 0)
+      ]
+
+      const handleCreated = (scene, { camera }) => {
+        camera.position.set(0, 0, 3)
+        camera.lookAt(0, 0, 0)
+
+        const mesh = new FlowLineMesh({
+          points,
+          color: [0.0, 1.0, 1.0, 1],
+          speed: 16,
+          width: 0.4,
+          axis: AxisType.Z,
+          textureRepeat: 10
+        })
+        scene.add(mesh)
+      }
+
+      return (
+        <div style={{ marginTop: '10px', width: '100%', height: '300px' }}>
+          <Scene rendererType="webgl" onCreated={handleCreated} />
+        </div>
+      )
+    }
+    ```
+  </TabItem>
+</Tabs>
 
 ## 构造函数参数
 

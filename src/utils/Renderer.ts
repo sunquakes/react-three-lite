@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import { WebGPURenderer } from 'three/webgpu'
+import { WebGLNodesHandler } from 'three/examples/jsm/tsl/WebGLNodesHandler.js'
 import type { R3LRenderer } from '../context/SceneContext'
 
 export type RendererType = 'webgpu' | 'webgl'
@@ -10,7 +11,12 @@ export type RendererType = 'webgpu' | 'webgl'
  * - `webgpu`: `WebGPURenderer` from `three/webgpu`. It automatically falls back
  *   to the WebGL2 backend when WebGPU is not available, and all TSL shaders in
  *   this library compile to WGSL on WebGPU and GLSL on the WebGL backend.
- * - `webgl`: the classic `WebGLRenderer` from `three`.
+ * - `webgl`: the classic `THREE.WebGLRenderer`. The library is built entirely
+ *   on three.js TSL (NodeMaterial, RenderPipeline, etc.); a plain
+ *   `WebGLRenderer` cannot compile TSL shaders because it has no node builder,
+ *   so we attach three's official `WebGLNodesHandler`, which bridges the node
+ *   system into `WebGLRenderer` (TSL compiles to GLSL and runs on a genuine
+ *   WebGL context, `data-engine="three.js r184"`).
  *
  * The returned renderer is NOT yet initialized. Call `await renderer.init()`
  * before rendering (WebGPURenderer only). When using the built-in Scene
@@ -22,6 +28,12 @@ export default function (type: RendererType = 'webgpu'): R3LRenderer {
       antialias: true,
       alpha: true
     })
+    // WebGLNodesHandler compiles TSL node materials to GLSL for WebGLRenderer.
+    // WebGLRenderer.render() invokes renderStart/renderEnd/build automatically
+    // once the handler is attached via setNodesHandler().
+    const nodesHandler = new WebGLNodesHandler()
+    nodesHandler.setRenderer(renderer)
+    renderer.setNodesHandler(nodesHandler)
     renderer.toneMapping = THREE.NoToneMapping
     renderer.toneMappingExposure = 1.0
     return renderer as unknown as R3LRenderer

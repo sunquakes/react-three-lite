@@ -3,74 +3,146 @@ lang: en-US
 title: Wave Circle Mesh
 ---
 
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import WaveCircleMesh from '@site/src/components/meshes/WaveCircleMesh'
+import WaveCircleMeshOptions from '@site/src/components/meshes/WaveCircleMeshOptions'
+
 ## Type
 
 Class
 
-import WaveCircleMesh from '@site/src/components/meshes/WaveCircleMesh'
-import WaveCircleMeshOptions from '@site/src/components/meshes/WaveCircleMeshOptions'
-
 ## Default Usage
 
-<WaveCircleMesh />
+Every example below can be viewed with either the **WebGPU** (default) or the **WebGL** renderer — switch tabs to compare.
 
-```tsx
-import { useRef } from 'react'
-import { Scene, WaveCircleMesh } from 'react-three-lite'
-import type * as THREE from 'three'
+<Tabs groupId="renderer">
+  <TabItem value="webgpu" label="WebGPU" default>
+    <WaveCircleMesh rendererType="webgpu" />
 
-export default function App() {
-  const sceneRef = useRef<THREE.Scene>()
+    ```tsx
+    import { useRef } from 'react'
+    import { Scene, WaveCircleMesh } from 'react-three-lite'
+    import type * as THREE from 'three'
 
-  const handleCreated = (scene: THREE.Scene, { camera }: any) => {
-    sceneRef.current = scene
-    camera.position.set(0, 2, 0)
+    export default function App() {
+      const sceneRef = useRef<THREE.Scene>()
 
-    const mesh = new WaveCircleMesh()
-    scene.add(mesh)
-  }
+      const handleCreated = (scene: THREE.Scene, { camera }: any) => {
+        sceneRef.current = scene
+        camera.position.set(0, 2, 0)
 
-  return (
-    <div style={{ marginTop: '10px', width: '100%', height: '300px' }}>
-      <Scene onCreated={handleCreated} />
-    </div>
-  )
-}
-```
+        const mesh = new WaveCircleMesh()
+        scene.add(mesh)
+      }
+
+      return (
+        <div style={{ marginTop: '10px', width: '100%', height: '300px' }}>
+          <Scene rendererType="webgpu" onCreated={handleCreated} />
+        </div>
+      )
+    }
+    ```
+  </TabItem>
+  <TabItem value="webgl" label="WebGL">
+    <WaveCircleMesh rendererType="webgl" />
+
+    ```tsx
+    import { useRef } from 'react'
+    import { Scene, WaveCircleMesh } from 'react-three-lite'
+    import type * as THREE from 'three'
+
+    export default function App() {
+      const sceneRef = useRef<THREE.Scene>()
+
+      const handleCreated = (scene: THREE.Scene, { camera }: any) => {
+        sceneRef.current = scene
+        camera.position.set(0, 2, 0)
+
+        const mesh = new WaveCircleMesh()
+        scene.add(mesh)
+      }
+
+      return (
+        <div style={{ marginTop: '10px', width: '100%', height: '300px' }}>
+          <Scene rendererType="webgl" onCreated={handleCreated} />
+        </div>
+      )
+    }
+    ```
+  </TabItem>
+</Tabs>
 
 ## Custom Options
 
-<WaveCircleMeshOptions />
+<Tabs groupId="renderer">
+  <TabItem value="webgpu" label="WebGPU" default>
+    <WaveCircleMeshOptions rendererType="webgpu" />
 
-```tsx
-import { useRef } from 'react'
-import { Scene, WaveCircleMesh, AxisType } from 'react-three-lite'
-import type * as THREE from 'three'
+    ```tsx
+    import { useRef } from 'react'
+    import { Scene, WaveCircleMesh, AxisType } from 'react-three-lite'
+    import type * as THREE from 'three'
 
-export default function App() {
-  const sceneRef = useRef<THREE.Scene>()
+    export default function App() {
+      const sceneRef = useRef<THREE.Scene>()
 
-  const handleCreated = (scene: THREE.Scene, { camera }: any) => {
-    sceneRef.current = scene
-    camera.position.set(2, 0, 0)
+      const handleCreated = (scene: THREE.Scene, { camera }: any) => {
+        sceneRef.current = scene
+        camera.position.set(2, 0, 0)
 
-    const mesh = new WaveCircleMesh({
-      radius: 0.5,
-      color: [0.98, 0.61, 0.6, 1],
-      speed: 2,
-      verticalAxis: AxisType.X
-    })
-    scene.add(mesh)
-    mesh.position.set(0, 0.5, 0)
-  }
+        const mesh = new WaveCircleMesh({
+          radius: 0.5,
+          color: [0.98, 0.61, 0.6, 1],
+          speed: 2,
+          verticalAxis: AxisType.X
+        })
+        scene.add(mesh)
+        mesh.position.set(0, 0.5, 0)
+      }
 
-  return (
-    <div style={{ marginTop: '10px', width: '100%', height: '300px' }}>
-      <Scene onCreated={handleCreated} />
-    </div>
-  )
-}
-```
+      return (
+        <div style={{ marginTop: '10px', width: '100%', height: '300px' }}>
+          <Scene rendererType="webgpu" onCreated={handleCreated} />
+        </div>
+      )
+    }
+    ```
+  </TabItem>
+  <TabItem value="webgl" label="WebGL">
+    <WaveCircleMeshOptions rendererType="webgl" />
+
+    ```tsx
+    import { useRef } from 'react'
+    import { Scene, WaveCircleMesh, AxisType } from 'react-three-lite'
+    import type * as THREE from 'three'
+
+    export default function App() {
+      const sceneRef = useRef<THREE.Scene>()
+
+      const handleCreated = (scene: THREE.Scene, { camera }: any) => {
+        sceneRef.current = scene
+        camera.position.set(2, 0, 0)
+
+        const mesh = new WaveCircleMesh({
+          radius: 0.5,
+          color: [0.98, 0.61, 0.6, 1],
+          speed: 2,
+          verticalAxis: AxisType.X
+        })
+        scene.add(mesh)
+        mesh.position.set(0, 0.5, 0)
+      }
+
+      return (
+        <div style={{ marginTop: '10px', width: '100%', height: '300px' }}>
+          <Scene rendererType="webgl" onCreated={handleCreated} />
+        </div>
+      )
+    }
+    ```
+  </TabItem>
+</Tabs>
 
 ## Constructor Parameters
 

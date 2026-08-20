@@ -3,7 +3,11 @@ import { Scene, ModelRotator, GLTFLoaderAsync } from 'react-three-lite'
 import type { SceneComponents } from 'react-three-lite'
 import type * as THREE from 'three'
 
-export default function ModelRotatorComponent() {
+interface ModelRotatorProps {
+  rendererType?: 'webgpu' | 'webgl'
+}
+
+export default function ModelRotatorComponent({ rendererType = 'webgpu' }: ModelRotatorProps = {}) {
   const rotatorRef = useRef<ModelRotator | null>(null)
 
   const handleCreated = async (scene: THREE.Scene, components: SceneComponents) => {
@@ -33,6 +37,6 @@ export default function ModelRotatorComponent() {
   }, [])
 
   return (
-    <Scene style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '300px' }} bgColor="#1a1a2e" onCreated={handleCreated} />
+    <Scene rendererType={rendererType} style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '300px' }} bgColor="#1a1a2e" onCreated={handleCreated} />
   )
 }

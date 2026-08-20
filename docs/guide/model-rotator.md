@@ -4,6 +4,8 @@ lang: en-US
 title: Model Rotator
 ---
 
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
 import ModelRotator from '@site/src/components/ModelRotator'
 
 ## Type
@@ -12,47 +14,96 @@ Class
 
 ## Default Usage
 
-<ModelRotator />
+Every example below can be viewed with either the **WebGPU** (default) or the **WebGL** renderer — switch tabs to compare.
 
-```tsx
-import { useRef, useEffect } from 'react'
-import * as THREE from 'three'
-import { Scene, ModelRotator, GLTFLoaderAsync } from 'react-three-lite'
-import type { SceneComponents } from 'react-three-lite'
+<Tabs groupId="renderer">
+  <TabItem value="webgpu" label="WebGPU" default>
+    <ModelRotator rendererType="webgpu" />
 
-function App() {
-  const rotatorRef = useRef<ModelRotator | null>(null)
+    ```tsx
+    import { useRef, useEffect } from 'react'
+    import * as THREE from 'three'
+    import { Scene, ModelRotator, GLTFLoaderAsync } from 'react-three-lite'
+    import type { SceneComponents } from 'react-three-lite'
 
-  const handleCreated = async (scene: THREE.Scene, components: SceneComponents) => {
-    const { camera } = components
-    if (!camera) return
+    function App() {
+      const rotatorRef = useRef<ModelRotator | null>(null)
 
-    camera.position.set(0, 0, 4)
-    camera.lookAt(0, 0, 0)
+      const handleCreated = async (scene: THREE.Scene, components: SceneComponents) => {
+        const { camera } = components
+        if (!camera) return
 
-    const model = await GLTFLoaderAsync('/models/perseverance-draco.glb', true)
-    model.position.set(0, 0, 0)
-    scene.add(model)
+        camera.position.set(0, 0, 4)
+        camera.lookAt(0, 0, 0)
 
-    rotatorRef.current = new ModelRotator(model, {
-      axis: 'y',
-      speed: 0.5,
-      autoStart: true,
-    })
-  }
+        const model = await GLTFLoaderAsync('/models/perseverance-draco.glb', true)
+        model.position.set(0, 0, 0)
+        scene.add(model)
 
-  useEffect(() => {
-    return () => {
-      rotatorRef.current?.dispose()
-      rotatorRef.current = null
+        rotatorRef.current = new ModelRotator(model, {
+          axis: 'y',
+          speed: 0.5,
+          autoStart: true,
+        })
+      }
+
+      useEffect(() => {
+        return () => {
+          rotatorRef.current?.dispose()
+          rotatorRef.current = null
+        }
+      }, [])
+
+      return (
+        <Scene rendererType="webgpu" bgColor="#1a1a2e" style={{ marginTop: '10px', width: '100%', height: '300px' }} onCreated={handleCreated} />
+      )
     }
-  }, [])
+    ```
+  </TabItem>
+  <TabItem value="webgl" label="WebGL">
+    <ModelRotator rendererType="webgl" />
 
-  return (
-    <Scene bgColor="#1a1a2e" style={{ marginTop: '10px', width: '100%', height: '300px' }} onCreated={handleCreated} />
-  )
-}
-```
+    ```tsx
+    import { useRef, useEffect } from 'react'
+    import * as THREE from 'three'
+    import { Scene, ModelRotator, GLTFLoaderAsync } from 'react-three-lite'
+    import type { SceneComponents } from 'react-three-lite'
+
+    function App() {
+      const rotatorRef = useRef<ModelRotator | null>(null)
+
+      const handleCreated = async (scene: THREE.Scene, components: SceneComponents) => {
+        const { camera } = components
+        if (!camera) return
+
+        camera.position.set(0, 0, 4)
+        camera.lookAt(0, 0, 0)
+
+        const model = await GLTFLoaderAsync('/models/perseverance-draco.glb', true)
+        model.position.set(0, 0, 0)
+        scene.add(model)
+
+        rotatorRef.current = new ModelRotator(model, {
+          axis: 'y',
+          speed: 0.5,
+          autoStart: true,
+        })
+      }
+
+      useEffect(() => {
+        return () => {
+          rotatorRef.current?.dispose()
+          rotatorRef.current = null
+        }
+      }, [])
+
+      return (
+        <Scene rendererType="webgl" bgColor="#1a1a2e" style={{ marginTop: '10px', width: '100%', height: '300px' }} onCreated={handleCreated} />
+      )
+    }
+    ```
+  </TabItem>
+</Tabs>
 
 ## Options
 

@@ -3,6 +3,8 @@ lang: zh-CN
 title: 引线注释
 ---
 
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
 import Callout from '@site/src/components/Callout'
 
 ## 类型
@@ -11,78 +13,160 @@ import Callout from '@site/src/components/Callout'
 
 ## 默认用法
 
-<Callout />
+下面的每个示例都可以用 **WebGPU**（默认）或 **WebGL** 渲染器查看 —— 切换标签页进行对比。
 
-```tsx
-import { useEffect, useRef } from 'react'
-import * as THREE from 'three'
-import { Scene, Callout } from 'react-three-lite'
-import type { SceneComponents } from 'react-three-lite'
+<Tabs groupId="renderer">
+  <TabItem value="webgpu" label="WebGPU" default>
+    <Callout rendererType="webgpu" />
 
-export default function App() {
-  const calloutRef = useRef<Callout | null>(null)
+    ```tsx
+    import { useEffect, useRef } from 'react'
+    import * as THREE from 'three'
+    import { Scene, Callout } from 'react-three-lite'
+    import type { SceneComponents } from 'react-three-lite'
 
-  const handleCreated = (scene: THREE.Scene, components: SceneComponents) => {
-    const { camera } = components
-    if (!camera) return
+    export default function App() {
+      const calloutRef = useRef<Callout | null>(null)
 
-    camera.position.set(0, 0, 5)
-    camera.lookAt(0, 0, 0)
+      const handleCreated = (scene: THREE.Scene, components: SceneComponents) => {
+        const { camera } = components
+        if (!camera) return
 
-    // 原点处的正方体，注释指向它
-    const box = new THREE.Mesh(
-      new THREE.BoxGeometry(1, 1, 1),
-      new THREE.MeshNormalMaterial()
-    )
-    scene.add(box)
+        camera.position.set(0, 0, 5)
+        camera.lookAt(0, 0, 0)
 
-    // Callout：start（锚点）在正方体表面，end（标签）在右侧。
-    // autoAnchor 让标签底边的连接点跟随相机——每帧调用 updateLabelAnchor(camera)。
-    const callout = new Callout(
-      [0.5, 0.5, 0.5],                     // start（锚点）— 正方体角点
-      [1.5, 1.0, 0.5],                     // end（标签）— 正方体右侧
-      <div style={{
-        padding: '8px 14px',
-        background: 'linear-gradient(180deg, #ff8a2b 0%, #e66400 100%)',
-        borderRadius: '4px',
-        color: '#1a0f00',
-        fontSize: '16px',
-        fontWeight: 600
-      }}>This is a box!</div>,
-      {
-        color: '#ffffff',
-        lineWidth: 2,
-        lineShape: 'broken',               // 'straight' 直线 | 'broken' 折线（钝角拐点）
-        bendAxis: 'x',                     // 'auto' 自动 | 'x' | 'y' | 'z'  — 与标签平行段的轴
-        bendRatio: 2 / 3,                  // 斜线水平投影 = 总水平距离的 1/3
-        autoAnchor: true,                  // 连接点按方向在底边上自动滑动
-        showDot: true,
-        dotColor: '#ffffff',
-        dotRadius: 0.06
+        // 原点处的正方体，注释指向它
+        const box = new THREE.Mesh(
+          new THREE.BoxGeometry(1, 1, 1),
+          new THREE.MeshNormalMaterial()
+        )
+        scene.add(box)
+
+        // Callout：start（锚点）在正方体表面，end（标签）在右侧。
+        // autoAnchor 让标签底边的连接点跟随相机——每帧调用 updateLabelAnchor(camera)。
+        const callout = new Callout(
+          [0.5, 0.5, 0.5],                     // start（锚点）— 正方体角点
+          [1.5, 1.0, 0.5],                     // end（标签）— 正方体右侧
+          <div style={{
+            padding: '8px 14px',
+            background: 'linear-gradient(180deg, #ff8a2b 0%, #e66400 100%)',
+            borderRadius: '4px',
+            color: '#1a0f00',
+            fontSize: '16px',
+            fontWeight: 600
+          }}>This is a box!</div>,
+          {
+            color: '#ffffff',
+            lineWidth: 2,
+            lineShape: 'broken',               // 'straight' 直线 | 'broken' 折线（钝角拐点）
+            bendAxis: 'x',                     // 'auto' 自动 | 'x' | 'y' | 'z'  — 与标签平行段的轴
+            bendRatio: 2 / 3,                  // 斜线水平投影 = 总水平距离的 1/3
+            autoAnchor: true,                  // 连接点按方向在底边上自动滑动
+            showDot: true,
+            dotColor: '#ffffff',
+            dotRadius: 0.06
+          }
+        )
+        scene.add(callout.scene)
+        callout.attach(camera)                  // 启动内部 autoAnchor 循环
+        calloutRef.current = callout
       }
-    )
-    scene.add(callout.scene)
-    callout.attach(camera)                  // 启动内部 autoAnchor 循环
-    calloutRef.current = callout
-  }
 
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      calloutRef.current?.dispose()
-      calloutRef.current = null
+      // Cleanup on unmount
+      useEffect(() => {
+        return () => {
+          calloutRef.current?.dispose()
+          calloutRef.current = null
+        }
+      }, [])
+
+      return (
+        <Scene
+          rendererType="webgpu"
+          bgColor="#1a1a2e"
+          style={{ marginTop: '10px', width: '100%', height: '360px' }}
+          onCreated={handleCreated}
+        />
+      )
     }
-  }, [])
+    ```
+  </TabItem>
+  <TabItem value="webgl" label="WebGL">
+    <Callout rendererType="webgl" />
 
-  return (
-    <Scene
-      bgColor="#1a1a2e"
-      style={{ marginTop: '10px', width: '100%', height: '360px' }}
-      onCreated={handleCreated}
-    />
-  )
-}
-```
+    ```tsx
+    import { useEffect, useRef } from 'react'
+    import * as THREE from 'three'
+    import { Scene, Callout } from 'react-three-lite'
+    import type { SceneComponents } from 'react-three-lite'
+
+    export default function App() {
+      const calloutRef = useRef<Callout | null>(null)
+
+      const handleCreated = (scene: THREE.Scene, components: SceneComponents) => {
+        const { camera } = components
+        if (!camera) return
+
+        camera.position.set(0, 0, 5)
+        camera.lookAt(0, 0, 0)
+
+        // 原点处的正方体，注释指向它
+        const box = new THREE.Mesh(
+          new THREE.BoxGeometry(1, 1, 1),
+          new THREE.MeshNormalMaterial()
+        )
+        scene.add(box)
+
+        // Callout：start（锚点）在正方体表面，end（标签）在右侧。
+        // autoAnchor 让标签底边的连接点跟随相机——每帧调用 updateLabelAnchor(camera)。
+        const callout = new Callout(
+          [0.5, 0.5, 0.5],                     // start（锚点）— 正方体角点
+          [1.5, 1.0, 0.5],                     // end（标签）— 正方体右侧
+          <div style={{
+            padding: '8px 14px',
+            background: 'linear-gradient(180deg, #ff8a2b 0%, #e66400 100%)',
+            borderRadius: '4px',
+            color: '#1a0f00',
+            fontSize: '16px',
+            fontWeight: 600
+          }}>This is a box!</div>,
+          {
+            color: '#ffffff',
+            lineWidth: 2,
+            lineShape: 'broken',               // 'straight' 直线 | 'broken' 折线（钝角拐点）
+            bendAxis: 'x',                     // 'auto' 自动 | 'x' | 'y' | 'z'  — 与标签平行段的轴
+            bendRatio: 2 / 3,                  // 斜线水平投影 = 总水平距离的 1/3
+            autoAnchor: true,                  // 连接点按方向在底边上自动滑动
+            showDot: true,
+            dotColor: '#ffffff',
+            dotRadius: 0.06
+          }
+        )
+        scene.add(callout.scene)
+        callout.attach(camera)                  // 启动内部 autoAnchor 循环
+        calloutRef.current = callout
+      }
+
+      // Cleanup on unmount
+      useEffect(() => {
+        return () => {
+          calloutRef.current?.dispose()
+          calloutRef.current = null
+        }
+      }, [])
+
+      return (
+        <Scene
+          rendererType="webgl"
+          bgColor="#1a1a2e"
+          style={{ marginTop: '10px', width: '100%', height: '360px' }}
+          onCreated={handleCreated}
+        />
+      )
+    }
+    ```
+  </TabItem>
+</Tabs>
 
 ## 配置项
 

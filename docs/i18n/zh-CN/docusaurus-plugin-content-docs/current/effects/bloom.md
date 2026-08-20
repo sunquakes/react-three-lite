@@ -6,42 +6,84 @@ title: 光晕效果
 
 组件
 
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
 import Bloom from '@site/src/components/effects/Bloom'
 
 ## 默认用法
 
-<Bloom />
+下面的每个示例都可以用 **WebGPU**（默认）或 **WebGL** 渲染器查看 —— 切换标签页进行对比。
 
-```tsx
-import * as THREE from 'three'
-import { Scene, Bloom } from 'react-three-lite'
+<Tabs groupId="renderer">
+  <TabItem value="webgpu" label="WebGPU" default>
+    <Bloom rendererType="webgpu" />
 
-export default function BloomComponent() {
-  const handleCreated = (scene: THREE.Scene, { camera }: any) => {
-    camera.position.set(0, 1.5, 3)
+    ```tsx
+    import * as THREE from 'three'
+    import { Scene, Bloom } from 'react-three-lite'
 
-    const geometry = new THREE.BoxGeometry()
-    const material = new THREE.MeshLambertMaterial({ color: 0xff5500 })
-    const cube0 = new THREE.Mesh(geometry, material)
-    cube0.position.set(0.5, 0, 0)
-    cube0.layers.set(0)
-    scene.add(cube0)
+    export default function BloomComponent() {
+      const handleCreated = (scene: THREE.Scene, { camera }: any) => {
+        camera.position.set(0, 1.5, 3)
 
-    const cube1 = new THREE.Mesh(geometry, material)
-    cube1.position.set(-0.5, 0, 0)
-    cube1.layers.set(1)
-    scene.add(cube1)
-  }
+        const geometry = new THREE.BoxGeometry()
+        const material = new THREE.MeshLambertMaterial({ color: 0xff5500 })
+        const cube0 = new THREE.Mesh(geometry, material)
+        cube0.position.set(0.5, 0, 0)
+        cube0.layers.set(0)
+        scene.add(cube0)
 
-  return (
-    <div style={{ marginTop: '10px', width: '100%', height: '300px' }}>
-      <Scene onCreated={handleCreated}>
-        <Bloom layer={1} />
-      </Scene>
-    </div>
-  )
-}
-```
+        const cube1 = new THREE.Mesh(geometry, material)
+        cube1.position.set(-0.5, 0, 0)
+        cube1.layers.set(1)
+        scene.add(cube1)
+      }
+
+      return (
+        <div style={{ marginTop: '10px', width: '100%', height: '300px' }}>
+          <Scene onCreated={handleCreated} rendererType="webgpu">
+            <Bloom layer={1} />
+          </Scene>
+        </div>
+      )
+    }
+    ```
+  </TabItem>
+  <TabItem value="webgl" label="WebGL">
+    <Bloom rendererType="webgl" />
+
+    ```tsx
+    import * as THREE from 'three'
+    import { Scene, Bloom } from 'react-three-lite'
+
+    export default function BloomComponent() {
+      const handleCreated = (scene: THREE.Scene, { camera }: any) => {
+        camera.position.set(0, 1.5, 3)
+
+        const geometry = new THREE.BoxGeometry()
+        const material = new THREE.MeshLambertMaterial({ color: 0xff5500 })
+        const cube0 = new THREE.Mesh(geometry, material)
+        cube0.position.set(0.5, 0, 0)
+        cube0.layers.set(0)
+        scene.add(cube0)
+
+        const cube1 = new THREE.Mesh(geometry, material)
+        cube1.position.set(-0.5, 0, 0)
+        cube1.layers.set(1)
+        scene.add(cube1)
+      }
+
+      return (
+        <div style={{ marginTop: '10px', width: '100%', height: '300px' }}>
+          <Scene onCreated={handleCreated} rendererType="webgl">
+            <Bloom layer={1} />
+          </Scene>
+        </div>
+      )
+    }
+    ```
+  </TabItem>
+</Tabs>
 
 ## 属性
 

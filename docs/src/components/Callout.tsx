@@ -3,7 +3,11 @@ import * as THREE from 'three'
 import { Scene, Callout } from 'react-three-lite'
 import type { SceneComponents } from 'react-three-lite'
 
-export default function App() {
+interface CalloutProps {
+  rendererType?: 'webgpu' | 'webgl'
+}
+
+export default function App({ rendererType = 'webgpu' }: CalloutProps = {}) {
   const calloutRef = useRef<Callout | null>(null)
 
   const handleCreated = (scene: THREE.Scene, components: SceneComponents) => {
@@ -66,6 +70,7 @@ export default function App() {
 
   return (
     <Scene
+      rendererType={rendererType}
       bgColor="#1a1a2e"
       style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '360px' }}
       onCreated={handleCreated}

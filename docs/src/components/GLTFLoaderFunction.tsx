@@ -3,7 +3,11 @@ import { Scene, GLTFLoaderAsync } from 'react-three-lite'
 import type { SceneComponents } from 'react-three-lite'
 import type * as THREE from 'three'
 
-export default function GLTFLoaderFunctionComponent() {
+interface GLTFLoaderFunctionProps {
+  rendererType?: 'webgpu' | 'webgl'
+}
+
+export default function GLTFLoaderFunctionComponent({ rendererType }: GLTFLoaderFunctionProps) {
   const handleCreated = useCallback(async (scene: THREE.Scene, components: SceneComponents) => {
     const { camera } = components
     if (!camera) return
@@ -17,7 +21,7 @@ export default function GLTFLoaderFunctionComponent() {
   }, [])
 
   return (
-    <Scene style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '300px' }} bgColor="#1a1a2e" onCreated={handleCreated}>
+    <Scene rendererType={rendererType} style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '300px' }} bgColor="#1a1a2e" onCreated={handleCreated}>
     </Scene>
   )
 }

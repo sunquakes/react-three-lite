@@ -3,7 +3,11 @@ import { Scene } from 'react-three-lite'
 import type { SceneComponents } from 'react-three-lite'
 import type * as THREE from 'three'
 
-export default function OBJLoaderComponentComponent() {
+interface OBJLoaderComponentProps {
+  rendererType?: 'webgpu' | 'webgl'
+}
+
+export default function OBJLoaderComponentComponent({ rendererType }: OBJLoaderComponentProps) {
   const [OBJLoader, setOBJLoader] = useState<any>(null)
 
   useEffect(() => {
@@ -18,7 +22,7 @@ export default function OBJLoaderComponentComponent() {
   }, [])
 
   return (
-    <Scene style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '300px', border: '1px solid #eee', borderRadius: '4px', overflow: 'hidden' }} bgColor="#1a1a2e" onCreated={handleCreated}>
+    <Scene rendererType={rendererType} style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '300px', border: '1px solid #eee', borderRadius: '4px', overflow: 'hidden' }} bgColor="#1a1a2e" onCreated={handleCreated}>
       {OBJLoader && (
         <OBJLoader
           modelUrl="/models/obj/perseverance.obj"

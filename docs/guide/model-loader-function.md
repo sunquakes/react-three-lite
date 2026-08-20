@@ -3,43 +3,80 @@ lang: en-US
 title: Function Loader
 ---
 
-## Type
-
-Function
-
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
 import GLTFLoaderFunction from '@site/src/components/GLTFLoaderFunction'
 import FBXLoaderFunction from '@site/src/components/FBXLoaderFunction'
 import OBJLoaderFunction from '@site/src/components/OBJLoaderFunction'
+
+## Type
+
+Function
 
 ## GLTF Loader
 
 ### Default Usage
 
-<GLTFLoaderFunction />
+Every example below can be viewed with either the **WebGPU** (default) or the **WebGL** renderer — switch tabs to compare.
 
-```tsx
-import { Scene, GLTFLoaderAsync } from 'react-three-lite'
-import type * as THREE from 'three'
+<Tabs groupId="renderer">
+  <TabItem value="webgpu" label="WebGPU" default>
+    <GLTFLoaderFunction rendererType="webgpu" />
 
-function App() {
-  const handleCreated = async (scene: THREE.Scene, { camera }: { camera: THREE.Camera }) => {
-    camera.position.set(0, 1.5, 3)
-    camera.lookAt(0, 0, 0)
+    ```tsx
+    import { Scene, GLTFLoaderAsync } from 'react-three-lite'
+    import type * as THREE from 'three'
 
-    // Load model to scene.
-    const model = await GLTFLoaderAsync('/models/perseverance-draco.glb', true)
-    model.scale.set(0.8, 0.8, 0.8)
-    scene.add(model)
-  }
+    function App() {
+      const handleCreated = async (scene: THREE.Scene, { camera }: { camera: THREE.Camera }) => {
+        camera.position.set(0, 1.5, 3)
+        camera.lookAt(0, 0, 0)
 
-  return (
-    <Scene 
-      style={{ marginTop: '10px', width: '100%', height: '300px' }} 
-      onCreated={handleCreated} 
-    />
-  )
-}
-```
+        // Load model to scene.
+        const model = await GLTFLoaderAsync('/models/perseverance-draco.glb', true)
+        model.scale.set(0.8, 0.8, 0.8)
+        scene.add(model)
+      }
+
+      return (
+        <Scene 
+          rendererType="webgpu"
+          style={{ marginTop: '10px', width: '100%', height: '300px' }} 
+          onCreated={handleCreated} 
+        />
+      )
+    }
+    ```
+  </TabItem>
+  <TabItem value="webgl" label="WebGL">
+    <GLTFLoaderFunction rendererType="webgl" />
+
+    ```tsx
+    import { Scene, GLTFLoaderAsync } from 'react-three-lite'
+    import type * as THREE from 'three'
+
+    function App() {
+      const handleCreated = async (scene: THREE.Scene, { camera }: { camera: THREE.Camera }) => {
+        camera.position.set(0, 1.5, 3)
+        camera.lookAt(0, 0, 0)
+
+        // Load model to scene.
+        const model = await GLTFLoaderAsync('/models/perseverance-draco.glb', true)
+        model.scale.set(0.8, 0.8, 0.8)
+        scene.add(model)
+      }
+
+      return (
+        <Scene 
+          rendererType="webgl"
+          style={{ marginTop: '10px', width: '100%', height: '300px' }} 
+          onCreated={handleCreated} 
+        />
+      )
+    }
+    ```
+  </TabItem>
+</Tabs>
 
 ### Parameters
 
@@ -55,31 +92,64 @@ function App() {
 
 ### Default Usage
 
-<FBXLoaderFunction />
+<Tabs groupId="renderer">
+  <TabItem value="webgpu" label="WebGPU" default>
+    <FBXLoaderFunction rendererType="webgpu" />
 
-```tsx
-import { Scene, FBXLoaderAsync } from 'react-three-lite'
-import type * as THREE from 'three'
+    ```tsx
+    import { Scene, FBXLoaderAsync } from 'react-three-lite'
+    import type * as THREE from 'three'
 
-function App() {
-  const handleCreated = async (scene: THREE.Scene, { camera }: { camera: THREE.Camera }) => {
-    camera.position.set(0, 1.5, 3)
-    camera.lookAt(0, 0, 0)
+    function App() {
+      const handleCreated = async (scene: THREE.Scene, { camera }: { camera: THREE.Camera }) => {
+        camera.position.set(0, 1.5, 3)
+        camera.lookAt(0, 0, 0)
 
-    // Load model to scene.
-    const model = await FBXLoaderAsync('/models/perseverance.fbx')
-    model.scale.set(0.8, 0.8, 0.8)
-    scene.add(model)
-  }
+        // Load model to scene.
+        const model = await FBXLoaderAsync('/models/perseverance.fbx')
+        model.scale.set(0.8, 0.8, 0.8)
+        scene.add(model)
+      }
 
-  return (
-    <Scene 
-      style={{ marginTop: '10px', width: '100%', height: '300px' }} 
-      onCreated={handleCreated} 
-    />
-  )
-}
-```
+      return (
+        <Scene 
+          rendererType="webgpu"
+          style={{ marginTop: '10px', width: '100%', height: '300px' }} 
+          onCreated={handleCreated} 
+        />
+      )
+    }
+    ```
+  </TabItem>
+  <TabItem value="webgl" label="WebGL">
+    <FBXLoaderFunction rendererType="webgl" />
+
+    ```tsx
+    import { Scene, FBXLoaderAsync } from 'react-three-lite'
+    import type * as THREE from 'three'
+
+    function App() {
+      const handleCreated = async (scene: THREE.Scene, { camera }: { camera: THREE.Camera }) => {
+        camera.position.set(0, 1.5, 3)
+        camera.lookAt(0, 0, 0)
+
+        // Load model to scene.
+        const model = await FBXLoaderAsync('/models/perseverance.fbx')
+        model.scale.set(0.8, 0.8, 0.8)
+        scene.add(model)
+      }
+
+      return (
+        <Scene 
+          rendererType="webgl"
+          style={{ marginTop: '10px', width: '100%', height: '300px' }} 
+          onCreated={handleCreated} 
+        />
+      )
+    }
+    ```
+  </TabItem>
+</Tabs>
 
 ### Parameters
 
@@ -93,31 +163,64 @@ function App() {
 
 ### Default Usage
 
-<OBJLoaderFunction />
+<Tabs groupId="renderer">
+  <TabItem value="webgpu" label="WebGPU" default>
+    <OBJLoaderFunction rendererType="webgpu" />
 
-```tsx
-import { Scene, OBJLoaderAsync } from 'react-three-lite'
-import type * as THREE from 'three'
+    ```tsx
+    import { Scene, OBJLoaderAsync } from 'react-three-lite'
+    import type * as THREE from 'three'
 
-function App() {
-  const handleCreated = async (scene: THREE.Scene, { camera }: { camera: THREE.Camera }) => {
-    camera.position.set(0, 1.5, 3)
-    camera.lookAt(0, 0, 0)
+    function App() {
+      const handleCreated = async (scene: THREE.Scene, { camera }: { camera: THREE.Camera }) => {
+        camera.position.set(0, 1.5, 3)
+        camera.lookAt(0, 0, 0)
 
-    // Load model to scene.
-    const model = await OBJLoaderAsync('/models/obj/perseverance.obj', '/models/obj/perseverance.mtl')
-    model.scale.set(0.8, 0.8, 0.8)
-    scene.add(model)
-  }
+        // Load model to scene.
+        const model = await OBJLoaderAsync('/models/obj/perseverance.obj', '/models/obj/perseverance.mtl')
+        model.scale.set(0.8, 0.8, 0.8)
+        scene.add(model)
+      }
 
-  return (
-    <Scene 
-      style={{ marginTop: '10px', width: '100%', height: '300px' }} 
-      onCreated={handleCreated} 
-    />
-  )
-}
-```
+      return (
+        <Scene 
+          rendererType="webgpu"
+          style={{ marginTop: '10px', width: '100%', height: '300px' }} 
+          onCreated={handleCreated} 
+        />
+      )
+    }
+    ```
+  </TabItem>
+  <TabItem value="webgl" label="WebGL">
+    <OBJLoaderFunction rendererType="webgl" />
+
+    ```tsx
+    import { Scene, OBJLoaderAsync } from 'react-three-lite'
+    import type * as THREE from 'three'
+
+    function App() {
+      const handleCreated = async (scene: THREE.Scene, { camera }: { camera: THREE.Camera }) => {
+        camera.position.set(0, 1.5, 3)
+        camera.lookAt(0, 0, 0)
+
+        // Load model to scene.
+        const model = await OBJLoaderAsync('/models/obj/perseverance.obj', '/models/obj/perseverance.mtl')
+        model.scale.set(0.8, 0.8, 0.8)
+        scene.add(model)
+      }
+
+      return (
+        <Scene 
+          rendererType="webgl"
+          style={{ marginTop: '10px', width: '100%', height: '300px' }} 
+          onCreated={handleCreated} 
+        />
+      )
+    }
+    ```
+  </TabItem>
+</Tabs>
 
 ### Parameters
 

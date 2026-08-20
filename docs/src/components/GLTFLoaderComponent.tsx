@@ -3,7 +3,11 @@ import { Scene } from 'react-three-lite'
 import type { SceneComponents } from 'react-three-lite'
 import type * as THREE from 'three'
 
-export default function GLTFLoaderComponentComponent() {
+interface GLTFLoaderComponentProps {
+  rendererType?: 'webgpu' | 'webgl'
+}
+
+export default function GLTFLoaderComponentComponent({ rendererType }: GLTFLoaderComponentProps) {
   const [GLTFLoader, setGLTFLoader] = useState<any>(null)
 
   useEffect(() => {
@@ -18,7 +22,7 @@ export default function GLTFLoaderComponentComponent() {
   }, [])
 
   return (
-    <Scene style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '300px', border: '1px solid #eee', borderRadius: '4px', overflow: 'hidden' }} bgColor="#1a1a2e" onCreated={handleCreated}>
+    <Scene rendererType={rendererType} style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '300px', border: '1px solid #eee', borderRadius: '4px', overflow: 'hidden' }} bgColor="#1a1a2e" onCreated={handleCreated}>
       {GLTFLoader && <GLTFLoader modelUrl="/models/perseverance-draco.glb" scale={[0.8, 0.8, 0.8]} useDraco />}
     </Scene>
   )

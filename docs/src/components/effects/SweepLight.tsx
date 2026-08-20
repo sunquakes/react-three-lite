@@ -3,7 +3,11 @@ import { Scene, GLTFLoaderAsync, SweepLight } from 'react-three-lite'
 import type { SceneComponents } from 'react-three-lite'
 import type * as THREE from 'three'
 
-export default function SweepLightComponent() {
+interface SweepLightProps {
+  rendererType?: 'webgpu' | 'webgl'
+}
+
+export default function SweepLightComponent({ rendererType }: SweepLightProps) {
   const sweepLightRef = useRef<SweepLight | null>(null)
 
   const handleCreated = async (scene: THREE.Scene, components: SceneComponents) => {
@@ -29,6 +33,6 @@ export default function SweepLightComponent() {
   }, [])
 
   return (
-    <Scene bgColor="#1a1a2e" style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '300px' }} onCreated={handleCreated} />
+    <Scene rendererType={rendererType} bgColor="#1a1a2e" style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '300px' }} onCreated={handleCreated} />
   )
 }

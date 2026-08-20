@@ -7,23 +7,46 @@ title: Rain
 
 Component
 
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
 import Rain from '@site/src/components/effects/Rain'
 
 ## Default Usage
 
-<Rain />
+Every example below can be viewed with either the **WebGPU** (default) or the **WebGL** renderer — switch tabs to compare.
 
-```tsx
-import { Scene, Rain } from 'react-three-lite'
+<Tabs groupId="renderer">
+  <TabItem value="webgpu" label="WebGPU" default>
+    <Rain rendererType="webgpu" />
 
-export default function App() {
-  return (
-    <Scene bgColor="#0f172a" style={{ width: '100%', height: '300px' }}>
-      <Rain count={3000} speed={0.8} color={0x87ceeb} range={30} height={20} />
-    </Scene>
-  )
-}
-```
+    ```tsx
+    import { Scene, Rain } from 'react-three-lite'
+
+    export default function App() {
+      return (
+        <Scene bgColor="#0f172a" rendererType="webgpu" style={{ width: '100%', height: '300px' }}>
+          <Rain count={3000} speed={0.8} color={0x87ceeb} range={30} height={20} />
+        </Scene>
+      )
+    }
+    ```
+  </TabItem>
+  <TabItem value="webgl" label="WebGL">
+    <Rain rendererType="webgl" />
+
+    ```tsx
+    import { Scene, Rain } from 'react-three-lite'
+
+    export default function App() {
+      return (
+        <Scene bgColor="#0f172a" rendererType="webgl" style={{ width: '100%', height: '300px' }}>
+          <Rain count={3000} speed={0.8} color={0x87ceeb} range={30} height={20} />
+        </Scene>
+      )
+    }
+    ```
+  </TabItem>
+</Tabs>
 
 ## Props
 
