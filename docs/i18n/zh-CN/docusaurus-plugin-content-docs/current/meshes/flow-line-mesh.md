@@ -17,7 +17,7 @@ import FlowLineMeshOptions from '@site/src/components/meshes/FlowLineMeshOptions
 
 <Tabs groupId="renderer">
   <TabItem value="webgpu" label="WebGPU" default>
-    <FlowLineMesh rendererType="webgpu" />
+    <FlowLineMesh />
 
     ```tsx
     import { Scene, FlowLineMesh, AxisType } from 'react-three-lite'
@@ -65,7 +65,7 @@ import FlowLineMeshOptions from '@site/src/components/meshes/FlowLineMeshOptions
 
       return (
         <div style={{ marginTop: '10px', width: '100%', height: '300px' }}>
-          <Scene rendererType="webgpu" onCreated={handleCreated} />
+          <Scene onCreated={handleCreated} />
         </div>
       )
     }
@@ -132,7 +132,7 @@ import FlowLineMeshOptions from '@site/src/components/meshes/FlowLineMeshOptions
 
 <Tabs groupId="renderer">
   <TabItem value="webgpu" label="WebGPU" default>
-    <FlowLineMeshOptions rendererType="webgpu" />
+    <FlowLineMeshOptions />
 
     ```tsx
     import { Scene, FlowLineMesh, AxisType } from 'react-three-lite'
@@ -180,7 +180,7 @@ import FlowLineMeshOptions from '@site/src/components/meshes/FlowLineMeshOptions
 
       return (
         <div style={{ marginTop: '10px', width: '100%', height: '300px' }}>
-          <Scene rendererType="webgpu" onCreated={handleCreated} />
+          <Scene onCreated={handleCreated} />
         </div>
       )
     }

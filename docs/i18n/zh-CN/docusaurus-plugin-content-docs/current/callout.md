@@ -17,7 +17,7 @@ import Callout from '@site/src/components/Callout'
 
 <Tabs groupId="renderer">
   <TabItem value="webgpu" label="WebGPU" default>
-    <Callout rendererType="webgpu" />
+    <Callout />
 
     ```tsx
     import { useEffect, useRef } from 'react'
@@ -82,7 +82,6 @@ import Callout from '@site/src/components/Callout'
 
       return (
         <Scene
-          rendererType="webgpu"
           bgColor="#1a1a2e"
           style={{ marginTop: '10px', width: '100%', height: '360px' }}
           onCreated={handleCreated}

@@ -17,7 +17,7 @@ import WaveCircleMeshOptions from '@site/src/components/meshes/WaveCircleMeshOpt
 
 <Tabs groupId="renderer">
   <TabItem value="webgpu" label="WebGPU" default>
-    <WaveCircleMesh rendererType="webgpu" />
+    <WaveCircleMesh />
 
     ```tsx
     import { useRef } from 'react'
@@ -37,7 +37,7 @@ import WaveCircleMeshOptions from '@site/src/components/meshes/WaveCircleMeshOpt
 
       return (
         <div style={{ marginTop: '10px', width: '100%', height: '300px' }}>
-          <Scene rendererType="webgpu" onCreated={handleCreated} />
+          <Scene onCreated={handleCreated} />
         </div>
       )
     }
@@ -76,7 +76,7 @@ import WaveCircleMeshOptions from '@site/src/components/meshes/WaveCircleMeshOpt
 
 <Tabs groupId="renderer">
   <TabItem value="webgpu" label="WebGPU" default>
-    <WaveCircleMeshOptions rendererType="webgpu" />
+    <WaveCircleMeshOptions />
 
     ```tsx
     import { useRef } from 'react'
@@ -102,7 +102,7 @@ import WaveCircleMeshOptions from '@site/src/components/meshes/WaveCircleMeshOpt
 
       return (
         <div style={{ marginTop: '10px', width: '100%', height: '300px' }}>
-          <Scene rendererType="webgpu" onCreated={handleCreated} />
+          <Scene onCreated={handleCreated} />
         </div>
       )
     }

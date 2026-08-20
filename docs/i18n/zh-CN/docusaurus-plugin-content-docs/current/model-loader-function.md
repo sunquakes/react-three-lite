@@ -20,7 +20,7 @@ import OBJLoaderFunction from '@site/src/components/OBJLoaderFunction'
 
 <Tabs groupId="renderer">
   <TabItem value="webgpu" label="WebGPU" default>
-    <GLTFLoaderFunction rendererType="webgpu" />
+    <GLTFLoaderFunction />
 
     ```tsx
     import { Scene, GLTFLoaderAsync } from 'react-three-lite'
@@ -39,7 +39,6 @@ import OBJLoaderFunction from '@site/src/components/OBJLoaderFunction'
 
       return (
         <Scene
-          rendererType="webgpu"
           style={{ marginTop: '10px', width: '100%', height: '300px' }}
           onCreated={handleCreated}
         />
@@ -93,7 +92,7 @@ import OBJLoaderFunction from '@site/src/components/OBJLoaderFunction'
 
 <Tabs groupId="renderer">
   <TabItem value="webgpu" label="WebGPU" default>
-    <FBXLoaderFunction rendererType="webgpu" />
+    <FBXLoaderFunction />
 
     ```tsx
     import { Scene, FBXLoaderAsync } from 'react-three-lite'
@@ -112,7 +111,6 @@ import OBJLoaderFunction from '@site/src/components/OBJLoaderFunction'
 
       return (
         <Scene
-          rendererType="webgpu"
           style={{ marginTop: '10px', width: '100%', height: '300px' }}
           onCreated={handleCreated}
         />
@@ -164,7 +162,7 @@ import OBJLoaderFunction from '@site/src/components/OBJLoaderFunction'
 
 <Tabs groupId="renderer">
   <TabItem value="webgpu" label="WebGPU" default>
-    <OBJLoaderFunction rendererType="webgpu" />
+    <OBJLoaderFunction />
 
     ```tsx
     import { Scene, OBJLoaderAsync } from 'react-three-lite'
@@ -183,7 +181,6 @@ import OBJLoaderFunction from '@site/src/components/OBJLoaderFunction'
 
       return (
         <Scene
-          rendererType="webgpu"
           style={{ marginTop: '10px', width: '100%', height: '300px' }}
           onCreated={handleCreated}
         />

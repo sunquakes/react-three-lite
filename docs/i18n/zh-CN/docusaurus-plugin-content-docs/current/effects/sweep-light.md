@@ -17,7 +17,7 @@ import SweepLightComponent from '@site/src/components/effects/SweepLight'
 
 <Tabs groupId="renderer">
   <TabItem value="webgpu" label="WebGPU" default>
-    <SweepLightComponent rendererType="webgpu" />
+    <SweepLightComponent />
 
     ```tsx
     import { useRef, useEffect } from 'react'
@@ -47,7 +47,6 @@ import SweepLightComponent from '@site/src/components/effects/SweepLight'
         <Scene
           bgColor="#0a0a0a"
           onCreated={handleCreated}
-          rendererType="webgpu"
           style={{ marginTop: '10px', width: '100%', height: '300px' }}
         />
       )

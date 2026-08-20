@@ -18,7 +18,7 @@ Every example below can be viewed with either the **WebGPU** (default) or the **
 
 <Tabs groupId="renderer">
   <TabItem value="webgpu" label="WebGPU" default>
-    <SweepLight rendererType="webgpu" />
+    <SweepLight />
 
     ```tsx
     import { useRef, useEffect } from 'react'
@@ -48,7 +48,6 @@ Every example below can be viewed with either the **WebGPU** (default) or the **
         <Scene
           bgColor="#0a0a0a"
           onCreated={handleCreated}
-          rendererType="webgpu"
           style={{ marginTop: '10px', width: '100%', height: '300px' }}
         />
       )

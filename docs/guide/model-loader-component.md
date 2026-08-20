@@ -21,7 +21,7 @@ Every example below can be viewed with either the **WebGPU** (default) or the **
 
 <Tabs groupId="renderer">
   <TabItem value="webgpu" label="WebGPU" default>
-    <GLTFLoaderComponent rendererType="webgpu" />
+    <GLTFLoaderComponent />
 
     ```tsx
     import { Scene, GLTFLoader } from 'react-three-lite'
@@ -33,7 +33,6 @@ Every example below can be viewed with either the **WebGPU** (default) or the **
 
       return (
         <Scene 
-          rendererType="webgpu"
           style={{ marginTop: '10px', width: '100%', height: '300px' }} 
           onCreated={handleCreated}
         >
@@ -92,7 +91,7 @@ Every example below can be viewed with either the **WebGPU** (default) or the **
 
 <Tabs groupId="renderer">
   <TabItem value="webgpu" label="WebGPU" default>
-    <FBXLoaderComponent rendererType="webgpu" />
+    <FBXLoaderComponent />
 
     ```tsx
     import { Scene, FBXLoader } from 'react-three-lite'
@@ -104,7 +103,6 @@ Every example below can be viewed with either the **WebGPU** (default) or the **
 
       return (
         <Scene 
-          rendererType="webgpu"
           style={{ marginTop: '10px', width: '100%', height: '300px' }} 
           onCreated={handleCreated}
         >
@@ -161,7 +159,7 @@ Every example below can be viewed with either the **WebGPU** (default) or the **
 
 <Tabs groupId="renderer">
   <TabItem value="webgpu" label="WebGPU" default>
-    <OBJLoaderComponent rendererType="webgpu" />
+    <OBJLoaderComponent />
 
     ```tsx
     import { Scene, OBJLoader } from 'react-three-lite'
@@ -173,7 +171,6 @@ Every example below can be viewed with either the **WebGPU** (default) or the **
 
       return (
         <Scene 
-          rendererType="webgpu"
           style={{ marginTop: '10px', width: '100%', height: '300px' }} 
           onCreated={handleCreated}
         >

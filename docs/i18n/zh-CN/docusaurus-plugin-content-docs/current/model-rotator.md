@@ -17,7 +17,7 @@ import ModelRotator from '@site/src/components/ModelRotator'
 
 <Tabs groupId="renderer">
   <TabItem value="webgpu" label="WebGPU" default>
-    <ModelRotator rendererType="webgpu" />
+    <ModelRotator />
 
     ```tsx
     import { useRef, useEffect } from 'react'
@@ -54,7 +54,7 @@ import ModelRotator from '@site/src/components/ModelRotator'
       }, [])
 
       return (
-        <Scene rendererType="webgpu" bgColor="#1a1a2e" style={{ marginTop: '10px', width: '100%', height: '300px' }} onCreated={handleCreated} />
+        <Scene bgColor="#1a1a2e" style={{ marginTop: '10px', width: '100%', height: '300px' }} onCreated={handleCreated} />
       )
     }
     ```

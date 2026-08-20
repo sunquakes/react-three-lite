@@ -33,6 +33,33 @@ Visit [r3l.sunquakes.com](https://r3l.sunquakes.com).
 - **Animation** — Model animation playback
 - **WaveCircleMesh / FlowLineMesh** — Custom visualization meshes
 
+## Renderer Support
+
+react-three-lite works with both modern 3D renderers:
+
+| Renderer | Default | Notes |
+|----------|---------|-------|
+| **WebGPU** | ✅ | `WebGPURenderer` from `three/webgpu`. The default renderer. Automatically falls back to the WebGL2 backend when WebGPU is unavailable. |
+| **WebGL** | | Classic `THREE.WebGLRenderer`. TSL shaders are compiled to GLSL via `WebGLNodesHandler`. |
+
+Switch renderers per scene with the `rendererType` prop:
+
+```jsx
+import { Scene } from 'react-three-lite'
+
+function App() {
+  // WebGPU (default)
+  return <Scene style={{ width: '100%', height: '300px' }} />
+}
+
+function AppWebGL() {
+  // WebGL
+  return <Scene rendererType="webgl" style={{ width: '100%', height: '300px' }} />
+}
+```
+
+The docs site shows every example under both renderers with a WebGPU / WebGL tab switch.
+
 ## Install
 
 ### Install `Three.js`

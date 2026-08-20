@@ -16,7 +16,7 @@ import SkyBoxComponent from '@site/src/components/SkyBox'
 
 <Tabs groupId="renderer">
   <TabItem value="webgpu" label="WebGPU" default>
-    <SkyBoxComponent rendererType="webgpu" />
+    <SkyBoxComponent />
 
     ```tsx
     import { useEffect, useRef } from 'react'
@@ -52,7 +52,6 @@ import SkyBoxComponent from '@site/src/components/SkyBox'
 
       return (
         <Scene
-          rendererType="webgpu"
           style={{ marginTop: '10px', width: '100%', height: '300px' }}
           onCreated={handleCreated}
         />

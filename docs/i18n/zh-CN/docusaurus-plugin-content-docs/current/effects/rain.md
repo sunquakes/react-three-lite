@@ -16,14 +16,14 @@ import RainComponent from '@site/src/components/effects/Rain'
 
 <Tabs groupId="renderer">
   <TabItem value="webgpu" label="WebGPU" default>
-    <RainComponent rendererType="webgpu" />
+    <RainComponent />
 
     ```tsx
     import { Scene, Rain } from 'react-three-lite'
 
     export default function App() {
       return (
-        <Scene bgColor="#0f172a" rendererType="webgpu" style={{ width: '100%', height: '300px' }}>
+        <Scene bgColor="#0f172a" style={{ width: '100%', height: '300px' }}>
           <Rain count={3000} speed={0.8} color={0x87ceeb} range={30} height={20} />
         </Scene>
       )

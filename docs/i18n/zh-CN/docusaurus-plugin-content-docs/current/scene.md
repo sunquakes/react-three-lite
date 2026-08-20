@@ -18,7 +18,7 @@ import SceneBgImage from '@site/src/components/SceneBgImage'
 
 <Tabs groupId="renderer">
   <TabItem value="webgpu" label="WebGPU" default>
-    <SceneComponent rendererType="webgpu" />
+    <SceneComponent />
 
     ```tsx
     import { Scene } from 'react-three-lite'
@@ -26,7 +26,6 @@ import SceneBgImage from '@site/src/components/SceneBgImage'
     function App() {
       return (
         <Scene
-          rendererType="webgpu"
           style={{ marginTop: '10px', width: '100%', height: '300px' }}
         />
       )
@@ -55,7 +54,7 @@ import SceneBgImage from '@site/src/components/SceneBgImage'
 
 <Tabs groupId="renderer">
   <TabItem value="webgpu" label="WebGPU" default>
-    <SceneBgColor rendererType="webgpu" />
+    <SceneBgColor />
 
     ```tsx
     import { Scene } from 'react-three-lite'
@@ -63,7 +62,6 @@ import SceneBgImage from '@site/src/components/SceneBgImage'
     function App() {
       return (
         <Scene
-          rendererType="webgpu"
           style={{ marginTop: '10px', width: '100%', height: '400px' }}
           bgColor="#98F5F9"
         />
@@ -94,7 +92,7 @@ import SceneBgImage from '@site/src/components/SceneBgImage'
 
 <Tabs groupId="renderer">
   <TabItem value="webgpu" label="WebGPU" default>
-    <SceneBgImage rendererType="webgpu" />
+    <SceneBgImage />
 
     ```tsx
     import { Scene } from 'react-three-lite'
@@ -102,7 +100,6 @@ import SceneBgImage from '@site/src/components/SceneBgImage'
     function App() {
       return (
         <Scene
-          rendererType="webgpu"
           style={{ marginTop: '10px', width: '100%', height: '300px' }}
           bgImage="/images/examples/bg.jpg"
         />

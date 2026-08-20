@@ -17,7 +17,7 @@ Every example below can be viewed with either the **WebGPU** (default) or the **
 
 <Tabs groupId="renderer">
   <TabItem value="webgpu" label="WebGPU" default>
-    <Bloom rendererType="webgpu" />
+    <Bloom />
 
     ```tsx
     import * as THREE from 'three'
@@ -42,7 +42,7 @@ Every example below can be viewed with either the **WebGPU** (default) or the **
 
       return (
         <div style={{ marginTop: '10px', width: '100%', height: '300px' }}>
-          <Scene onCreated={handleCreated} rendererType="webgpu">
+          <Scene onCreated={handleCreated}>
             <Bloom layer={1} />
           </Scene>
         </div>

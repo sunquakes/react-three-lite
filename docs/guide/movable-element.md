@@ -17,7 +17,7 @@ Every example below can be viewed with either the **WebGPU** (default) or the **
 
 <Tabs groupId="renderer">
   <TabItem value="webgpu" label="WebGPU" default>
-    <MovableElement rendererType="webgpu" />
+    <MovableElement />
 
     ```tsx
     import { Scene, Movable } from 'react-three-lite'
@@ -41,7 +41,6 @@ Every example below can be viewed with either the **WebGPU** (default) or the **
 
       return (
         <Scene 
-          rendererType="webgpu"
           style={{ marginTop: '10px', width: '100%', height: '300px' }} 
           onCreated={handleCreated} 
         />

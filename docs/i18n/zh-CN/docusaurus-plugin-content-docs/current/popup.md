@@ -16,7 +16,7 @@ import PopupComponent from '@site/src/components/Popup'
 
 <Tabs groupId="renderer">
   <TabItem value="webgpu" label="WebGPU" default>
-    <PopupComponent rendererType="webgpu" />
+    <PopupComponent />
 
     ```tsx
     import { Scene, Popup } from 'react-three-lite'
@@ -36,7 +36,6 @@ import PopupComponent from '@site/src/components/Popup'
 
       return (
         <Scene
-          rendererType="webgpu"
           style={{ marginTop: '10px', width: '100%', height: '300px' }}
           onCreated={handleCreated}
         />

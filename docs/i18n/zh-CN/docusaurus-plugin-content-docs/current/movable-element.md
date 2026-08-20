@@ -16,7 +16,7 @@ import MovableElement from '@site/src/components/MovableElement'
 
 <Tabs groupId="renderer">
   <TabItem value="webgpu" label="WebGPU" default>
-    <MovableElement rendererType="webgpu" />
+    <MovableElement />
 
     ```tsx
     import { Scene, Movable } from 'react-three-lite'
@@ -40,7 +40,6 @@ import MovableElement from '@site/src/components/MovableElement'
 
       return (
         <Scene
-          rendererType="webgpu"
           style={{ marginTop: '10px', width: '100%', height: '300px' }}
           onCreated={handleCreated}
         />

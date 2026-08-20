@@ -20,7 +20,7 @@ Every example below can be viewed with either the **WebGPU** (default) or the **
 
 <Tabs groupId="renderer">
   <TabItem value="webgpu" label="WebGPU" default>
-    <Scene rendererType="webgpu" />
+    <Scene />
 
     ```tsx
     import { Scene } from 'react-three-lite'
@@ -28,7 +28,6 @@ Every example below can be viewed with either the **WebGPU** (default) or the **
     function App() {
       return (
         <Scene
-          rendererType="webgpu"
           style={{ marginTop: '10px', width: '100%', height: '300px' }}
         />
       )
@@ -57,7 +56,7 @@ Every example below can be viewed with either the **WebGPU** (default) or the **
 
 <Tabs groupId="renderer">
   <TabItem value="webgpu" label="WebGPU" default>
-    <SceneBgColor rendererType="webgpu" />
+    <SceneBgColor />
 
     ```tsx
     import { Scene } from 'react-three-lite'
@@ -65,7 +64,6 @@ Every example below can be viewed with either the **WebGPU** (default) or the **
     function App() {
       return (
         <Scene
-          rendererType="webgpu"
           style={{ marginTop: '10px', width: '100%', height: '400px' }}
           bgColor="#98F5F9"
         />
@@ -96,7 +94,7 @@ Every example below can be viewed with either the **WebGPU** (default) or the **
 
 <Tabs groupId="renderer">
   <TabItem value="webgpu" label="WebGPU" default>
-    <SceneBgImage rendererType="webgpu" />
+    <SceneBgImage />
 
     ```tsx
     import { Scene } from 'react-three-lite'
@@ -104,7 +102,6 @@ Every example below can be viewed with either the **WebGPU** (default) or the **
     function App() {
       return (
         <Scene
-          rendererType="webgpu"
           style={{ marginTop: '10px', width: '100%', height: '300px' }}
           bgImage="/images/examples/bg.jpg"
         />

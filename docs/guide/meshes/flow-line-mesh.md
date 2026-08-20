@@ -18,7 +18,7 @@ Every example below can be viewed with either the **WebGPU** (default) or the **
 
 <Tabs groupId="renderer">
   <TabItem value="webgpu" label="WebGPU" default>
-    <FlowLineMesh rendererType="webgpu" />
+    <FlowLineMesh />
 
     ```tsx
     import { useRef } from 'react'
@@ -70,7 +70,7 @@ Every example below can be viewed with either the **WebGPU** (default) or the **
 
       return (
         <div style={{ marginTop: '10px', width: '100%', height: '300px' }}>
-          <Scene rendererType="webgpu" onCreated={handleCreated} />
+          <Scene onCreated={handleCreated} />
         </div>
       )
     }
@@ -141,7 +141,7 @@ Every example below can be viewed with either the **WebGPU** (default) or the **
 
 <Tabs groupId="renderer">
   <TabItem value="webgpu" label="WebGPU" default>
-    <FlowLineMeshOptions rendererType="webgpu" />
+    <FlowLineMeshOptions />
 
     ```tsx
     import { useRef } from 'react'
@@ -194,7 +194,7 @@ Every example below can be viewed with either the **WebGPU** (default) or the **
 
       return (
         <div style={{ marginTop: '10px', width: '100%', height: '300px' }}>
-          <Scene rendererType="webgpu" onCreated={handleCreated} />
+          <Scene onCreated={handleCreated} />
         </div>
       )
     }

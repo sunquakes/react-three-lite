@@ -18,7 +18,7 @@ Every example below can be viewed with either the **WebGPU** (default) or the **
 
 <Tabs groupId="renderer">
   <TabItem value="webgpu" label="WebGPU" default>
-    <WaveCircleMesh rendererType="webgpu" />
+    <WaveCircleMesh />
 
     ```tsx
     import { useRef } from 'react'
@@ -38,7 +38,7 @@ Every example below can be viewed with either the **WebGPU** (default) or the **
 
       return (
         <div style={{ marginTop: '10px', width: '100%', height: '300px' }}>
-          <Scene rendererType="webgpu" onCreated={handleCreated} />
+          <Scene onCreated={handleCreated} />
         </div>
       )
     }
@@ -77,7 +77,7 @@ Every example below can be viewed with either the **WebGPU** (default) or the **
 
 <Tabs groupId="renderer">
   <TabItem value="webgpu" label="WebGPU" default>
-    <WaveCircleMeshOptions rendererType="webgpu" />
+    <WaveCircleMeshOptions />
 
     ```tsx
     import { useRef } from 'react'
@@ -103,7 +103,7 @@ Every example below can be viewed with either the **WebGPU** (default) or the **
 
       return (
         <div style={{ marginTop: '10px', width: '100%', height: '300px' }}>
-          <Scene rendererType="webgpu" onCreated={handleCreated} />
+          <Scene onCreated={handleCreated} />
         </div>
       )
     }

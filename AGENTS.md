@@ -104,7 +104,7 @@ import * as THREE from 'three'  // Don't mix both
 
 - Library code in `src/` must branch on `renderer.isWebGPURenderer === true` where the implementation differs between backends (e.g. Bloom: `RenderPipeline` + TSL on WebGPU, `EffectComposer` + `UnrealBloomPass` on WebGL).
 - The demo component in `docs/src/components/` MUST accept a `rendererType?: 'webgpu' | 'webgl'` prop and forward it to `<Scene rendererType={rendererType}>`.
-- The demo MUST be displayed as a Tabs block with one `TabItem` per renderer in BOTH the English and Chinese docs (see the `## Default Usage` section below). The WebGPU tab is marked `default`.
+- The demo MUST be displayed as a Tabs block with one `TabItem` per renderer in BOTH the English and Chinese docs (see the `## Default Usage` section below). The WebGPU tab is marked `default`. Since `webgpu` is the Scene default, the WebGPU tab may omit the prop (`<Xxx />`), while the WebGL tab MUST pass `rendererType="webgl"`.
 - Do NOT add debug probes, `window` globals, or `console` output to demo components.
 
 **Resource Cleanup on Unmount**: When adding new components, meshes, utilities, or any feature that allocates Three.js resources (geometries, materials, textures, shaders, event listeners, animation frames, etc.), you MUST implement proper cleanup in the `useEffect` return function to prevent memory leaks:
@@ -340,7 +340,7 @@ import <ComponentName> from '@site/src/components/<ComponentName>'
 
 <Tabs groupId="renderer">
   <TabItem value="webgpu" label="WebGPU" default>
-    <<ComponentName> rendererType="webgpu" />
+    <<ComponentName> />
   </TabItem>
   <TabItem value="webgl" label="WebGL">
     <<ComponentName> rendererType="webgl" />
@@ -450,4 +450,4 @@ import <ComponentName> from '@site/src/components/<ComponentName>'
 - Options/Props tables use consistent column names
 - Chinese docs for effects go under `current/effects/`, not `current/guide/effects/`
 - Every demo MUST be wrapped in `<Tabs groupId="renderer">` with `webgpu`/`webgl` `TabItem`s (WebGPU marked `default`) in BOTH English and Chinese docs
-- Code examples MUST pass `rendererType="webgpu"` / `rendererType="webgl"` to `<Scene>` matching the surrounding TabItem
+- The WebGPU tab may omit `rendererType` (it is the Scene default); the WebGL tab MUST pass `rendererType="webgl"` to `<Scene>`

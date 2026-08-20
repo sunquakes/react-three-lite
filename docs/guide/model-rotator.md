@@ -18,7 +18,7 @@ Every example below can be viewed with either the **WebGPU** (default) or the **
 
 <Tabs groupId="renderer">
   <TabItem value="webgpu" label="WebGPU" default>
-    <ModelRotator rendererType="webgpu" />
+    <ModelRotator />
 
     ```tsx
     import { useRef, useEffect } from 'react'
@@ -55,7 +55,7 @@ Every example below can be viewed with either the **WebGPU** (default) or the **
       }, [])
 
       return (
-        <Scene rendererType="webgpu" bgColor="#1a1a2e" style={{ marginTop: '10px', width: '100%', height: '300px' }} onCreated={handleCreated} />
+        <Scene bgColor="#1a1a2e" style={{ marginTop: '10px', width: '100%', height: '300px' }} onCreated={handleCreated} />
       )
     }
     ```
