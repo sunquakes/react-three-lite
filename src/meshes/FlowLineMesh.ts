@@ -25,8 +25,8 @@ function createArrowTexture(arrowColor: [number, number, number]): THREE.CanvasT
   const centerX = 256
   const centerY = 128
 
-  // Upper arrow (right-pointing triangle). Its lower edge crosses the
-  // center line so it overlaps the lower arrow — otherwise a wedge-shaped
+  // Upper arrow (right‑pointing triangle). Its lower edge crosses the
+  // center line so it overlaps the lower arrow — otherwise a wedge‑shaped
   // gap forms between the two triangles, which renders as a dark line
   // running through the middle of each arrow.
   ctx.beginPath()
@@ -36,7 +36,7 @@ function createArrowTexture(arrowColor: [number, number, number]): THREE.CanvasT
   ctx.closePath()
   ctx.fill()
 
-  // Lower arrow (right-pointing triangle), mirrored and overlapping.
+  // Lower arrow (right‑pointing triangle), mirrored and overlapping.
   ctx.beginPath()
   ctx.moveTo(centerX - arrowWidth / 2, centerY + arrowHeight / 2)
   ctx.lineTo(centerX + arrowWidth / 2, centerY)
@@ -47,6 +47,10 @@ function createArrowTexture(arrowColor: [number, number, number]): THREE.CanvasT
   const texture = new THREE.CanvasTexture(canvas)
   texture.wrapS = THREE.RepeatWrapping
   texture.wrapT = THREE.RepeatWrapping
+  // 修复：关闭线性过滤，关闭mipmap，消除接缝插值缝隙
+  texture.minFilter = THREE.NearestFilter
+  texture.magFilter = THREE.NearestFilter
+  texture.generateMipmaps = false
 
   return texture
 }
@@ -150,31 +154,48 @@ function getLineMaterial(
   const vUv = varying(uv())
 
   material.fragmentNode = Fn(() => {
-    const scrolledX = fract(vUv.x.mul(uTextureRepeat).sub(uTime))
-    const sampleUv = vec2(scrolledX, vUv.y)
-    const texColor = texture(arrowTexture, sampleUv)
+    const rawUvX = vUv.x.mul(uTextureRepeat).sub(uTime)
+    const scrolledX = fract(rawUvX)
+
+    // 双采样，在fract(0/1)接缝处混合相邻tile，消除缝隙
+    const edgeBlend = smoothstep(float(0.0), float(0.02), scrolledX)
+    const sampleUv0 = vec2(scrolledX, vUv.y)
+    const sampleUv1 = vec2(scrolledX.add(1.0), vUv.y)
+
+    const texColor0 = texture(arrowTexture, sampleUv0)
+    const texColor1 = texture(arrowTexture, sampleUv1)
+    const texColor = mix(texColor1, texColor0, edgeBlend)
 
     const centerDist = abs(vUv.y.sub(float(0.5))).mul(2.0)
 
     const core = oneMinus(smoothstep(float(0), float(0.5), centerDist))
-
     const glowGradient = oneMinus(smoothstep(float(0.3), float(1.2), centerDist))
 
     const glowAlpha = glowGradient.mul(oneMinus(centerDist.div(float(1.5))))
-
     const glow = core.add(glowAlpha.mul(0.8))
 
-    const arrowBrightness = max(max(texColor.r, texColor.g), texColor.b)
+    // 兜底极小值，接缝不会完全归零变黑
+    const arrowBrightness = max(max(max(texColor.r, texColor.g), texColor.b), float(0.001))
 
     const glowColor = uLineColor.rgb.mul(float(1.2).add(glowGradient.mul(0.3)))
 
     const finalColor = mix(glowColor, uArrowColor.mul(1.3), arrowBrightness)
-    const finalAlpha = glow.mul(uLineColor.a).mul(float(0.85).add(float(0.15).mul(arrowBrightness)))
+    const finalAlpha = glow.mul(uLineColor.a)
 
     return vec4(finalColor, finalAlpha)
   })()
 
   return { material, texture: arrowTexture, timeUniform: uTime }
+}
+
+interface FlowLineMeshOptions {
+  points?: THREE.Vector3[]
+  width?: number
+  color?: [number, number, number, number]
+  arrowColor?: [number, number, number]
+  axis?: AxisType
+  textureRepeat?: number
+  speed?: number
 }
 
 export default class FlowLineMesh extends THREE.Mesh {
