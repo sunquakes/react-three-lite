@@ -3,6 +3,7 @@ import { NodeMaterial } from 'three/webgpu'
 import { Fn, uniform, float, vec2, vec4, uv, texture, varying, abs, smoothstep, mix, max, fract, oneMinus } from 'three/tsl'
 import { AxisType } from '../enums/AxisType'
 
+// V-shaped arrow drawing ported from the previous ShaderMaterial version
 function createArrowTexture(arrowColor: [number, number, number]): THREE.CanvasTexture {
   const canvas = document.createElement('canvas')
   canvas.width = 512
@@ -21,33 +22,32 @@ function createArrowTexture(arrowColor: [number, number, number]): THREE.CanvasT
 
   const arrowWidth = 240
   const arrowHeight = 100
-  const overlap = 8
+  const lineThickness = 24
   const centerX = 256
   const centerY = 128
 
-  // Upper arrow (right‑pointing triangle). Its lower edge crosses the
-  // center line so it overlaps the lower arrow — otherwise a wedge‑shaped
-  // gap forms between the two triangles, which renders as a dark line
-  // running through the middle of each arrow.
+  // Upper arm of the V-shaped arrow
   ctx.beginPath()
   ctx.moveTo(centerX - arrowWidth / 2, centerY - arrowHeight / 2)
   ctx.lineTo(centerX + arrowWidth / 2, centerY)
-  ctx.lineTo(centerX - arrowWidth / 2, centerY + overlap)
+  ctx.lineTo(centerX + arrowWidth / 2 - lineThickness, centerY + lineThickness * 0.5)
+  ctx.lineTo(centerX - arrowWidth / 2, centerY - arrowHeight / 2 + lineThickness)
   ctx.closePath()
   ctx.fill()
 
-  // Lower arrow (right‑pointing triangle), mirrored and overlapping.
+  // Lower arm of the V-shaped arrow
   ctx.beginPath()
   ctx.moveTo(centerX - arrowWidth / 2, centerY + arrowHeight / 2)
   ctx.lineTo(centerX + arrowWidth / 2, centerY)
-  ctx.lineTo(centerX - arrowWidth / 2, centerY - overlap)
+  ctx.lineTo(centerX + arrowWidth / 2 - lineThickness, centerY - lineThickness * 0.5)
+  ctx.lineTo(centerX - arrowWidth / 2, centerY + arrowHeight / 2 - lineThickness)
   ctx.closePath()
   ctx.fill()
 
   const texture = new THREE.CanvasTexture(canvas)
   texture.wrapS = THREE.RepeatWrapping
   texture.wrapT = THREE.RepeatWrapping
-  // 修复：关闭线性过滤，关闭mipmap，消除接缝插值缝隙
+  // Keep the seam-prevention settings from the original TSL version
   texture.minFilter = THREE.NearestFilter
   texture.magFilter = THREE.NearestFilter
   texture.generateMipmaps = false
@@ -157,7 +157,7 @@ function getLineMaterial(
     const rawUvX = vUv.x.mul(uTextureRepeat).sub(uTime)
     const scrolledX = fract(rawUvX)
 
-    // 双采样，在fract(0/1)接缝处混合相邻tile，消除缝隙
+    // Double-sample near the wrap seam to hide texture seams, as in the original TSL version
     const edgeBlend = smoothstep(float(0.0), float(0.02), scrolledX)
     const sampleUv0 = vec2(scrolledX, vUv.y)
     const sampleUv1 = vec2(scrolledX.add(1.0), vUv.y)
@@ -174,7 +174,6 @@ function getLineMaterial(
     const glowAlpha = glowGradient.mul(oneMinus(centerDist.div(float(1.5))))
     const glow = core.add(glowAlpha.mul(0.8))
 
-    // 兜底极小值，接缝不会完全归零变黑
     const arrowBrightness = max(max(max(texColor.r, texColor.g), texColor.b), float(0.001))
 
     const glowColor = uLineColor.rgb.mul(float(1.2).add(glowGradient.mul(0.3)))
@@ -236,9 +235,6 @@ export default class FlowLineMesh extends THREE.Mesh {
     animate()
   }
 
-  /**
-   * Dispose flow line mesh and release resources.
-   */
   dispose(): void {
     if (this.animationId !== null) {
       cancelAnimationFrame(this.animationId)
