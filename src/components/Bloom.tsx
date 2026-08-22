@@ -55,6 +55,7 @@ const Bloom = ({
     const height = container.clientHeight
 
     let removeBeforeFrame: (() => void) | undefined
+    let resizeObserver: ResizeObserver | undefined
 
     const isWebGPU = renderer.isWebGPURenderer === true
 
@@ -100,6 +101,21 @@ const Bloom = ({
       )
       bloomComposerRef.current = bloomComposer
 
+      // Keep the composer size in sync with the container. When the scene is
+      // first mounted inside a not-yet-laid-out (or hidden) container the
+      // clientWidth/clientHeight above can be 0, which makes UnrealBloomPass
+      // render into 0x0 targets and silently disables the effect until the
+      // page is reloaded. Scene already resizes its canvas through its own
+      // ResizeObserver, so the composer must follow the same resizes.
+      resizeObserver = new ResizeObserver(() => {
+        const w = container.clientWidth
+        const h = container.clientHeight
+        if (w > 0 && h > 0) {
+          bloomComposer.setSize(w, h)
+        }
+      })
+      resizeObserver.observe(container)
+
       if (layer === 0) {
         // layer 0: Apply bloom to all objects
         setFrame?.((renderer: R3LRenderer, _scene: THREE.Scene, components: SceneComponents) => {
@@ -123,6 +139,7 @@ const Bloom = ({
     // Cleanup
     return () => {
       removeBeforeFrame?.()
+      resizeObserver?.disconnect()
       bloomComposerRef.current?.dispose()
       bloomComposerRef.current = null
       postProcessingRef.current?.dispose()
