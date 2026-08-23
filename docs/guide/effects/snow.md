@@ -24,7 +24,7 @@ Every example below can be viewed with either the **WebGPU** (default) or the **
 
     export default function App() {
       return (
-        <Scene bgColor="#1e293b" style={{ width: '100%', height: '300px' }}>
+        <Scene bgColor="#1a1a2e" style={{ width: '100%', height: '300px' }}>
           <Snow count={2000} speed={0.5} color={0xffffff} range={25} height={18} />
         </Scene>
       )
@@ -39,7 +39,7 @@ Every example below can be viewed with either the **WebGPU** (default) or the **
 
     export default function App() {
       return (
-        <Scene bgColor="#1e293b" rendererType="webgl" style={{ width: '100%', height: '300px' }}>
+        <Scene bgColor="#1a1a2e" rendererType="webgl" style={{ width: '100%', height: '300px' }}>
           <Snow count={2000} speed={0.5} color={0xffffff} range={25} height={18} />
         </Scene>
       )

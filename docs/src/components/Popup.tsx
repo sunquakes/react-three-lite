@@ -27,6 +27,7 @@ export default function PopupComponent({ rendererType = 'webgpu' }: PopupProps =
   return (
     <Scene 
       rendererType={rendererType}
+      bgColor="#ffffff"
       style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '300px' }} 
       onCreated={handleCreated} 
     />

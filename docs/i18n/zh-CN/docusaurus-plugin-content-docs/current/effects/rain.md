@@ -23,7 +23,7 @@ import RainComponent from '@site/src/components/effects/Rain'
 
     export default function App() {
       return (
-        <Scene bgColor="#0f172a" style={{ width: '100%', height: '300px' }}>
+        <Scene bgColor="#1a1a2e" style={{ width: '100%', height: '300px' }}>
           <Rain count={3000} speed={0.8} color={0x87ceeb} range={30} height={20} />
         </Scene>
       )
@@ -38,7 +38,7 @@ import RainComponent from '@site/src/components/effects/Rain'
 
     export default function App() {
       return (
-        <Scene bgColor="#0f172a" rendererType="webgl" style={{ width: '100%', height: '300px' }}>
+        <Scene bgColor="#1a1a2e" rendererType="webgl" style={{ width: '100%', height: '300px' }}>
           <Rain count={3000} speed={0.8} color={0x87ceeb} range={30} height={20} />
         </Scene>
       )

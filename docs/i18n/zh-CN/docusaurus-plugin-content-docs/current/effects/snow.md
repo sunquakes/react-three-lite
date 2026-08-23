@@ -23,7 +23,7 @@ import SnowComponent from '@site/src/components/effects/Snow'
 
     export default function App() {
       return (
-        <Scene bgColor="#1e293b" style={{ width: '100%', height: '300px' }}>
+        <Scene bgColor="#1a1a2e" style={{ width: '100%', height: '300px' }}>
           <Snow count={2000} speed={0.5} color={0xffffff} range={25} height={18} />
         </Scene>
       )
@@ -38,7 +38,7 @@ import SnowComponent from '@site/src/components/effects/Snow'
 
     export default function App() {
       return (
-        <Scene bgColor="#1e293b" rendererType="webgl" style={{ width: '100%', height: '300px' }}>
+        <Scene bgColor="#1a1a2e" rendererType="webgl" style={{ width: '100%', height: '300px' }}>
           <Snow count={2000} speed={0.5} color={0xffffff} range={25} height={18} />
         </Scene>
       )

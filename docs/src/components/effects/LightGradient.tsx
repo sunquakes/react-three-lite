@@ -63,6 +63,6 @@ export default function LightGradientComponent({ rendererType }: LightGradientPr
   }, [])
 
   return (
-    <Scene rendererType={rendererType} style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '300px' }} onCreated={handleCreated} />
+    <Scene rendererType={rendererType} bgColor="#1a1a2e" style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '300px' }} onCreated={handleCreated} />
   )
 }

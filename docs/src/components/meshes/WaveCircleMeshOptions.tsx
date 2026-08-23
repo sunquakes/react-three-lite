@@ -1,5 +1,6 @@
 import { useRef } from 'react'
 import { Scene, WaveCircleMesh, AxisType } from 'react-three-lite'
+import type { SceneComponents } from 'react-three-lite'
 import type * as THREE from 'three'
 
 interface WaveCircleMeshOptionsProps {
@@ -9,7 +10,8 @@ interface WaveCircleMeshOptionsProps {
 export default function WaveCircleMeshOptionsComponent({ rendererType }: WaveCircleMeshOptionsProps) {
   const sceneRef = useRef<THREE.Scene>()
 
-  const handleCreated = (scene: THREE.Scene, { camera }: any) => {
+  const handleCreated = (scene: THREE.Scene, components: SceneComponents) => {
+    const { camera } = components
     if (!camera) return
 
     sceneRef.current = scene
@@ -27,7 +29,7 @@ export default function WaveCircleMeshOptionsComponent({ rendererType }: WaveCir
 
   return (
     <div style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '300px' }}>
-      <Scene rendererType={rendererType} onCreated={handleCreated} />
+      <Scene rendererType={rendererType} bgColor="#1a1a2e" onCreated={handleCreated} />
     </div>
   )
 }

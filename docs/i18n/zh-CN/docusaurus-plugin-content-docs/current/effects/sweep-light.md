@@ -45,7 +45,7 @@ import SweepLightComponent from '@site/src/components/effects/SweepLight'
 
       return (
         <Scene
-          bgColor="#0a0a0a"
+          bgColor="#1a1a2e"
           onCreated={handleCreated}
           style={{ marginTop: '10px', width: '100%', height: '300px' }}
         />
@@ -82,7 +82,7 @@ import SweepLightComponent from '@site/src/components/effects/SweepLight'
 
       return (
         <Scene
-          bgColor="#0a0a0a"
+          bgColor="#1a1a2e"
           onCreated={handleCreated}
           rendererType="webgl"
           style={{ marginTop: '10px', width: '100%', height: '300px' }}

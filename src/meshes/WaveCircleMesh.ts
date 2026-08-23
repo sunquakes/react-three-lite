@@ -14,7 +14,8 @@ import {
   positionLocal,
   frontFacing,
   Discard,
-  If
+  If,
+  clamp
 } from 'three/tsl'
 import { AxisType } from '../enums/AxisType'
 
@@ -31,38 +32,56 @@ interface WaveCircleMeshOptions {
   radius?: number
   color?: Array4
   speed?: number
+  isWebGPU?: boolean
 }
 
 function getGeometry(axis: AxisType, radius: number): THREE.CircleGeometry {
   const geometry = new THREE.CircleGeometry(radius)
-  let rotateMatrix: THREE.Matrix4
+  const rotateMatrix = new THREE.Matrix4()
+
   if (axis === AxisType.X) {
-    rotateMatrix = new THREE.Matrix4().makeRotationY((Math.PI / 180) * 90)
+    rotateMatrix.makeRotationY(Math.PI / 2)
   } else if (axis === AxisType.Y) {
-    rotateMatrix = new THREE.Matrix4().makeRotationX((-Math.PI / 180) * 90)
-  } else {
-    rotateMatrix = new THREE.Matrix4()
+    rotateMatrix.makeRotationX(-Math.PI / 2)
   }
+
   geometry.applyMatrix4(rotateMatrix)
   return geometry
 }
 
 function getMaterial(
   radius?: number,
-  color?: Array4
+  color?: Array4,
+  isWebGPU: boolean = false
 ): { material: NodeMaterial; timeUniform: ReturnType<typeof uniform> } {
   const uTime = uniform(0)
   const uRadius = uniform(radius ?? 1)
   const uCenter = uniform(new THREE.Vector3(0, 0, 0))
-  const uColor = uniform(new THREE.Vector4().fromArray(color ?? [0.6, 0.96, 0.98, 1]))
+
+  // 取自截图WebGL正确颜色 [R,G,B,A]
+  const origColor = color ?? [0.52, 0.78, 0.80, 1]
+
+  let r = origColor[0]
+  let g = origColor[1]
+  let b = origColor[2]
+  const a = origColor[3]
+
+  // WebGPU预校正，抵消sRGB亮度偏差
+  if (isWebGPU) {
+    const brightness = 0.86
+    r = Math.pow(r, 2.2) * brightness
+    g = Math.pow(g, 2.2) * brightness
+    b = Math.pow(b, 2.2) * brightness
+  }
+
+  const uColor = uniform(new THREE.Vector4(r, g, b, a))
 
   const material = new NodeMaterial()
   material.transparent = true
   material.depthWrite = false
+  material.blending = THREE.NormalBlending
 
-  // Fragment shader — distance-based wave with ring bands.
   material.fragmentNode = Fn(() => {
-    // Discard back-facing fragments (original: if (gl_FrontFacing == false) discard)
     If(frontFacing.not(), () => {
       Discard()
     })
@@ -71,19 +90,23 @@ function getMaterial(
     const dis = distance(pos, uCenter)
     const per = fract(uTime)
 
-    // if (per < 0.5) per += 0.5  — branchless: per + (1 - step(0.5, per)) * 0.5
     const adjustedPer = per.add(oneMinus(step(float(0.5), per)).mul(0.5))
-
-    const alpha = oneMinus(dis.div(adjustedPer).div(uRadius))
-
-    // Ring bands: if (dis >= 0.5*m && dis <= 0.52*m || dis >= 0.7*m && dis <= 0.72*m) alpha = 0.8
     const m = adjustedPer.mul(uRadius)
+
+    let alpha = oneMinus(dis.div(m))
+    alpha = clamp(alpha, float(0), float(1))
+
     const inBand1 = step(m.mul(0.5), dis).mul(oneMinus(step(m.mul(0.52), dis)))
     const inBand2 = step(m.mul(0.7), dis).mul(oneMinus(step(m.mul(0.72), dis)))
     const inBands = max(inBand1, inBand2)
 
     const finalAlpha = mix(alpha, float(0.8), inBands)
 
+    If(finalAlpha.lessThanEqual(float(0)), () => {
+      Discard()
+    })
+
+    // Shader直接输出颜色，无额外亮度处理
     return vec4(uColor.rgb, finalAlpha)
   })()
 
@@ -92,32 +115,37 @@ function getMaterial(
 
 export default class WaveCircleMesh extends THREE.Mesh {
   private animationId: number | null = null
-  private timeUniform: ReturnType<typeof uniform>
+  private readonly timeUniform: ReturnType<typeof uniform>
 
   constructor(options: WaveCircleMeshOptions = {}) {
-    const geometry = getGeometry(options.verticalAxis ?? AxisType.Y, options.radius ?? 1)
-    const { material, timeUniform } = getMaterial(options.radius, options.color)
-    super(geometry, material)
+    const geo = getGeometry(options.verticalAxis ?? AxisType.Y, options.radius ?? 1)
+    const { material, timeUniform } = getMaterial(
+      options.radius,
+      options.color,
+      options.isWebGPU ?? false
+    )
+
+    super(geo, material)
+
     this.timeUniform = timeUniform
-    this.create(options.speed ?? 1)
+    this.startAnimate(options.speed ?? 1)
   }
 
-  private create(speed: number) {
-    const animate = () => {
-      this.animationId = requestAnimationFrame(animate)
+  private startAnimate(speed: number) {
+    const tick = () => {
+      this.animationId = requestAnimationFrame(tick)
       ;(this.timeUniform as { value: number }).value += 0.005 * speed
     }
-    animate()
+
+    tick()
   }
 
-  /**
-   * Dispose wave circle mesh and release resources.
-   */
-  dispose(): void {
+  public dispose(): void {
     if (this.animationId !== null) {
       cancelAnimationFrame(this.animationId)
       this.animationId = null
     }
+
     this.geometry.dispose()
     ;(this.material as NodeMaterial).dispose()
   }

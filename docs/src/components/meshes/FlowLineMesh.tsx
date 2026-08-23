@@ -1,5 +1,6 @@
 import { useRef } from 'react'
 import { Scene, FlowLineMesh, AxisType } from 'react-three-lite'
+import type { SceneComponents } from 'react-three-lite'
 import * as THREE from 'three'
 
 interface FlowLineMeshProps {
@@ -9,7 +10,8 @@ interface FlowLineMeshProps {
 export default function FlowLineMeshComponent({ rendererType }: FlowLineMeshProps) {
   const sceneRef = useRef<THREE.Scene>()
 
-  const handleCreated = (scene: THREE.Scene, { camera }: any) => {
+  const handleCreated = (scene: THREE.Scene, components: SceneComponents) => {
+    const { camera } = components
     if (!camera) return
 
     sceneRef.current = scene
@@ -53,7 +55,7 @@ export default function FlowLineMeshComponent({ rendererType }: FlowLineMeshProp
 
   return (
     <div style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '300px' }}>
-      <Scene rendererType={rendererType} onCreated={handleCreated} />
+      <Scene rendererType={rendererType} bgColor="#1a1a2e" onCreated={handleCreated} />
     </div>
   )
 }

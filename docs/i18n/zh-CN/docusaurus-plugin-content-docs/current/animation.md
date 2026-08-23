@@ -36,7 +36,7 @@ import Animation from '@site/src/components/Animation'
       return (
         <Scene
           style={{ marginTop: '10px', width: '100%', height: '300px' }}
-          bgColor="#FAEBD7"
+          bgColor="#1a1a2e"
           onCreated={handleCreated}
         />
       )
@@ -65,7 +65,7 @@ import Animation from '@site/src/components/Animation'
         <Scene
           rendererType="webgl"
           style={{ marginTop: '10px', width: '100%', height: '300px' }}
-          bgColor="#FAEBD7"
+          bgColor="#1a1a2e"
           onCreated={handleCreated}
         />
       )
