@@ -55,7 +55,7 @@ interface SweepMaterialOptions {
 // attribute instead of a per-material uniform.
 function createSweepMaterial(
   options: SweepMaterialOptions
-): { material: NodeMaterial; timeUniform: ReturnType<typeof uniform> } {
+): { material: NodeMaterial; timeUniform: ReturnType<typeof uniform>; colorUniform: { value: THREE.Color } } {
   const {
     color,
     speed,
@@ -147,7 +147,7 @@ function createSweepMaterial(
     return vec4(uColor.rgb, alpha)
   })()
 
-  return { material, timeUniform: uTime }
+  return { material, timeUniform: uTime, colorUniform: uColor }
 }
 
 class SweepLight {
@@ -155,6 +155,11 @@ class SweepLight {
   private geometries: THREE.BufferGeometry[] = []
   private material: NodeMaterial | null = null
   private timeUniform: ReturnType<typeof uniform> | null = null
+  private colorUniform: { value: THREE.Color } | null = null
+  private readonly origColor: THREE.Color
+  private colorApplied: boolean = false
+  private readonly target: SweepTarget
+  private readonly onAdded: () => void
   private startTime: number
   private pausedTime: number = 0
   private isAnimating: boolean = false
@@ -165,6 +170,7 @@ class SweepLight {
     target: SweepTarget,
     options: SweepLightOptions = {}
   ) {
+    this.target = target
     const {
       color = 0x00ffff,
       speed = 0.5,
@@ -189,7 +195,7 @@ class SweepLight {
     }
 
     // Create one shared material for every sweep mesh.
-    const { material, timeUniform } = createSweepMaterial({
+    const { material, timeUniform, colorUniform } = createSweepMaterial({
       color,
       speed,
       width,
@@ -199,6 +205,23 @@ class SweepLight {
     })
     this.material = material
     this.timeUniform = timeUniform
+    this.colorUniform = colorUniform
+    this.origColor = new THREE.Color(color)
+
+    // Auto-detect the renderer from the scene the target belongs to: WebGPU
+    // converts linear to sRGB on final output, so pre-correct the color so it
+    // matches the WebGL output. Listen for the 'added' event to cover the case
+    // where SweepLight is created before the target is added to the scene.
+    this.onAdded = () => {
+      if (this.colorApplied || !this.colorUniform) return
+      const scene = this.getScene(this.target)
+      const renderer = scene?.userData?.renderer as { isWebGPURenderer?: boolean } | undefined
+      if (renderer) this.applyColor(renderer.isWebGPURenderer === true)
+    }
+    target.addEventListener('added', this.onAdded)
+    // If the target is already in the scene at construction time, the 'added'
+    // event will not fire again, so check once here.
+    this.onAdded()
 
     // Create sweep light for each mesh
     targetMeshes.forEach((mesh) => {
@@ -252,6 +275,34 @@ class SweepLight {
 
     this.startTime = performance.now()
     this.animate()
+  }
+
+  // Walk up the parent chain to find the scene an object belongs to
+  private getScene(obj: THREE.Object3D): THREE.Scene | null {
+    let current: THREE.Object3D | null = obj
+    while (current) {
+      if ((current as THREE.Scene).isScene) return current as THREE.Scene
+      current = current.parent
+    }
+    return null
+  }
+
+  // Set the color according to the renderer type; WebGPU needs sRGB brightness
+  // pre-correction so it matches the WebGL output.
+  private applyColor(isWebGPU: boolean): void {
+    if (!this.colorUniform) return
+    this.colorApplied = true
+    if (isWebGPU) {
+      const { r, g, b } = this.origColor
+      const brightness = 0.86
+      this.colorUniform.value.setRGB(
+        Math.pow(r, 2.2) * brightness,
+        Math.pow(g, 2.2) * brightness,
+        Math.pow(b, 2.2) * brightness
+      )
+    } else {
+      this.colorUniform.value.copy(this.origColor)
+    }
   }
 
   /** Internal animation loop using requestAnimationFrame */
@@ -308,6 +359,8 @@ class SweepLight {
   /** Dispose sweep light and stop animation */
   dispose() {
     this.stop()
+
+    this.target.removeEventListener('added', this.onAdded)
 
     this.meshes.forEach((mesh) => {
       mesh.parent?.remove(mesh)

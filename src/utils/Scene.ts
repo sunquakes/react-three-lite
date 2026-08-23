@@ -19,6 +19,11 @@ export default async function (
   const camera = components.camera
   const scene = new THREE.Scene()
 
+  // Attach the renderer to the scene so custom meshes (e.g. WaveCircleMesh)
+  // can read isWebGPURenderer at runtime to adapt to rendering differences
+  // such as color output.
+  scene.userData.renderer = renderer
+
   if (components.light) {
     scene.add(components.light)
   }

@@ -32,7 +32,16 @@ interface WaveCircleMeshOptions {
   radius?: number
   color?: Array4
   speed?: number
-  isWebGPU?: boolean
+}
+
+// Walk up the parent chain to find the scene an object belongs to
+function findScene(start: THREE.Object3D): THREE.Scene | null {
+  let current: THREE.Object3D | null = start
+  while (current) {
+    if ((current as THREE.Scene).isScene) return current as THREE.Scene
+    current = current.parent
+  }
+  return null
 }
 
 function getGeometry(axis: AxisType, radius: number): THREE.CircleGeometry {
@@ -51,30 +60,16 @@ function getGeometry(axis: AxisType, radius: number): THREE.CircleGeometry {
 
 function getMaterial(
   radius?: number,
-  color?: Array4,
-  isWebGPU: boolean = false
-): { material: NodeMaterial; timeUniform: ReturnType<typeof uniform> } {
+  color?: Array4
+): { material: NodeMaterial; timeUniform: ReturnType<typeof uniform>; colorUniform: { value: THREE.Vector4 } } {
   const uTime = uniform(0)
   const uRadius = uniform(radius ?? 1)
   const uCenter = uniform(new THREE.Vector3(0, 0, 0))
 
-  // 取自截图WebGL正确颜色 [R,G,B,A]
+  // Correct color taken from the WebGL screenshot [R,G,B,A]; pre-correction is
+  // applied later based on the renderer type.
   const origColor = color ?? [0.52, 0.78, 0.80, 1]
-
-  let r = origColor[0]
-  let g = origColor[1]
-  let b = origColor[2]
-  const a = origColor[3]
-
-  // WebGPU预校正，抵消sRGB亮度偏差
-  if (isWebGPU) {
-    const brightness = 0.86
-    r = Math.pow(r, 2.2) * brightness
-    g = Math.pow(g, 2.2) * brightness
-    b = Math.pow(b, 2.2) * brightness
-  }
-
-  const uColor = uniform(new THREE.Vector4(r, g, b, a))
+  const uColor = uniform(new THREE.Vector4(origColor[0], origColor[1], origColor[2], origColor[3]))
 
   const material = new NodeMaterial()
   material.transparent = true
@@ -106,29 +101,62 @@ function getMaterial(
       Discard()
     })
 
-    // Shader直接输出颜色，无额外亮度处理
+    // The shader outputs the color directly with no extra brightness handling
     return vec4(uColor.rgb, finalAlpha)
   })()
 
-  return { material, timeUniform: uTime }
+  return { material, timeUniform: uTime, colorUniform: uColor }
 }
 
 export default class WaveCircleMesh extends THREE.Mesh {
   private animationId: number | null = null
   private readonly timeUniform: ReturnType<typeof uniform>
+  private readonly colorUniform: { value: THREE.Vector4 }
+  private readonly origColor: Array4
 
   constructor(options: WaveCircleMeshOptions = {}) {
     const geo = getGeometry(options.verticalAxis ?? AxisType.Y, options.radius ?? 1)
-    const { material, timeUniform } = getMaterial(
-      options.radius,
-      options.color,
-      options.isWebGPU ?? false
-    )
+    const { material, timeUniform, colorUniform } = getMaterial(options.radius, options.color)
 
     super(geo, material)
 
     this.timeUniform = timeUniform
+    this.colorUniform = colorUniform
+    this.origColor = (options.color ?? [0.52, 0.78, 0.80, 1]).slice() as Array4
+
+    // Auto-detect the renderer from the scene the mesh belongs to: WebGPU
+    // converts linear to sRGB on final output, so pre-correct the color so it
+    // matches the WebGL output.
+    this.addEventListener('added', () => {
+      const scene = this.getScene()
+      const renderer = scene?.userData?.renderer as { isWebGPURenderer?: boolean } | undefined
+      if (renderer) this.applyColor(renderer.isWebGPURenderer === true)
+    })
+
     this.startAnimate(options.speed ?? 1)
+  }
+
+  // Walk up the parent chain to find the scene the mesh belongs to
+  private getScene(): THREE.Scene | null {
+    return findScene(this)
+  }
+
+  // Set the color according to the renderer type; WebGPU needs sRGB brightness
+  // pre-correction so it matches the WebGL output.
+  private applyColor(isWebGPU: boolean): void {
+    const [r, g, b, a] = this.origColor
+    const value = this.colorUniform.value
+    if (isWebGPU) {
+      const brightness = 0.86
+      value.set(
+        Math.pow(r, 2.2) * brightness,
+        Math.pow(g, 2.2) * brightness,
+        Math.pow(b, 2.2) * brightness,
+        a
+      )
+    } else {
+      value.set(r, g, b, a)
+    }
   }
 
   private startAnimate(speed: number) {

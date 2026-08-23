@@ -137,7 +137,13 @@ function getLineMaterial(
   color: [number, number, number, number],
   arrowColor: [number, number, number],
   textureRepeat?: number
-): { material: NodeMaterial; texture: THREE.Texture; timeUniform: ReturnType<typeof uniform> } {
+): {
+  material: NodeMaterial
+  texture: THREE.Texture
+  timeUniform: ReturnType<typeof uniform>
+  lineColorUniform: { value: THREE.Vector4 }
+  arrowColorUniform: { value: THREE.Vector3 }
+} {
   const arrowTexture = createArrowTexture(arrowColor)
 
   const uTime = uniform(0)
@@ -184,7 +190,7 @@ function getLineMaterial(
     return vec4(finalColor, finalAlpha)
   })()
 
-  return { material, texture: arrowTexture, timeUniform: uTime }
+  return { material, texture: arrowTexture, timeUniform: uTime, lineColorUniform: uLineColor, arrowColorUniform: uArrowColor }
 }
 
 interface FlowLineMeshOptions {
@@ -197,8 +203,22 @@ interface FlowLineMeshOptions {
   speed?: number
 }
 
+// Walk up the parent chain to find the scene an object belongs to
+function findScene(start: THREE.Object3D): THREE.Scene | null {
+  let current: THREE.Object3D | null = start
+  while (current) {
+    if ((current as THREE.Scene).isScene) return current as THREE.Scene
+    current = current.parent
+  }
+  return null
+}
+
 export default class FlowLineMesh extends THREE.Mesh {
   private timeUniform: ReturnType<typeof uniform>
+  private lineColorUniform: { value: THREE.Vector4 }
+  private arrowColorUniform: { value: THREE.Vector3 }
+  private readonly origLineColor: [number, number, number, number]
+  private readonly origArrowColor: [number, number, number]
   private speed: number = 1
   private startTime: number = Date.now()
   private animationId: number | null = null
@@ -217,11 +237,54 @@ export default class FlowLineMesh extends THREE.Mesh {
     const speed = options.speed ?? 4.0
 
     const { geometry } = createLineGeometry(points, width, axis)
-    const { material, timeUniform } = getLineMaterial(color, arrowColor, textureRepeat)
+    const { material, timeUniform, lineColorUniform, arrowColorUniform } = getLineMaterial(color, arrowColor, textureRepeat)
     super(geometry, material)
     this.timeUniform = timeUniform
+    this.lineColorUniform = lineColorUniform
+    this.arrowColorUniform = arrowColorUniform
+    this.origLineColor = [...color] as [number, number, number, number]
+    this.origArrowColor = [...arrowColor] as [number, number, number]
     this.speed = speed
+
+    // Auto-detect the renderer from the scene the mesh belongs to: WebGPU
+    // converts linear to sRGB on final output, so pre-correct the color so it
+    // matches the WebGL output.
+    this.addEventListener('added', () => {
+      const scene = this.getScene()
+      const renderer = scene?.userData?.renderer as { isWebGPURenderer?: boolean } | undefined
+      if (renderer) this.applyColor(renderer.isWebGPURenderer === true)
+    })
+
     this.startAnimation()
+  }
+
+  // Walk up the parent chain to find the scene the mesh belongs to
+  private getScene(): THREE.Scene | null {
+    return findScene(this)
+  }
+
+  // Set the color according to the renderer type; WebGPU needs sRGB brightness
+  // pre-correction so it matches the WebGL output.
+  private applyColor(isWebGPU: boolean): void {
+    const brightness = 0.86
+    if (isWebGPU) {
+      const [r, g, b, a] = this.origLineColor
+      this.lineColorUniform.value.set(
+        Math.pow(r, 2.2) * brightness,
+        Math.pow(g, 2.2) * brightness,
+        Math.pow(b, 2.2) * brightness,
+        a
+      )
+      const [ar, ag, ab] = this.origArrowColor
+      this.arrowColorUniform.value.set(
+        Math.pow(ar, 2.2) * brightness,
+        Math.pow(ag, 2.2) * brightness,
+        Math.pow(ab, 2.2) * brightness
+      )
+    } else {
+      this.lineColorUniform.value.fromArray(this.origLineColor)
+      this.arrowColorUniform.value.fromArray(this.origArrowColor)
+    }
   }
 
   private startAnimation() {

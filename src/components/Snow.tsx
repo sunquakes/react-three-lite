@@ -53,7 +53,7 @@ const Snow = ({
   const animationIdRef = useRef<number | null>(null)
 
   useEffect(() => {
-    const { scene, sceneComponents } = sceneContext
+    const { scene, sceneComponents, renderer } = sceneContext
     if (!scene || !sceneComponents?.camera) {
       return
     }
@@ -187,6 +187,18 @@ const Snow = ({
     const uWindX = uniform(windX)
     const uWindZ = uniform(windZ)
     const uColor = uniform(new THREE.Color(color))
+    // Custom TSL materials go through a linear to sRGB conversion on WebGPU
+    // final output (making colors brighter), while WebGL writes the raw value
+    // directly, so pre-correct on WebGPU to make both backends match.
+    if (renderer?.isWebGPURenderer === true) {
+      const brightness = 0.86
+      const { r, g, b } = uColor.value
+      uColor.value.setRGB(
+        Math.pow(r, 2.2) * brightness,
+        Math.pow(g, 2.2) * brightness,
+        Math.pow(b, 2.2) * brightness
+      )
+    }
     const uOpacity = uniform(opacity)
     timeUniformRef.current = uTime
 
