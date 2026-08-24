@@ -444,7 +444,14 @@ export async function OBJLoader(
     onProgress?.({ type: 'parse', progress: 0 })
     const model = loader.parse(splitMixedLineObjects(text)) as THREE.Group
     normalizeMaterials(model)
-    onProgress?.({ type: 'parse', progress: 100 })
-    resolve(model)
+    // OBJ/MTL textures also load asynchronously: MTLLoader creates the Texture
+    // object synchronously but fills its image via ImageLoader. If the model is
+    // added before those images are ready, textured surfaces (e.g. a diffuse
+    // body) render black until the GPU upload completes. Hold the model until
+    // every texture is loaded so it never appears black — mirrors FBXLoader.
+    void waitForTextures(model).then(() => {
+      onProgress?.({ type: 'parse', progress: 100 })
+      resolve(model)
+    })
   })
 }
