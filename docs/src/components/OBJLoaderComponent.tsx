@@ -3,12 +3,14 @@ import { Scene } from 'react-three-lite'
 import type { SceneComponents } from 'react-three-lite'
 import type * as THREE from 'three'
 
+type OBJLoaderType = typeof import('react-three-lite')['OBJLoader']
+
 interface OBJLoaderComponentProps {
   rendererType?: 'webgpu' | 'webgl'
 }
 
 export default function OBJLoaderComponentComponent({ rendererType }: OBJLoaderComponentProps) {
-  const [OBJLoader, setOBJLoader] = useState<any>(null)
+  const [OBJLoader, setOBJLoader] = useState<OBJLoaderType | null>(null)
 
   useEffect(() => {
     import('react-three-lite').then((module) => {
@@ -19,8 +21,7 @@ export default function OBJLoaderComponentComponent({ rendererType }: OBJLoaderC
   const handleCreated = useCallback((scene: THREE.Scene, components: SceneComponents) => {
     const { camera } = components
     camera.position.set(0, 1.5, 3)
-    ;(window as any)['__scene_' + (rendererType || 'webgpu')] = scene
-  }, [rendererType])
+  }, [])
 
   return (
     <Scene rendererType={rendererType} style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '300px', border: '1px solid #eee', borderRadius: '4px', overflow: 'hidden' }} bgColor="#1a1a2e" onCreated={handleCreated}>
@@ -29,9 +30,6 @@ export default function OBJLoaderComponentComponent({ rendererType }: OBJLoaderC
           modelUrl="/models/obj/perseverance.obj"
           mtlUrl="/models/obj/perseverance.mtl"
           scale={[0.8, 0.8, 0.8]}
-          onLoaded={(m: THREE.Group) => {
-            ;(window as any)['__obj_' + (rendererType || 'webgpu')] = m
-          }}
         />
       )}
     </Scene>

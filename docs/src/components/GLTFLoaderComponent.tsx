@@ -3,12 +3,14 @@ import { Scene } from 'react-three-lite'
 import type { SceneComponents } from 'react-three-lite'
 import type * as THREE from 'three'
 
+type GLTFLoaderType = typeof import('react-three-lite')['GLTFLoader']
+
 interface GLTFLoaderComponentProps {
   rendererType?: 'webgpu' | 'webgl'
 }
 
 export default function GLTFLoaderComponentComponent({ rendererType }: GLTFLoaderComponentProps) {
-  const [GLTFLoader, setGLTFLoader] = useState<any>(null)
+  const [GLTFLoader, setGLTFLoader] = useState<GLTFLoaderType | null>(null)
 
   useEffect(() => {
     import('react-three-lite').then((module) => {

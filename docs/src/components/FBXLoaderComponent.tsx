@@ -3,12 +3,14 @@ import { Scene } from 'react-three-lite'
 import type { SceneComponents } from 'react-three-lite'
 import type * as THREE from 'three'
 
+type FBXLoaderType = typeof import('react-three-lite')['FBXLoader']
+
 interface FBXLoaderComponentProps {
   rendererType?: 'webgpu' | 'webgl'
 }
 
 export default function FBXLoaderComponentComponent({ rendererType }: FBXLoaderComponentProps) {
-  const [FBXLoader, setFBXLoader] = useState<any>(null)
+  const [FBXLoader, setFBXLoader] = useState<FBXLoaderType | null>(null)
 
   useEffect(() => {
     import('react-three-lite').then((module) => {
