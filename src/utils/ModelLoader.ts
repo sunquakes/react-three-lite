@@ -21,16 +21,54 @@ const TEXTURE_PROPERTIES = [
 ] as const
 
 /**
- * Wait until every texture referenced by the model has finished loading.
+ * Create a LoadingManager plus a promise that settles once every request it
+ * tracks has finished.
  *
- * FBX embeds its image files as data/blob URLs; FBXLoader feeds them to
- * TextureLoader, which creates an <img> and loads it asynchronously. If the
- * model is added to the scene before those images are ready, surfaces with
- * textures render black for the first frames, then "pop" to normal once the
- * GPU upload completes. Holding back the model until all textures are loaded
- * removes that flicker.
+ * Texture loading inside MTLLoader/FBXLoader is fire-and-forget:
+ * `TextureLoader.load()` returns a Texture whose `image` is still `null` and
+ * fills it in later from an ImageLoader callback. Inspecting the textures right
+ * after the model has been parsed therefore tells us nothing about their state.
+ * Routing all requests through our own manager gives us a reliable hook: its
+ * `onLoad` fires when the last image has either loaded or failed.
  */
-async function waitForTextures(model: THREE.Group): Promise<void> {
+function createTextureManager(): { manager: THREE.LoadingManager; waitAll: () => Promise<void> } {
+  let settle: (() => void) | null = null
+  let started = false
+  const done = new Promise<void>((resolve) => {
+    settle = resolve
+  })
+  const manager = new THREE.LoadingManager()
+  manager.onStart = () => {
+    started = true
+  }
+  manager.onLoad = () => {
+    settle?.()
+  }
+
+  return {
+    manager,
+    // `onLoad` never fires when nothing was requested, so resolve immediately
+    // for models without textures.
+    waitAll: () => (started ? done : Promise.resolve())
+  }
+}
+
+/**
+ * Flag every usable texture of the model with `needsUpdate = true` to bump its
+ * version.
+ *
+ * The WebGPU backend binds a placeholder texture the first time it sees a
+ * texture whose image is not decoded yet, records the version it uploaded and
+ * then skips any further upload while that version stays the same, which
+ * leaves the model permanently untextured. Bumping the version forces the real
+ * image to be uploaded. The classic WebGL backend re-checks `image.complete`
+ * every frame and is therefore unaffected.
+ *
+ * Textures whose image never arrived (e.g. a 404 in the MTL file) are skipped:
+ * their version must stay at 0 so the backend keeps using its default texture
+ * instead of dereferencing a null image.
+ */
+function refreshTextures(model: THREE.Group): void {
   const textures = new Set<THREE.Texture>()
   model.traverse((child) => {
     const mesh = child as THREE.Mesh
@@ -47,27 +85,14 @@ async function waitForTextures(model: THREE.Group): Promise<void> {
     }
   })
 
-  const pending: Promise<void>[] = []
   textures.forEach((tex) => {
-    const img = tex.image as HTMLImageElement | undefined
-    if (!img || typeof HTMLImageElement === 'undefined' || !(img instanceof HTMLImageElement)) return
-    if (img.complete) return
-    pending.push(
-      new Promise<void>((resolve) => {
-        const done = () => {
-          img.removeEventListener('load', done)
-          img.removeEventListener('error', done)
-          resolve()
-        }
-        img.addEventListener('load', done)
-        img.addEventListener('error', done)
-      })
-    )
+    const img = tex.image as HTMLImageElement | null | undefined
+    if (!img) return
+    if (typeof HTMLImageElement !== 'undefined' && img instanceof HTMLImageElement) {
+      if (!img.complete || img.naturalWidth === 0) return
+    }
+    tex.needsUpdate = true
   })
-
-  if (pending.length > 0) {
-    await Promise.all(pending)
-  }
 }
 
 // Helper function to validate if ArrayBuffer contains valid model data (not HTML)
@@ -370,14 +395,16 @@ export async function FBXLoader(
   onProgress?: (event: LoadEvent) => void
 ): Promise<THREE.Group> {
   const data = await fileLoader(url, cache)
-  const loader = new THREEFBXLoader()
+  const { manager, waitAll } = createTextureManager()
+  const loader = new THREEFBXLoader(manager)
   return new Promise((resolve) => {
     onProgress?.({ type: 'parse', progress: 0 })
     const model = loader.parse(data, '') as THREE.Group
     normalizeMaterials(model)
-    // FBX textures load asynchronously (data/blob URLs); wait for them so the
-    // model never appears with black surfaces on the first frames.
-    void waitForTextures(model).then(() => {
+    // FBX textures (data/blob URLs) are loaded the same asynchronous way as
+    // OBJ/MTL ones, so wait for the manager before releasing the model.
+    void waitAll().then(() => {
+      refreshTextures(model)
       onProgress?.({ type: 'parse', progress: 100 })
       resolve(model)
     })
@@ -437,19 +464,21 @@ export async function OBJLoader(
   const text = decoder.decode(data)
   const mtlText = decoder.decode(mtlData)
   const loader = new THREEOBJLoader()
-  const mtlLoader = new THREEMTLLoader()
+  const { manager, waitAll } = createTextureManager()
+  const mtlLoader = new THREEMTLLoader(manager)
   const mtl = mtlLoader.parse(mtlText, '')
   loader.setMaterials(mtl)
   return new Promise((resolve) => {
     onProgress?.({ type: 'parse', progress: 0 })
     const model = loader.parse(splitMixedLineObjects(text)) as THREE.Group
     normalizeMaterials(model)
-    // OBJ/MTL textures also load asynchronously: MTLLoader creates the Texture
-    // object synchronously but fills its image via ImageLoader. If the model is
-    // added before those images are ready, textured surfaces (e.g. a diffuse
-    // body) render black until the GPU upload completes. Hold the model until
-    // every texture is loaded so it never appears black — mirrors FBXLoader.
-    void waitForTextures(model).then(() => {
+    // OBJ/MTL textures are requested while the materials are created, but the
+    // Texture objects are handed back with an empty image and filled in later.
+    // Wait for the shared LoadingManager to report that every image request has
+    // settled, then bump the texture versions and release the model, so it is
+    // never added to the scene while its textures are still placeholders.
+    void waitAll().then(() => {
+      refreshTextures(model)
       onProgress?.({ type: 'parse', progress: 100 })
       resolve(model)
     })
