@@ -114,6 +114,8 @@ export default class WaveCircleMesh extends THREE.Mesh {
   private readonly colorUniform: { value: THREE.Vector4 }
   private readonly origColor: Array4
 
+  private readonly onAdded: () => void
+
   constructor(options: WaveCircleMeshOptions = {}) {
     const geo = getGeometry(options.verticalAxis ?? AxisType.Y, options.radius ?? 1)
     const { material, timeUniform, colorUniform } = getMaterial(options.radius, options.color)
@@ -127,11 +129,13 @@ export default class WaveCircleMesh extends THREE.Mesh {
     // Auto-detect the renderer from the scene the mesh belongs to: WebGPU
     // converts linear to sRGB on final output, so pre-correct the color so it
     // matches the WebGL output.
-    this.addEventListener('added', () => {
+    // Keep a reference so the listener can be removed in dispose().
+    this.onAdded = () => {
       const scene = this.getScene()
       const renderer = scene?.userData?.renderer as { isWebGPURenderer?: boolean } | undefined
       if (renderer) this.applyColor(renderer.isWebGPURenderer === true)
-    })
+    }
+    this.addEventListener('added', this.onAdded)
 
     this.startAnimate(options.speed ?? 1)
   }
@@ -174,6 +178,8 @@ export default class WaveCircleMesh extends THREE.Mesh {
       this.animationId = null
     }
 
+    this.removeEventListener('added', this.onAdded)
+    this.parent?.remove(this)
     this.geometry.dispose()
     ;(this.material as NodeMaterial).dispose()
   }

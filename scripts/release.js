@@ -10,9 +10,9 @@ const __dirname = path.dirname(__filename)
 const rootDir = path.resolve(__dirname, '..')
 
 // Get version from command line argument or prompt
-const version = process.argv[2]
+const input = process.argv[2]
 
-if (!version) {
+if (!input) {
   console.error('Please provide a version number:')
   console.error('  npm run release 0.0.7')
   console.error('Or use predefined scripts:')
@@ -22,19 +22,52 @@ if (!version) {
   process.exit(1)
 }
 
-// Validate version format
+const packageJsonPath = path.join(rootDir, 'package.json')
+const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'))
+const oldVersion = packageJson.version
+
 const versionRegex = /^\d+\.\d+\.\d+$/
-if (!versionRegex.test(version)) {
-  console.error('Invalid version format. Please use semantic versioning (e.g., 0.0.7)')
+
+/**
+ * Resolve the target version. The argument is either an explicit semver string
+ * or one of the `patch` / `minor` / `major` bump keywords, which are computed
+ * relative to the version currently in package.json.
+ */
+function resolveVersion(arg) {
+  if (versionRegex.test(arg)) {
+    return arg
+  }
+
+  if (!versionRegex.test(oldVersion)) {
+    console.error(`Cannot bump: package.json version "${oldVersion}" is not valid semver`)
+    process.exit(1)
+  }
+
+  const [major, minor, patch] = oldVersion.split('.').map(Number)
+
+  switch (arg) {
+    case 'major':
+      return `${major + 1}.0.0`
+    case 'minor':
+      return `${major}.${minor + 1}.0`
+    case 'patch':
+      return `${major}.${minor}.${patch + 1}`
+    default:
+      console.error(
+        'Invalid version. Use semantic versioning (e.g., 0.0.7) or one of: patch, minor, major'
+      )
+      process.exit(1)
+  }
+}
+
+const version = resolveVersion(input)
+
+if (version === oldVersion) {
+  console.error(`Version ${version} is already the current version in package.json`)
   process.exit(1)
 }
 
 console.log(`🚀 Releasing version ${version}...`)
-
-// Update package.json version
-const packageJsonPath = path.join(rootDir, 'package.json')
-const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'))
-const oldVersion = packageJson.version
 
 console.log(`📦 Updating version from ${oldVersion} to ${version}...`)
 packageJson.version = version

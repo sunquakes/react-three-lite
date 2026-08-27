@@ -3,6 +3,8 @@ import * as THREE from 'three'
 export default class SkyBox {
   public scene: THREE.CubeTexture
 
+  private disposed = false
+
   constructor(images: string[]) {
     this.scene = this.load(images)
   }
@@ -14,5 +16,15 @@ export default class SkyBox {
     // otherwise WebGPU treats it as linear and the skybox appears black.
     texture.colorSpace = THREE.SRGBColorSpace
     return texture
+  }
+
+  /**
+   * Dispose the cube texture and release GPU memory.
+   * Safe to call more than once.
+   */
+  public dispose(): void {
+    if (this.disposed) return
+    this.disposed = true
+    this.scene.dispose()
   }
 }

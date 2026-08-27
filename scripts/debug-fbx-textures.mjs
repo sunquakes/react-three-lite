@@ -42,9 +42,11 @@ function readProp(pos) {
       const len = dv.getUint32(pos, true)
       const encoding = dv.getUint32(pos + 4, true)
       const compLen = dv.getUint32(pos + 8, true)
-      let data
-      if (encoding === 0) data = buf.subarray(pos + 12, pos + 12 + compLen)
-      else data = zlib.inflateSync(buf.subarray(pos + 12, pos + 12 + compLen))
+      // The payload is decoded to verify the stream is well formed, but this
+      // dump only reports the array header.
+      let _data
+      if (encoding === 0) _data = buf.subarray(pos + 12, pos + 12 + compLen)
+      else _data = zlib.inflateSync(buf.subarray(pos + 12, pos + 12 + compLen))
       value = `<arr ${type} ${len}>`
       size = 12 + compLen
       break

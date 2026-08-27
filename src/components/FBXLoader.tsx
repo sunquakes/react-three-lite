@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import * as THREE from 'three'
-import { FBXLoader as FBXLoaderUtil } from '../utils/ModelLoader'
+import { FBXLoader as FBXLoaderUtil, disposeModel } from '../utils/ModelLoader'
 import { useScene } from '../context/SceneContext'
 
 interface LoadEvent {
@@ -50,23 +50,9 @@ const FBXLoader = ({
     return () => {
       cancelled = true
       if (modelRef.current) {
-        const scene = propScene || sceneContext?.scene
-        if (scene) {
-          scene.remove(modelRef.current)
-        }
-        modelRef.current.traverse((child) => {
-          const obj = child as THREE.Object3D & { geometry?: THREE.BufferGeometry; material?: THREE.Material | THREE.Material[] }
-          if (obj.geometry) {
-            obj.geometry.dispose()
-          }
-          if (obj.material) {
-            if (Array.isArray(obj.material)) {
-              obj.material.forEach((m) => m.dispose())
-            } else {
-              obj.material.dispose()
-            }
-          }
-        })
+        // disposeModel detaches the model from its actual parent and releases
+        // geometries, materials and textures.
+        disposeModel(modelRef.current)
         modelRef.current = null
       }
     }

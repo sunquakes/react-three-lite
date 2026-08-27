@@ -9,7 +9,7 @@ importers:
   .:
     dependencies:
       three:
-        specifier: '>=0.172.0'
+        specifier: '>=0.180.0'
         version: 0.184.0
       three-stdlib:
         specifier: ^2.36.1
@@ -12145,7 +12145,7 @@ snapshots:
       camel-case: 4.1.2
       clean-css: 5.3.3
       commander: 10.0.0
-      entities: 4.4.0
+      entities: 4.5.0
       param-case: 3.0.4
       relateurl: 0.2.7
       terser: 5.48.0
@@ -15593,7 +15593,7 @@ snapshots:
   wrap-ansi@7.0.0:
     dependencies:
       ansi-styles: 4.3.0
-      string-width: 4.1.0
+      string-width: 4.2.0
       strip-ansi: 6.0.1
 
   wrap-ansi@8.0.1:

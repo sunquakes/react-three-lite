@@ -484,3 +484,54 @@ export async function OBJLoader(
     })
   })
 }
+
+/**
+ * Recursively dispose every GPU resource owned by a loaded model:
+ * geometries, materials and — most importantly — the textures referenced by
+ * those materials. Textures are usually the dominant VRAM cost of a model,
+ * so disposing only geometry and material still leaks them.
+ *
+ * Also detaches the model from its parent so the disposed subtree stops taking
+ * part in scene traversal.
+ */
+export function disposeModel(model: THREE.Object3D): void {
+  const disposeMaterial = (material: THREE.Material): void => {
+    // Any material property holding a Texture is a potential leak, so walk the
+    // whole material instead of hardcoding a map/normalMap/... allowlist.
+    for (const value of Object.values(material as unknown as Record<string, unknown>)) {
+      if (value && (value as THREE.Texture).isTexture === true) {
+        ;(value as THREE.Texture).dispose()
+      }
+    }
+    material.dispose()
+  }
+
+  model.traverse((child) => {
+    const obj = child as THREE.Object3D & {
+      geometry?: THREE.BufferGeometry
+      material?: THREE.Material | THREE.Material[]
+    }
+    obj.geometry?.dispose()
+    if (obj.material) {
+      if (Array.isArray(obj.material)) {
+        obj.material.forEach(disposeMaterial)
+      } else {
+        disposeMaterial(obj.material)
+      }
+    }
+  })
+
+  model.parent?.remove(model)
+}
+
+/**
+ * Dispose the shared DRACOLoader and terminate its worker pool.
+ * The loader is a module level singleton created on first use, so without this
+ * its workers stay alive for the whole page lifetime.
+ */
+export function disposeDRACOLoader(): void {
+  if (dracoLoader) {
+    dracoLoader.dispose()
+    dracoLoader = null
+  }
+}

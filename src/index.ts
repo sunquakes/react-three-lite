@@ -13,7 +13,13 @@ import WaveCircleMesh from './meshes/WaveCircleMesh'
 import FlowLineMesh from './meshes/FlowLineMesh'
 import Animation from './utils/Animation'
 import { SceneContext, useScene } from './context/SceneContext'
-import { GLTFLoader as GLTFLoaderFn, FBXLoader as FBXLoaderFn, OBJLoader as OBJLoaderFn } from './utils/ModelLoader'
+import {
+  GLTFLoader as GLTFLoaderFn,
+  FBXLoader as FBXLoaderFn,
+  OBJLoader as OBJLoaderFn,
+  disposeModel,
+  disposeDRACOLoader
+} from './utils/ModelLoader'
 
 import SweepLight from './utils/SweepLight'
 import ModelRotator from './utils/ModelRotator'
@@ -34,6 +40,9 @@ export { SkyBox, Popup, Callout, Movable, WaveCircleMesh, FlowLineMesh, Animatio
 
 // function - async loaders (no hooks)
 export { GLTFLoaderFn as GLTFLoaderAsync, FBXLoaderFn as FBXLoaderAsync, OBJLoaderFn as OBJLoaderAsync }
+
+// function - resource cleanup for models loaded through the async loaders
+export { disposeModel, disposeDRACOLoader }
 
 // enum
 export { AxisType } from './enums/AxisType'

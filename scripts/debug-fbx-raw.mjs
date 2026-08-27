@@ -66,16 +66,18 @@ function readProp(pos) {
 }
 
 function readNode(pos) {
-  let endOffset, numProps, propListLen, header
+  // propListLen is read only to document the FBX header layout; the parser
+  // navigates via endOffset instead.
+  let endOffset, numProps, _propListLen, header
   if (use64) {
     endOffset = Number(dv.getBigUint64(pos, true))
     numProps = dv.getUint32(pos + 8, true)
-    propListLen = dv.getUint32(pos + 12, true)
+    _propListLen = dv.getUint32(pos + 12, true)
     header = 16
   } else {
     endOffset = dv.getUint32(pos, true)
     numProps = dv.getUint32(pos + 4, true)
-    propListLen = dv.getUint32(pos + 8, true)
+    _propListLen = dv.getUint32(pos + 8, true)
     header = 12
   }
   const nameLen = dv.getUint8(pos + header)

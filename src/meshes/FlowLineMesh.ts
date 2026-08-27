@@ -222,6 +222,8 @@ export default class FlowLineMesh extends THREE.Mesh {
   private speed: number = 1
   private startTime: number = Date.now()
   private animationId: number | null = null
+  private arrowTexture: THREE.Texture | null
+  private readonly onAdded: () => void
 
   constructor(options: FlowLineMeshOptions = {}) {
     const points = options.points ?? [
@@ -237,11 +239,12 @@ export default class FlowLineMesh extends THREE.Mesh {
     const speed = options.speed ?? 4.0
 
     const { geometry } = createLineGeometry(points, width, axis)
-    const { material, timeUniform, lineColorUniform, arrowColorUniform } = getLineMaterial(color, arrowColor, textureRepeat)
+    const { material, texture, timeUniform, lineColorUniform, arrowColorUniform } = getLineMaterial(color, arrowColor, textureRepeat)
     super(geometry, material)
     this.timeUniform = timeUniform
     this.lineColorUniform = lineColorUniform
     this.arrowColorUniform = arrowColorUniform
+    this.arrowTexture = texture
     this.origLineColor = [...color] as [number, number, number, number]
     this.origArrowColor = [...arrowColor] as [number, number, number]
     this.speed = speed
@@ -249,11 +252,13 @@ export default class FlowLineMesh extends THREE.Mesh {
     // Auto-detect the renderer from the scene the mesh belongs to: WebGPU
     // converts linear to sRGB on final output, so pre-correct the color so it
     // matches the WebGL output.
-    this.addEventListener('added', () => {
+    // Keep a reference so the listener can be removed in dispose().
+    this.onAdded = () => {
       const scene = this.getScene()
       const renderer = scene?.userData?.renderer as { isWebGPURenderer?: boolean } | undefined
       if (renderer) this.applyColor(renderer.isWebGPURenderer === true)
-    })
+    }
+    this.addEventListener('added', this.onAdded)
 
     this.startAnimation()
   }
@@ -303,7 +308,11 @@ export default class FlowLineMesh extends THREE.Mesh {
       cancelAnimationFrame(this.animationId)
       this.animationId = null
     }
+    this.removeEventListener('added', this.onAdded)
+    this.parent?.remove(this)
     this.geometry.dispose()
     ;(this.material as NodeMaterial).dispose()
+    this.arrowTexture?.dispose()
+    this.arrowTexture = null
   }
 }
