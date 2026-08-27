@@ -5,7 +5,7 @@
   "author": "Shing Rui <sunquakes@outlook.com>",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sunquakes/react-three-lite.git"
+    "url": "https://github.com/sunquakes/react-three-lite"
   },
   "keywords": [
     "three.js",
