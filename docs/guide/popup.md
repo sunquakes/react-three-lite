@@ -7,36 +7,73 @@ title: Popup
 
 Class
 
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
 import Popup from '@site/src/components/Popup'
 
 ## Default Usage
 
-<Popup />
+Every example below can be viewed with either the **WebGPU** (default) or the **WebGL** renderer — switch tabs to compare.
 
-```tsx
-import { Scene, Popup } from 'react-three-lite'
-import TrafficLight from './TrafficLight'
+<Tabs groupId="renderer">
+  <TabItem value="webgpu" label="WebGPU" default>
+    <Popup />
 
-function App() {
-  const handleCreated = (scene, { camera }) => {
-    camera.position.set(0, 1.5, 3)
+    ```tsx
+    import { Scene, Popup } from 'react-three-lite'
+    import TrafficLight from './TrafficLight'
 
-    // Create popup with React component at starting position [0, 1, 0]
-    const popup = new Popup([0, 1, 0], <TrafficLight />, {})
-    scene.add(popup.scene)
-    
-    // Move popup vertically upward to [0, 2, 0] with 2 seconds animation
-    popup.moveTo([0, 2, 0], 2000)
-  }
+    function App() {
+      const handleCreated = (scene, { camera }) => {
+        camera.position.set(0, 1.5, 3)
 
-  return (
-    <Scene 
-      style={{ marginTop: '10px', width: '100%', height: '300px' }} 
-      onCreated={handleCreated} 
-    />
-  )
-}
-```
+        // Create popup with React component at starting position [0, 1, 0]
+        const popup = new Popup([0, 1, 0], <TrafficLight />, {})
+        scene.add(popup.scene)
+        
+        // Move popup vertically upward to [0, 2, 0] with 2 seconds animation
+        popup.moveTo([0, 2, 0], 2000)
+      }
+
+      return (
+        <Scene 
+          style={{ marginTop: '10px', width: '100%', height: '300px' }} 
+          onCreated={handleCreated} 
+        />
+      )
+    }
+    ```
+  </TabItem>
+  <TabItem value="webgl" label="WebGL">
+    <Popup rendererType="webgl" />
+
+    ```tsx
+    import { Scene, Popup } from 'react-three-lite'
+    import TrafficLight from './TrafficLight'
+
+    function App() {
+      const handleCreated = (scene, { camera }) => {
+        camera.position.set(0, 1.5, 3)
+
+        // Create popup with React component at starting position [0, 1, 0]
+        const popup = new Popup([0, 1, 0], <TrafficLight />, {})
+        scene.add(popup.scene)
+        
+        // Move popup vertically upward to [0, 2, 0] with 2 seconds animation
+        popup.moveTo([0, 2, 0], 2000)
+      }
+
+      return (
+        <Scene 
+          rendererType="webgl"
+          style={{ marginTop: '10px', width: '100%', height: '300px' }} 
+          onCreated={handleCreated} 
+        />
+      )
+    }
+    ```
+  </TabItem>
+</Tabs>
 
 ## TrafficLight Component
 

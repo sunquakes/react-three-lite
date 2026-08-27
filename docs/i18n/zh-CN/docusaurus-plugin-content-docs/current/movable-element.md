@@ -6,40 +6,81 @@ title: 可移动元素
 
 类
 
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
 import MovableElement from '@site/src/components/MovableElement'
 
 ## 默认用法
 
-<MovableElement />
+下面的每个示例都可以用 **WebGPU**（默认）或 **WebGL** 渲染器查看 —— 切换标签页进行对比。
 
-```tsx
-import { Scene, Movable } from 'react-three-lite'
-import { GLTFLoader } from 'react-three-lite'
+<Tabs groupId="renderer">
+  <TabItem value="webgpu" label="WebGPU" default>
+    <MovableElement />
 
-function App() {
-  const handleCreated = async (scene, { camera }) => {
-    camera.position.set(0, 1.5, 3)
+    ```tsx
+    import { Scene, Movable } from 'react-three-lite'
+    import { GLTFLoader } from 'react-three-lite'
 
-    // 使用GLTFLoader函数版本加载模型
-    const model = await GLTFLoader('/models/perseverance-draco.glb', true)
-    model.scale.set(0.8, 0.8, 0.8)
-    scene.add(model)
+    function App() {
+      const handleCreated = async (scene, { camera }) => {
+        camera.position.set(0, 1.5, 3)
 
-    // 创建可移动元素，起始位置为 [0, 0, -1]
-    const element = new Movable(model, [0, 0, -1])
+        // 使用GLTFLoader函数版本加载模型
+        const model = await GLTFLoader('/models/perseverance-draco.glb', true)
+        model.scale.set(0.8, 0.8, 0.8)
+        scene.add(model)
 
-    // 在10秒内将模型移动到 [0, 0, 0]
-    element.moveTo([0, 0, 0], 10000)
-  }
+        // 创建可移动元素，起始位置为 [0, 0, -1]
+        const element = new Movable(model, [0, 0, -1])
 
-  return (
-    <Scene
-      style={{ marginTop: '10px', width: '100%', height: '300px' }}
-      onCreated={handleCreated}
-    />
-  )
-}
-```
+        // 在10秒内将模型移动到 [0, 0, 0]
+        element.moveTo([0, 0, 0], 10000)
+      }
+
+      return (
+        <Scene
+          style={{ marginTop: '10px', width: '100%', height: '300px' }}
+          onCreated={handleCreated}
+        />
+      )
+    }
+    ```
+  </TabItem>
+  <TabItem value="webgl" label="WebGL">
+    <MovableElement rendererType="webgl" />
+
+    ```tsx
+    import { Scene, Movable } from 'react-three-lite'
+    import { GLTFLoader } from 'react-three-lite'
+
+    function App() {
+      const handleCreated = async (scene, { camera }) => {
+        camera.position.set(0, 1.5, 3)
+
+        // 使用GLTFLoader函数版本加载模型
+        const model = await GLTFLoader('/models/perseverance-draco.glb', true)
+        model.scale.set(0.8, 0.8, 0.8)
+        scene.add(model)
+
+        // 创建可移动元素，起始位置为 [0, 0, -1]
+        const element = new Movable(model, [0, 0, -1])
+
+        // 在10秒内将模型移动到 [0, 0, 0]
+        element.moveTo([0, 0, 0], 10000)
+      }
+
+      return (
+        <Scene
+          rendererType="webgl"
+          style={{ marginTop: '10px', width: '100%', height: '300px' }}
+          onCreated={handleCreated}
+        />
+      )
+    }
+    ```
+  </TabItem>
+</Tabs>
 
 ## 属性
 

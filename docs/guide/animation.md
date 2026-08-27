@@ -7,36 +7,73 @@ title: Animation
 
 Class
 
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
 import Animation from '@site/src/components/Animation'
 
 ## Default Usage
 
-<Animation />
+Every example below can be viewed with either the **WebGPU** (default) or the **WebGL** renderer — switch tabs to compare.
 
-```tsx
-import { Scene, GLTFLoader, Animation } from 'react-three-lite'
+<Tabs groupId="renderer">
+  <TabItem value="webgpu" label="WebGPU" default>
+    <Animation />
 
-function App() {
-  const handleCreated = async (scene, { camera }) => {
-    scene.position.set(0, -0.5, 0)
-    camera.position.set(0, 1.5, 3)
+    ```tsx
+    import { Scene, GLTFLoader, Animation } from 'react-three-lite'
 
-    const model = await GLTFLoader('/models/perseverance-draco.glb', true)
-    scene.add(model)
+    function App() {
+      const handleCreated = async (scene, { camera }) => {
+        scene.position.set(0, -0.5, 0)
+        camera.position.set(0, 1.5, 3)
 
-    const animation = new Animation(model)
-    animation.playAll()
-  }
+        const model = await GLTFLoader('/models/perseverance-draco.glb', true)
+        scene.add(model)
 
-  return (
-    <Scene 
-      style={{ marginTop: '10px', width: '100%', height: '300px' }} 
-      bgColor="#FAEBD7" 
-      onCreated={handleCreated} 
-    />
-  )
-}
-```
+        const animation = new Animation(model)
+        animation.playAll()
+      }
+
+      return (
+        <Scene 
+          style={{ marginTop: '10px', width: '100%', height: '300px' }} 
+          bgColor="#1a1a2e" 
+          onCreated={handleCreated} 
+        />
+      )
+    }
+    ```
+  </TabItem>
+  <TabItem value="webgl" label="WebGL">
+    <Animation rendererType="webgl" />
+
+    ```tsx
+    import { Scene, GLTFLoader, Animation } from 'react-three-lite'
+
+    function App() {
+      const handleCreated = async (scene, { camera }) => {
+        scene.position.set(0, -0.5, 0)
+        camera.position.set(0, 1.5, 3)
+
+        const model = await GLTFLoader('/models/perseverance-draco.glb', true)
+        scene.add(model)
+
+        const animation = new Animation(model)
+        animation.playAll()
+      }
+
+      return (
+        <Scene 
+          rendererType="webgl"
+          style={{ marginTop: '10px', width: '100%', height: '300px' }} 
+          bgColor="#1a1a2e" 
+          onCreated={handleCreated} 
+        />
+      )
+    }
+    ```
+  </TabItem>
+</Tabs>
 
 ## Methods
 

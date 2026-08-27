@@ -2,6 +2,8 @@
 title: 场景
 ---
 
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
 import SceneComponent from '@site/src/components/Scene'
 import SceneBgColor from '@site/src/components/SceneBgColor'
 import SceneBgImage from '@site/src/components/SceneBgImage'
@@ -12,58 +14,125 @@ import SceneBgImage from '@site/src/components/SceneBgImage'
 
 ## 默认用法
 
-<SceneComponent />
+下面的每个示例都可以用 **WebGPU**（默认）或 **WebGL** 渲染器查看 —— 切换标签页进行对比。
 
-```tsx
-import { Scene } from 'react-three-lite'
+<Tabs groupId="renderer">
+  <TabItem value="webgpu" label="WebGPU" default>
+    <SceneComponent />
 
-function App() {
-  return (
-    <Scene style={{ marginTop: '10px', width: '100%', height: '300px' }} />
-  )
-}
-```
+    ```tsx
+    import { Scene } from 'react-three-lite'
+
+    function App() {
+      return (
+        <Scene
+          style={{ marginTop: '10px', width: '100%', height: '300px' }}
+        />
+      )
+    }
+    ```
+  </TabItem>
+  <TabItem value="webgl" label="WebGL">
+    <SceneComponent rendererType="webgl" />
+
+    ```tsx
+    import { Scene } from 'react-three-lite'
+
+    function App() {
+      return (
+        <Scene
+          rendererType="webgl"
+          style={{ marginTop: '10px', width: '100%', height: '300px' }}
+        />
+      )
+    }
+    ```
+  </TabItem>
+</Tabs>
 
 ## 颜色背景
 
-<SceneBgColor />
+<Tabs groupId="renderer">
+  <TabItem value="webgpu" label="WebGPU" default>
+    <SceneBgColor />
 
-```tsx
-import { Scene } from 'react-three-lite'
+    ```tsx
+    import { Scene } from 'react-three-lite'
 
-function App() {
-  return (
-    <Scene 
-      style={{ marginTop: '10px', width: '100%', height: '400px' }} 
-      bgColor="#98F5F9" 
-    />
-  )
-}
-```
+    function App() {
+      return (
+        <Scene
+          style={{ marginTop: '10px', width: '100%', height: '400px' }}
+          bgColor="#98F5F9"
+        />
+      )
+    }
+    ```
+  </TabItem>
+  <TabItem value="webgl" label="WebGL">
+    <SceneBgColor rendererType="webgl" />
+
+    ```tsx
+    import { Scene } from 'react-three-lite'
+
+    function App() {
+      return (
+        <Scene
+          rendererType="webgl"
+          style={{ marginTop: '10px', width: '100%', height: '400px' }}
+          bgColor="#98F5F9"
+        />
+      )
+    }
+    ```
+  </TabItem>
+</Tabs>
 
 ## 图片背景
 
-<SceneBgImage />
+<Tabs groupId="renderer">
+  <TabItem value="webgpu" label="WebGPU" default>
+    <SceneBgImage />
 
-```tsx
-import { Scene } from 'react-three-lite'
+    ```tsx
+    import { Scene } from 'react-three-lite'
 
-function App() {
-  return (
-    <Scene
-      style={{ marginTop: '10px', width: '100%', height: '300px' }}
-      bgImage="/images/examples/bg.jpg"
-    />
-  )
-}
-```
+    function App() {
+      return (
+        <Scene
+          style={{ marginTop: '10px', width: '100%', height: '300px' }}
+          bgImage="/images/examples/bg.jpg"
+        />
+      )
+    }
+    ```
+  </TabItem>
+  <TabItem value="webgl" label="WebGL">
+    <SceneBgImage rendererType="webgl" />
+
+    ```tsx
+    import { Scene } from 'react-three-lite'
+
+    function App() {
+      return (
+        <Scene
+          rendererType="webgl"
+          style={{ marginTop: '10px', width: '100%', height: '300px' }}
+          bgImage="/images/examples/bg.jpg"
+        />
+      )
+    }
+    ```
+  </TabItem>
+</Tabs>
 
 ## 属性
 
 | 名称          | 类型                        | 默认值                  | 描述                                                                                                   |
 | ------------- | --------------------------- | ----------------------- | ------------------------------------------------------------------------------------------------------ |
 | modelValue    | THREE.Scene                 | THREE.Scene             | `可选` 组件挂载后，值将变为 `THREE.Scene` 实例。                                                       |
-| renderer      | THREE.WebGLRenderer         | THREE.WebGLRenderer     | `可选`                                                                                                 |
+| renderer      | WebGPURenderer \| WebGLRenderer |                     | `可选` 传入自定义渲染器实例，优先级高于 `rendererType`。                                                |
+| rendererType  | 'webgpu' \| 'webgl'         | 'webgpu'                | `可选` 渲染器后端。`'webgpu'` 使用 `WebGPURenderer`（WebGPU 不可用时自动回退到 WebGL2 后端），`'webgl'` 使用经典 `WebGLRenderer`。 |
 | bgColor       | String                      |                         | `可选` 场景的背景颜色。                                                                                |
 | bgImage       | String                      |                         | `可选` 场景的背景图片。                                                                                |
 | camera        | THREE.Camera                | THREE.PerspectiveCamera | `可选` 默认为 PerspectiveCamera。                                                                      |
@@ -77,6 +146,6 @@ function App() {
 | 名称          | 参数                                                                                                                        | 描述                               |
 | ------------- | --------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
 | onCreated     | (scene, &#123;camera, light, axesHelper, gridHelper, controls&#125;) => void                                                | 组件挂载并创建场景时调用。          |
-| onBeforeFrame | (renderer: THREE.WebGLRenderer, scene: THREE.Scene, components: &#123;camera, light, axesHelper, gridHelper, controls&#125;) => void | 每帧渲染前调用。                   |
-| onFrame       | (renderer: THREE.WebGLRenderer, scene: THREE.Scene, components: &#123;camera, light, axesHelper, gridHelper, controls&#125;) => void | 每帧渲染时调用。                   |
-| onAfterFrame  | (renderer: THREE.WebGLRenderer, scene: THREE.Scene, components: &#123;camera, light, axesHelper, gridHelper, controls&#125;) => void | 每帧渲染后调用。                   |
+| onBeforeFrame | (renderer: WebGPURenderer \| WebGLRenderer, scene: THREE.Scene, components: &#123;camera, light, axesHelper, gridHelper, controls&#125;) => void | 每帧渲染前调用。                   |
+| onFrame       | (renderer: WebGPURenderer \| WebGLRenderer, scene: THREE.Scene, components: &#123;camera, light, axesHelper, gridHelper, controls&#125;) => void | 每帧渲染时调用。                   |
+| onAfterFrame  | (renderer: WebGPURenderer \| WebGLRenderer, scene: THREE.Scene, components: &#123;camera, light, axesHelper, gridHelper, controls&#125;) => void | 每帧渲染后调用。                   |

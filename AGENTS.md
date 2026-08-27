@@ -100,6 +100,13 @@ import * as THREE from 'three'  // Don't mix both
 5. Update `docs/sidebars.js`
 6. Add i18n labels in `docs/i18n/*/docusaurus-plugin-content-docs/current.json`
 
+**Dual Renderer Support (Mandatory)**: Every new feature (component, mesh, utility, effect, loader, etc.) MUST support BOTH renderers — `webgpu` (default, `WebGPURenderer`) and `webgl` (classic `THREE.WebGLRenderer` with `WebGLNodesHandler`). The scene renders differently per renderer, so a feature that works on one backend but not the other is considered broken:
+
+- Library code in `src/` must branch on `renderer.isWebGPURenderer === true` where the implementation differs between backends (e.g. Bloom: `RenderPipeline` + TSL on WebGPU, `EffectComposer` + `UnrealBloomPass` on WebGL).
+- The demo component in `docs/src/components/` MUST accept a `rendererType?: 'webgpu' | 'webgl'` prop and forward it to `<Scene rendererType={rendererType}>`.
+- The demo MUST be displayed as a Tabs block with one `TabItem` per renderer in BOTH the English and Chinese docs (see the `## Default Usage` section below). The WebGPU tab is marked `default`. Since `webgpu` is the Scene default, the WebGPU tab may omit the prop (`<Xxx />`), while the WebGL tab MUST pass `rendererType="webgl"`.
+- Do NOT add debug probes, `window` globals, or `console` output to demo components.
+
 **Resource Cleanup on Unmount**: When adding new components, meshes, utilities, or any feature that allocates Three.js resources (geometries, materials, textures, shaders, event listeners, animation frames, etc.), you MUST implement proper cleanup in the `useEffect` return function to prevent memory leaks:
 
 ```tsx
@@ -122,12 +129,13 @@ useEffect(() => {
 
 **Note on Demo Components**: When creating demo components for visual effects:
 - Use `export default function App()` format (not arrow functions)
+- Accept a `rendererType?: 'webgpu' | 'webgl'` prop and forward it to `<Scene rendererType={rendererType}>` so the demo can be shown under both renderers
 - Import from `react-three-lite` directly (not relative paths like `../../..`)
 - Import THREE: `import * as THREE from 'three'` (not `import type`, needs runtime access)
 - Use `onCreated` callback on `<Scene>` to initialize effects (not `useScene()` hook)
 - Set camera position in `handleCreated`: `camera.position.set(0, 0, 4)`
 - Use `camera.lookAt(0, 0, 0)` to ensure proper orientation
-- **Default Scene background color: `bgColor="#1a1a2e"`** — use this for all demo Scenes unless a specific contrasting color is required by the visual effect (e.g. dark themes for Rain/Snow).
+- **Default Scene background color: `bgColor="#1a1a2e"`** — use this for all demo Scenes by default.
 - Set demo container style: `style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '300px' }}`
 - Add cleanup in `useEffect` return function and set refs to `null`
 - Use `// Cleanup on unmount` comment before useEffect
@@ -177,6 +185,8 @@ export default function App() {
 - Pass time-based animation via `uTime` uniform
 - Use `AdditiveBlending` for particle effects
 - Set `transparent: true` and `depthWrite: false`
+- Shaders MUST run on BOTH renderers: write them with three.js TSL (`three/tsl`) instead of raw GLSL so `WebGLNodesHandler` can compile them to GLSL for the classic `WebGLRenderer`. Verify against both renderers before finishing
+- For `NodeMaterial`, always return a `vec4` from the vertex node (it maps to `gl_Position` on the WebGL path)
 
 ### Particle Effect Development Workflow
 When creating particle effects like Rain or Snow, follow this workflow:
@@ -205,7 +215,7 @@ When creating particle effects like Rain or Snow, follow this workflow:
 **5. Create Demo Component**
 - Set front-facing camera: `camera.position.set(0, 0, 4)`
 - Use `camera.lookAt(0, 0, 0)` to ensure proper orientation
-- Default Scene background color: `bgColor="#1a1a2e"` — only use a contrasting color if the visual effect requires it (e.g. lighter/darker to show effect clearly)
+- Default Scene background color: `bgColor="#1a1a2e"` — use it for all demos by default
 - Adjust camera distance for visibility
 - Set demo container style: `style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '300px' }}`
 
@@ -321,7 +331,22 @@ import <ComponentName> from '@site/src/components/<ComponentName>'
 
 ## Default Usage
 
-<<ComponentName> />
+Every example is displayed with the WebGPU / WebGL renderer Tabs:
+
+```markdown
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import <ComponentName> from '@site/src/components/<ComponentName>'
+
+<Tabs groupId="renderer">
+  <TabItem value="webgpu" label="WebGPU" default>
+    <<ComponentName> />
+  </TabItem>
+  <TabItem value="webgl" label="WebGL">
+    <<ComponentName> rendererType="webgl" />
+  </TabItem>
+</Tabs>
+```
 
 ```tsx
 import { Scene, <ComponentName> } from 'react-three-lite'
@@ -329,7 +354,7 @@ import { useRef, useEffect } from 'react'
 import type { SceneComponents } from 'react-three-lite'
 import type * as THREE from 'three'
 
-function <ComponentName>Component() {
+function <ComponentName>Component({ rendererType }: { rendererType?: 'webgpu' | 'webgl' }) {
   const effectRef = useRef<...>(null)
 
   const handleCreated = (scene: THREE.Scene, components: SceneComponents) => {
@@ -350,7 +375,7 @@ function <ComponentName>Component() {
   }, [])
 
   return (
-    <Scene bgColor="#1a1a2e" style={{ marginTop: '10px', width: '100%', height: '300px' }} onCreated={handleCreated} />
+    <Scene rendererType={rendererType} bgColor="#1a1a2e" style={{ marginTop: '10px', width: '100%', height: '300px' }} onCreated={handleCreated} />
   )
 }
 ```
@@ -424,3 +449,5 @@ import <ComponentName> from '@site/src/components/<ComponentName>'
 - Code examples should use `style={{ marginTop: '10px', width: '100%', height: '300px' }}` for Scene containers
 - Options/Props tables use consistent column names
 - Chinese docs for effects go under `current/effects/`, not `current/guide/effects/`
+- Every demo MUST be wrapped in `<Tabs groupId="renderer">` with `webgpu`/`webgl` `TabItem`s (WebGPU marked `default`) in BOTH English and Chinese docs
+- The WebGPU tab may omit `rendererType` (it is the Scene default); the WebGL tab MUST pass `rendererType="webgl"` to `<Scene>`

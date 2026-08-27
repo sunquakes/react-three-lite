@@ -4,6 +4,8 @@ lang: en-US
 title: Scene
 ---
 
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
 import Scene from '@site/src/components/Scene'
 import SceneBgColor from '@site/src/components/SceneBgColor'
 import SceneBgImage from '@site/src/components/SceneBgImage'
@@ -14,58 +16,125 @@ Component
 
 ## Default Usage
 
-<Scene />
+Every example below can be viewed with either the **WebGPU** (default) or the **WebGL** renderer — switch tabs to compare.
 
-```tsx
-import { Scene } from 'react-three-lite'
+<Tabs groupId="renderer">
+  <TabItem value="webgpu" label="WebGPU" default>
+    <Scene />
 
-function App() {
-  return (
-    <Scene style={{ marginTop: '10px', width: '100%', height: '300px' }} />
-  )
-}
-```
+    ```tsx
+    import { Scene } from 'react-three-lite'
+
+    function App() {
+      return (
+        <Scene
+          style={{ marginTop: '10px', width: '100%', height: '300px' }}
+        />
+      )
+    }
+    ```
+  </TabItem>
+  <TabItem value="webgl" label="WebGL">
+    <Scene rendererType="webgl" />
+
+    ```tsx
+    import { Scene } from 'react-three-lite'
+
+    function App() {
+      return (
+        <Scene
+          rendererType="webgl"
+          style={{ marginTop: '10px', width: '100%', height: '300px' }}
+        />
+      )
+    }
+    ```
+  </TabItem>
+</Tabs>
 
 ## Color As Background
 
-<SceneBgColor />
+<Tabs groupId="renderer">
+  <TabItem value="webgpu" label="WebGPU" default>
+    <SceneBgColor />
 
-```tsx
-import { Scene } from 'react-three-lite'
+    ```tsx
+    import { Scene } from 'react-three-lite'
 
-function App() {
-  return (
-    <Scene 
-      style={{ marginTop: '10px', width: '100%', height: '400px' }} 
-      bgColor="#98F5F9" 
-    />
-  )
-}
-```
+    function App() {
+      return (
+        <Scene
+          style={{ marginTop: '10px', width: '100%', height: '400px' }}
+          bgColor="#98F5F9"
+        />
+      )
+    }
+    ```
+  </TabItem>
+  <TabItem value="webgl" label="WebGL">
+    <SceneBgColor rendererType="webgl" />
+
+    ```tsx
+    import { Scene } from 'react-three-lite'
+
+    function App() {
+      return (
+        <Scene
+          rendererType="webgl"
+          style={{ marginTop: '10px', width: '100%', height: '400px' }}
+          bgColor="#98F5F9"
+        />
+      )
+    }
+    ```
+  </TabItem>
+</Tabs>
 
 ## Image As Background
 
-<SceneBgImage />
+<Tabs groupId="renderer">
+  <TabItem value="webgpu" label="WebGPU" default>
+    <SceneBgImage />
 
-```tsx
-import { Scene } from 'react-three-lite'
+    ```tsx
+    import { Scene } from 'react-three-lite'
 
-function App() {
-  return (
-    <Scene 
-      style={{ marginTop: '10px', width: '100%', height: '300px' }} 
-      bgImage="/images/examples/bg.jpg" 
-    />
-  )
-}
-```
+    function App() {
+      return (
+        <Scene
+          style={{ marginTop: '10px', width: '100%', height: '300px' }}
+          bgImage="/images/examples/bg.jpg"
+        />
+      )
+    }
+    ```
+  </TabItem>
+  <TabItem value="webgl" label="WebGL">
+    <SceneBgImage rendererType="webgl" />
+
+    ```tsx
+    import { Scene } from 'react-three-lite'
+
+    function App() {
+      return (
+        <Scene
+          rendererType="webgl"
+          style={{ marginTop: '10px', width: '100%', height: '300px' }}
+          bgImage="/images/examples/bg.jpg"
+        />
+      )
+    }
+    ```
+  </TabItem>
+</Tabs>
 
 ## Props
 
 | Name          | Type                        | Default                 | Description                                                                                            |
 | ------------- | --------------------------- | ----------------------- | ------------------------------------------------------------------------------------------------------ |
 | modelValue    | THREE.Scene                 | THREE.Scene             | `optional` The value will be the `THREE.Scene` instance from `undefined` after the components mounted. |
-| renderer      | THREE.WebGLRenderer         | THREE.WebGLRenderer     | `optional`                                                                                             |
+| renderer      | WebGPURenderer \| WebGLRenderer |                     | `optional` Provide a custom renderer instance. Takes precedence over `rendererType`.                  |
+| rendererType  | 'webgpu' \| 'webgl'         | 'webgpu'                | `optional` Renderer backend. `'webgpu'` uses `WebGPURenderer` (falls back to the WebGL2 backend when WebGPU is unavailable), `'webgl'` uses the classic `WebGLRenderer`. |
 | bgColor       | String                      |                         | `optional` The background color of the scene.                                                          |
 | bgImage       | String                      |                         | `optional` The background image of the scene.                                                           |
 | camera        | THREE.Camera                | THREE.PerspectiveCamera | `optional` Defaults to a PerspectiveCamera.                                                            |
@@ -79,6 +148,6 @@ function App() {
 | Name          | Parameters                                                                                                      | Description                                                    |
 | ------------- | --------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
 | onCreated     | (scene, &#123;camera, light, axesHelper, controls&#125;) => void                                                         | Called when the component is mounted and the scene is created. |
-| onBeforeFrame | (renderer: THREE.WebGLRenderer, scene: THREE.Scene, components: &#123;camera, light, axesHelper, controls&#125;) => void | Called before each frame is rendered.                         |
-| onFrame       | (renderer: THREE.WebGLRenderer, scene: THREE.Scene, components: &#123;camera, light, axesHelper, controls&#125;) => void | Called during each frame render loop.                         |
-| onAfterFrame  | (renderer: THREE.WebGLRenderer, scene: THREE.Scene, components: &#123;camera, light, axesHelper, controls&#125;) => void | Called after each frame is rendered.                          |
+| onBeforeFrame | (renderer: WebGPURenderer \| WebGLRenderer, scene: THREE.Scene, components: &#123;camera, light, axesHelper, controls&#125;) => void | Called before each frame is rendered.                         |
+| onFrame       | (renderer: WebGPURenderer \| WebGLRenderer, scene: THREE.Scene, components: &#123;camera, light, axesHelper, controls&#125;) => void | Called during each frame render loop.                         |
+| onAfterFrame  | (renderer: WebGPURenderer \| WebGLRenderer, scene: THREE.Scene, components: &#123;camera, light, axesHelper, controls&#125;) => void | Called after each frame is rendered.                          |

@@ -3,6 +3,8 @@ lang: en-US
 title: Component Loader
 ---
 
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
 import GLTFLoaderComponent from '@site/src/components/GLTFLoaderComponent'
 import FBXLoaderComponent from '@site/src/components/FBXLoaderComponent'
 import OBJLoaderComponent from '@site/src/components/OBJLoaderComponent'
@@ -15,26 +17,55 @@ Component
 
 ### Default Usage
 
-<GLTFLoaderComponent />
+Every example below can be viewed with either the **WebGPU** (default) or the **WebGL** renderer — switch tabs to compare.
 
-```tsx
-import { Scene, GLTFLoader } from 'react-three-lite'
+<Tabs groupId="renderer">
+  <TabItem value="webgpu" label="WebGPU" default>
+    <GLTFLoaderComponent />
 
-function App() {
-  const handleCreated = (scene, { camera }) => {
-    camera.position.set(0, 1.5, 3)
-  }
+    ```tsx
+    import { Scene, GLTFLoader } from 'react-three-lite'
 
-  return (
-    <Scene 
-      style={{ marginTop: '10px', width: '100%', height: '300px' }} 
-      onCreated={handleCreated}
-    >
-      <GLTFLoader modelUrl="/models/perseverance-draco.glb" scale={[0.8, 0.8, 0.8]} useDraco />
-    </Scene>
-  )
-}
-```
+    function App() {
+      const handleCreated = (scene, { camera }) => {
+        camera.position.set(0, 1.5, 3)
+      }
+
+      return (
+        <Scene 
+          style={{ marginTop: '10px', width: '100%', height: '300px' }} 
+          onCreated={handleCreated}
+        >
+          <GLTFLoader modelUrl="/models/perseverance-draco.glb" scale={[0.8, 0.8, 0.8]} useDraco />
+        </Scene>
+      )
+    }
+    ```
+  </TabItem>
+  <TabItem value="webgl" label="WebGL">
+    <GLTFLoaderComponent rendererType="webgl" />
+
+    ```tsx
+    import { Scene, GLTFLoader } from 'react-three-lite'
+
+    function App() {
+      const handleCreated = (scene, { camera }) => {
+        camera.position.set(0, 1.5, 3)
+      }
+
+      return (
+        <Scene 
+          rendererType="webgl"
+          style={{ marginTop: '10px', width: '100%', height: '300px' }} 
+          onCreated={handleCreated}
+        >
+          <GLTFLoader modelUrl="/models/perseverance-draco.glb" scale={[0.8, 0.8, 0.8]} useDraco />
+        </Scene>
+      )
+    }
+    ```
+  </TabItem>
+</Tabs>
 
 ### Props
 
@@ -58,26 +89,53 @@ function App() {
 
 ### Default Usage
 
-<FBXLoaderComponent />
+<Tabs groupId="renderer">
+  <TabItem value="webgpu" label="WebGPU" default>
+    <FBXLoaderComponent />
 
-```tsx
-import { Scene, FBXLoader } from 'react-three-lite'
+    ```tsx
+    import { Scene, FBXLoader } from 'react-three-lite'
 
-function App() {
-  const handleCreated = (scene, { camera }) => {
-    camera.position.set(0, 1.5, 3)
-  }
+    function App() {
+      const handleCreated = (scene, { camera }) => {
+        camera.position.set(0, 1.5, 3)
+      }
 
-  return (
-    <Scene 
-      style={{ marginTop: '10px', width: '100%', height: '300px' }} 
-      onCreated={handleCreated}
-    >
-      <FBXLoader modelUrl="/models/perseverance.fbx" scale={[0.8, 0.8, 0.8]} />
-    </Scene>
-  )
-}
-```
+      return (
+        <Scene 
+          style={{ marginTop: '10px', width: '100%', height: '300px' }} 
+          onCreated={handleCreated}
+        >
+          <FBXLoader modelUrl="/models/perseverance.fbx" scale={[0.8, 0.8, 0.8]} />
+        </Scene>
+      )
+    }
+    ```
+  </TabItem>
+  <TabItem value="webgl" label="WebGL">
+    <FBXLoaderComponent rendererType="webgl" />
+
+    ```tsx
+    import { Scene, FBXLoader } from 'react-three-lite'
+
+    function App() {
+      const handleCreated = (scene, { camera }) => {
+        camera.position.set(0, 1.5, 3)
+      }
+
+      return (
+        <Scene 
+          rendererType="webgl"
+          style={{ marginTop: '10px', width: '100%', height: '300px' }} 
+          onCreated={handleCreated}
+        >
+          <FBXLoader modelUrl="/models/perseverance.fbx" scale={[0.8, 0.8, 0.8]} />
+        </Scene>
+      )
+    }
+    ```
+  </TabItem>
+</Tabs>
 
 ### Props
 
@@ -99,30 +157,61 @@ function App() {
 
 ### Default Usage
 
-<OBJLoaderComponent />
+<Tabs groupId="renderer">
+  <TabItem value="webgpu" label="WebGPU" default>
+    <OBJLoaderComponent />
 
-```tsx
-import { Scene, OBJLoader } from 'react-three-lite'
+    ```tsx
+    import { Scene, OBJLoader } from 'react-three-lite'
 
-function App() {
-  const handleCreated = (scene, { camera }) => {
-    camera.position.set(0, 1.5, 3)
-  }
+    function App() {
+      const handleCreated = (scene, { camera }) => {
+        camera.position.set(0, 1.5, 3)
+      }
 
-  return (
-    <Scene 
-      style={{ marginTop: '10px', width: '100%', height: '300px' }} 
-      onCreated={handleCreated}
-    >
-      <OBJLoader
-        modelUrl="/models/obj/perseverance.obj"
-        mtlUrl="/models/obj/perseverance.mtl"
-        scale={[0.8, 0.8, 0.8]}
-      />
-    </Scene>
-  )
-}
-```
+      return (
+        <Scene 
+          style={{ marginTop: '10px', width: '100%', height: '300px' }} 
+          onCreated={handleCreated}
+        >
+          <OBJLoader
+            modelUrl="/models/obj/perseverance.obj"
+            mtlUrl="/models/obj/perseverance.mtl"
+            scale={[0.8, 0.8, 0.8]}
+          />
+        </Scene>
+      )
+    }
+    ```
+  </TabItem>
+  <TabItem value="webgl" label="WebGL">
+    <OBJLoaderComponent rendererType="webgl" />
+
+    ```tsx
+    import { Scene, OBJLoader } from 'react-three-lite'
+
+    function App() {
+      const handleCreated = (scene, { camera }) => {
+        camera.position.set(0, 1.5, 3)
+      }
+
+      return (
+        <Scene 
+          rendererType="webgl"
+          style={{ marginTop: '10px', width: '100%', height: '300px' }} 
+          onCreated={handleCreated}
+        >
+          <OBJLoader
+            modelUrl="/models/obj/perseverance.obj"
+            mtlUrl="/models/obj/perseverance.mtl"
+            scale={[0.8, 0.8, 0.8]}
+          />
+        </Scene>
+      )
+    }
+    ```
+  </TabItem>
+</Tabs>
 
 ### Props
 

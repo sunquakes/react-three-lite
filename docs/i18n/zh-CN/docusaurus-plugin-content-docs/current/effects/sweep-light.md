@@ -7,45 +7,91 @@ title: 扫光效果
 
 类
 
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
 import SweepLightComponent from '@site/src/components/effects/SweepLight'
 
 ## 默认用法
 
-<SweepLightComponent />
+下面的每个示例都可以用 **WebGPU**（默认）或 **WebGL** 渲染器查看 —— 切换标签页进行对比。
 
-```tsx
-import { useRef, useEffect } from 'react'
-import { Scene, GLTFLoaderAsync, SweepLight } from 'react-three-lite'
-import type * as THREE from 'three'
+<Tabs groupId="renderer">
+  <TabItem value="webgpu" label="WebGPU" default>
+    <SweepLightComponent />
 
-export default function App() {
-  const sweepLightRef = useRef<SweepLight | null>(null)
+    ```tsx
+    import { useRef, useEffect } from 'react'
+    import { Scene, GLTFLoaderAsync, SweepLight } from 'react-three-lite'
+    import type * as THREE from 'three'
 
-  const handleCreated = async (scene: THREE.Scene) => {
-    const model = await GLTFLoaderAsync('/models/perseverance-draco.glb', true)
-    model.scale.set(0.8, 0.8, 0.8)
-    scene.add(model)
+    export default function App() {
+      const sweepLightRef = useRef<SweepLight | null>(null)
 
-    sweepLightRef.current = new SweepLight(model)
-  }
+      const handleCreated = async (scene: THREE.Scene) => {
+        const model = await GLTFLoaderAsync('/models/perseverance-draco.glb', true)
+        model.scale.set(0.8, 0.8, 0.8)
+        scene.add(model)
 
-  // 卸载时清理
-  useEffect(() => {
-    return () => {
-      sweepLightRef.current?.dispose()
-      sweepLightRef.current = null
+        sweepLightRef.current = new SweepLight(model)
+      }
+
+      // 卸载时清理
+      useEffect(() => {
+        return () => {
+          sweepLightRef.current?.dispose()
+          sweepLightRef.current = null
+        }
+      }, [])
+
+      return (
+        <Scene
+          bgColor="#1a1a2e"
+          onCreated={handleCreated}
+          style={{ marginTop: '10px', width: '100%', height: '300px' }}
+        />
+      )
     }
-  }, [])
+    ```
+  </TabItem>
+  <TabItem value="webgl" label="WebGL">
+    <SweepLightComponent rendererType="webgl" />
 
-  return (
-    <Scene
-      bgColor="#0a0a0a"
-      onCreated={handleCreated}
-      style={{ marginTop: '10px', width: '100%', height: '300px' }}
-    />
-  )
-}
-```
+    ```tsx
+    import { useRef, useEffect } from 'react'
+    import { Scene, GLTFLoaderAsync, SweepLight } from 'react-three-lite'
+    import type * as THREE from 'three'
+
+    export default function App() {
+      const sweepLightRef = useRef<SweepLight | null>(null)
+
+      const handleCreated = async (scene: THREE.Scene) => {
+        const model = await GLTFLoaderAsync('/models/perseverance-draco.glb', true)
+        model.scale.set(0.8, 0.8, 0.8)
+        scene.add(model)
+
+        sweepLightRef.current = new SweepLight(model)
+      }
+
+      // 卸载时清理
+      useEffect(() => {
+        return () => {
+          sweepLightRef.current?.dispose()
+          sweepLightRef.current = null
+        }
+      }, [])
+
+      return (
+        <Scene
+          bgColor="#1a1a2e"
+          onCreated={handleCreated}
+          rendererType="webgl"
+          style={{ marginTop: '10px', width: '100%', height: '300px' }}
+        />
+      )
+    }
+    ```
+  </TabItem>
+</Tabs>
 
 ## 配置项
 

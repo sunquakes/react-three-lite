@@ -8,45 +8,91 @@ title: Sweep Light
 
 Class
 
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
 import SweepLight from '@site/src/components/effects/SweepLight'
 
 ## Default Usage
 
-<SweepLight />
+Every example below can be viewed with either the **WebGPU** (default) or the **WebGL** renderer — switch tabs to compare.
 
-```tsx
-import { useRef, useEffect } from 'react'
-import { Scene, GLTFLoaderAsync, SweepLight } from 'react-three-lite'
-import type * as THREE from 'three'
+<Tabs groupId="renderer">
+  <TabItem value="webgpu" label="WebGPU" default>
+    <SweepLight />
 
-export default function App() {
-  const sweepLightRef = useRef<SweepLight | null>(null)
+    ```tsx
+    import { useRef, useEffect } from 'react'
+    import { Scene, GLTFLoaderAsync, SweepLight } from 'react-three-lite'
+    import type * as THREE from 'three'
 
-  const handleCreated = async (scene: THREE.Scene) => {
-    const model = await GLTFLoaderAsync('/models/perseverance-draco.glb', true)
-    model.scale.set(0.8, 0.8, 0.8)
-    scene.add(model)
+    export default function App() {
+      const sweepLightRef = useRef<SweepLight | null>(null)
 
-    sweepLightRef.current = new SweepLight(model)
-  }
+      const handleCreated = async (scene: THREE.Scene) => {
+        const model = await GLTFLoaderAsync('/models/perseverance-draco.glb', true)
+        model.scale.set(0.8, 0.8, 0.8)
+        scene.add(model)
 
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      sweepLightRef.current?.dispose()
-      sweepLightRef.current = null
+        sweepLightRef.current = new SweepLight(model)
+      }
+
+      // Cleanup on unmount
+      useEffect(() => {
+        return () => {
+          sweepLightRef.current?.dispose()
+          sweepLightRef.current = null
+        }
+      }, [])
+
+      return (
+        <Scene
+          bgColor="#1a1a2e"
+          onCreated={handleCreated}
+          style={{ marginTop: '10px', width: '100%', height: '300px' }}
+        />
+      )
     }
-  }, [])
+    ```
+  </TabItem>
+  <TabItem value="webgl" label="WebGL">
+    <SweepLight rendererType="webgl" />
 
-  return (
-    <Scene
-      bgColor="#0a0a0a"
-      onCreated={handleCreated}
-      style={{ marginTop: '10px', width: '100%', height: '300px' }}
-    />
-  )
-}
-```
+    ```tsx
+    import { useRef, useEffect } from 'react'
+    import { Scene, GLTFLoaderAsync, SweepLight } from 'react-three-lite'
+    import type * as THREE from 'three'
+
+    export default function App() {
+      const sweepLightRef = useRef<SweepLight | null>(null)
+
+      const handleCreated = async (scene: THREE.Scene) => {
+        const model = await GLTFLoaderAsync('/models/perseverance-draco.glb', true)
+        model.scale.set(0.8, 0.8, 0.8)
+        scene.add(model)
+
+        sweepLightRef.current = new SweepLight(model)
+      }
+
+      // Cleanup on unmount
+      useEffect(() => {
+        return () => {
+          sweepLightRef.current?.dispose()
+          sweepLightRef.current = null
+        }
+      }, [])
+
+      return (
+        <Scene
+          bgColor="#1a1a2e"
+          onCreated={handleCreated}
+          rendererType="webgl"
+          style={{ marginTop: '10px', width: '100%', height: '300px' }}
+        />
+      )
+    }
+    ```
+  </TabItem>
+</Tabs>
 
 ## Options
 

@@ -6,36 +6,73 @@ title: 动画
 
 类
 
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
 import Animation from '@site/src/components/Animation'
 
 ## 默认用法
 
-<Animation />
+下面的每个示例都可以用 **WebGPU**（默认）或 **WebGL** 渲染器查看 —— 切换标签页进行对比。
 
-```tsx
-import { Scene, GLTFLoader, Animation } from 'react-three-lite'
+<Tabs groupId="renderer">
+  <TabItem value="webgpu" label="WebGPU" default>
+    <Animation />
 
-function App() {
-  const handleCreated = async (scene, { camera }) => {
-    scene.position.set(0, -0.5, 0)
-    camera.position.set(0, 1.5, 3)
+    ```tsx
+    import { Scene, GLTFLoader, Animation } from 'react-three-lite'
 
-    const model = await GLTFLoader('/models/perseverance-draco.glb', true)
-    scene.add(model)
+    function App() {
+      const handleCreated = async (scene, { camera }) => {
+        scene.position.set(0, -0.5, 0)
+        camera.position.set(0, 1.5, 3)
 
-    const animation = new Animation(model)
-    animation.playAll()
-  }
+        const model = await GLTFLoader('/models/perseverance-draco.glb', true)
+        scene.add(model)
 
-  return (
-    <Scene
-      style={{ marginTop: '10px', width: '100%', height: '300px' }}
-      bgColor="#FAEBD7"
-      onCreated={handleCreated}
-    />
-  )
-}
-```
+        const animation = new Animation(model)
+        animation.playAll()
+      }
+
+      return (
+        <Scene
+          style={{ marginTop: '10px', width: '100%', height: '300px' }}
+          bgColor="#1a1a2e"
+          onCreated={handleCreated}
+        />
+      )
+    }
+    ```
+  </TabItem>
+  <TabItem value="webgl" label="WebGL">
+    <Animation rendererType="webgl" />
+
+    ```tsx
+    import { Scene, GLTFLoader, Animation } from 'react-three-lite'
+
+    function App() {
+      const handleCreated = async (scene, { camera }) => {
+        scene.position.set(0, -0.5, 0)
+        camera.position.set(0, 1.5, 3)
+
+        const model = await GLTFLoader('/models/perseverance-draco.glb', true)
+        scene.add(model)
+
+        const animation = new Animation(model)
+        animation.playAll()
+      }
+
+      return (
+        <Scene
+          rendererType="webgl"
+          style={{ marginTop: '10px', width: '100%', height: '300px' }}
+          bgColor="#1a1a2e"
+          onCreated={handleCreated}
+        />
+      )
+    }
+    ```
+  </TabItem>
+</Tabs>
 
 ## 方法
 

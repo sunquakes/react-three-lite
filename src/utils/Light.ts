@@ -1,9 +1,26 @@
-import { Light, AmbientLight, Color } from 'three'
+// Import from 'three/webgpu' so light classes match the classes registered in
+// the WebGPURenderer node library. 'three' and 'three/webgpu' are two separate
+// builds with distinct class identities; lights created from 'three' are never
+// found by LightsNode.setupNodeLights ("Light node not found") and silently
+// have no effect on rendering.
+import * as THREE from 'three/webgpu'
 
-export default function (): Light {
-  const light = new AmbientLight(0xffffff, 1)
-  light.intensity = 5
-  return light
+export default function (): THREE.Group {
+  const group = new THREE.Group()
+
+  // AmbientLight provides base illumination for PBR materials. Keep it low
+  // since the scene already provides an IBL environment; a high value here
+  // doubles up on the environment light and blows out PBR surfaces.
+  const ambient = new THREE.AmbientLight(0xffffff, 1)
+  group.add(ambient)
+
+  // DirectionalLight provides specular highlights and normal-map detail.
+  // Required for PBR materials to show surface detail.
+  const directional = new THREE.DirectionalLight(0xffffff, 3)
+  directional.position.set(5, 10, 7)
+  group.add(directional)
+
+  return group
 }
 
 /**
@@ -38,18 +55,18 @@ export interface LightGradientOptions {
  * ```
  */
 export class LightGradient {
-  private light: Light
-  private startColor: Color
-  private endColor: Color
-  private startIntensity: number
-  private endIntensity: number
+  private targets: Array<THREE.Light>
+  private startColors: THREE.Color[]
+  private endColors: THREE.Color[]
+  private startIntensities: number[]
+  private endIntensities: number[]
   private duration: number
   private startTime: number
   private animationId: number | null = null
   private completed = false
   private onComplete?: () => void
 
-  constructor(light: Light, options: LightGradientOptions = {}) {
+  constructor(light: THREE.Light | THREE.Object3D, options: LightGradientOptions = {}) {
     const {
       color: targetColor,
       intensity: targetIntensity,
@@ -57,11 +74,29 @@ export class LightGradient {
       onComplete
     } = options
 
-    this.light = light
-    this.startColor = light.color.clone()
-    this.startIntensity = light.intensity
-    this.endColor = targetColor ? new Color(targetColor) : this.startColor.clone()
-    this.endIntensity = targetIntensity ?? this.startIntensity
+    // Support both single Light and Group (Object3D with Light children).
+    const collected: THREE.Light[] = []
+    if ((light as THREE.Light).isLight) {
+      collected.push(light as THREE.Light)
+    } else if (light instanceof THREE.Object3D) {
+      light.traverse((child) => {
+        if ((child as THREE.Light).isLight) {
+          collected.push(child as THREE.Light)
+        }
+      })
+    }
+    if (collected.length === 0) {
+      throw new Error('[LightGradient] No THREE.Light instance(s) found on the provided target.')
+    }
+    this.targets = collected
+    this.startColors = this.targets.map((t) => t.color.clone())
+    this.endColors = this.targets.map(() =>
+      targetColor ? new THREE.Color(targetColor) : this.startColors[0].clone()
+    )
+    this.startIntensities = this.targets.map((t) => t.intensity)
+    this.endIntensities = this.targets.map(
+      () => targetIntensity ?? this.startIntensities[0]
+    )
     this.duration = duration
     this.startTime = performance.now()
     this.onComplete = onComplete
@@ -76,12 +111,13 @@ export class LightGradient {
     // Ease out cubic for smooth transition
     const easedProgress = 1 - Math.pow(1 - progress, 3)
 
-    // Interpolate color
-    this.light.color.copy(this.startColor).lerp(this.endColor, easedProgress)
-
-    // Interpolate intensity
-    this.light.intensity =
-      this.startIntensity + (this.endIntensity - this.startIntensity) * easedProgress
+    // Interpolate every collected light in parallel.
+    for (let i = 0; i < this.targets.length; i++) {
+      this.targets[i].color.copy(this.startColors[i]).lerp(this.endColors[i], easedProgress)
+      this.targets[i].intensity =
+        this.startIntensities[i] +
+        (this.endIntensities[i] - this.startIntensities[i]) * easedProgress
+    }
 
     if (progress < 1) {
       this.animationId = requestAnimationFrame(this.animate)

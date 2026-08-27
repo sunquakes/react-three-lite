@@ -19,8 +19,7 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/react-three-lite.js",
-      "require": "./dist/react-three-lite.umd.cjs"
+      "import": "./dist/react-three-lite.js"
     },
     "./dist/style.css": "./dist/style.css"
   },
@@ -31,7 +30,9 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "test": "vitest run",
     "test:unit": "vitest",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "eslint . --fix --ignore-pattern .gitignore",
     "format": "prettier --write src/",
     "release": "node scripts/release.js",
@@ -42,7 +43,7 @@
   "peerDependencies": {
     "react": ">=18.0.0",
     "react-dom": ">=18.0.0",
-    "three": ">=0.172.0"
+    "three": ">=0.180.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -71,5 +72,6 @@
   },
   "dependencies": {
     "three-stdlib": "^2.36.1"
-  }
+  },
+  "packageManager": "pnpm@11.17.0+sha512.cca3cea332ad254bb84145f966d19f4879615210346fc92c79a047f23a0d7b3cca3c3792f0076ba1f1831d277efbcf0a9119b31a9a60eca7fb3d6231f331ef72"
 }

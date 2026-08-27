@@ -2,43 +2,79 @@
 title: 函数加载器
 ---
 
-## 类型
-
-函数
-
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
 import GLTFLoaderFunction from '@site/src/components/GLTFLoaderFunction'
 import FBXLoaderFunction from '@site/src/components/FBXLoaderFunction'
 import OBJLoaderFunction from '@site/src/components/OBJLoaderFunction'
+
+## 类型
+
+函数
 
 ## GLTF 加载器
 
 ### 默认用法
 
-<GLTFLoaderFunction />
+下面的每个示例都可以用 **WebGPU**（默认）或 **WebGL** 渲染器查看 —— 切换标签页进行对比。
 
-```tsx
-import { Scene, GLTFLoaderAsync } from 'react-three-lite'
-import type * as THREE from 'three'
+<Tabs groupId="renderer">
+  <TabItem value="webgpu" label="WebGPU" default>
+    <GLTFLoaderFunction />
 
-function App() {
-  const handleCreated = async (scene: THREE.Scene, { camera }: { camera: THREE.Camera }) => {
-    camera.position.set(0, 1.5, 3)
-    camera.lookAt(0, 0, 0)
+    ```tsx
+    import { Scene, GLTFLoaderAsync } from 'react-three-lite'
+    import type * as THREE from 'three'
 
-    // 加载模型到场景
-    const model = await GLTFLoaderAsync('/models/perseverance-draco.glb', true)
-    model.scale.set(0.8, 0.8, 0.8)
-    scene.add(model)
-  }
+    function App() {
+      const handleCreated = async (scene: THREE.Scene, { camera }: { camera: THREE.Camera }) => {
+        camera.position.set(0, 1.5, 3)
+        camera.lookAt(0, 0, 0)
 
-  return (
-    <Scene
-      style={{ marginTop: '10px', width: '100%', height: '300px' }}
-      onCreated={handleCreated}
-    />
-  )
-}
-```
+        // 加载模型到场景
+        const model = await GLTFLoaderAsync('/models/perseverance-draco.glb', true)
+        model.scale.set(0.8, 0.8, 0.8)
+        scene.add(model)
+      }
+
+      return (
+        <Scene
+          style={{ marginTop: '10px', width: '100%', height: '300px' }}
+          onCreated={handleCreated}
+        />
+      )
+    }
+    ```
+  </TabItem>
+  <TabItem value="webgl" label="WebGL">
+    <GLTFLoaderFunction rendererType="webgl" />
+
+    ```tsx
+    import { Scene, GLTFLoaderAsync } from 'react-three-lite'
+    import type * as THREE from 'three'
+
+    function App() {
+      const handleCreated = async (scene: THREE.Scene, { camera }: { camera: THREE.Camera }) => {
+        camera.position.set(0, 1.5, 3)
+        camera.lookAt(0, 0, 0)
+
+        // 加载模型到场景
+        const model = await GLTFLoaderAsync('/models/perseverance-draco.glb', true)
+        model.scale.set(0.8, 0.8, 0.8)
+        scene.add(model)
+      }
+
+      return (
+        <Scene
+          rendererType="webgl"
+          style={{ marginTop: '10px', width: '100%', height: '300px' }}
+          onCreated={handleCreated}
+        />
+      )
+    }
+    ```
+  </TabItem>
+</Tabs>
 
 ### 参数
 
@@ -54,31 +90,63 @@ function App() {
 
 ### 默认用法
 
-<FBXLoaderFunction />
+<Tabs groupId="renderer">
+  <TabItem value="webgpu" label="WebGPU" default>
+    <FBXLoaderFunction />
 
-```tsx
-import { Scene, FBXLoaderAsync } from 'react-three-lite'
-import type * as THREE from 'three'
+    ```tsx
+    import { Scene, FBXLoaderAsync } from 'react-three-lite'
+    import type * as THREE from 'three'
 
-function App() {
-  const handleCreated = async (scene: THREE.Scene, { camera }: { camera: THREE.Camera }) => {
-    camera.position.set(0, 1.5, 3)
-    camera.lookAt(0, 0, 0)
+    function App() {
+      const handleCreated = async (scene: THREE.Scene, { camera }: { camera: THREE.Camera }) => {
+        camera.position.set(0, 1.5, 3)
+        camera.lookAt(0, 0, 0)
 
-    // 加载模型到场景
-    const model = await FBXLoaderAsync('/models/perseverance.fbx')
-    model.scale.set(0.8, 0.8, 0.8)
-    scene.add(model)
-  }
+        // 加载模型到场景
+        const model = await FBXLoaderAsync('/models/perseverance.fbx')
+        model.scale.set(0.8, 0.8, 0.8)
+        scene.add(model)
+      }
 
-  return (
-    <Scene
-      style={{ marginTop: '10px', width: '100%', height: '300px' }}
-      onCreated={handleCreated}
-    />
-  )
-}
-```
+      return (
+        <Scene
+          style={{ marginTop: '10px', width: '100%', height: '300px' }}
+          onCreated={handleCreated}
+        />
+      )
+    }
+    ```
+  </TabItem>
+  <TabItem value="webgl" label="WebGL">
+    <FBXLoaderFunction rendererType="webgl" />
+
+    ```tsx
+    import { Scene, FBXLoaderAsync } from 'react-three-lite'
+    import type * as THREE from 'three'
+
+    function App() {
+      const handleCreated = async (scene: THREE.Scene, { camera }: { camera: THREE.Camera }) => {
+        camera.position.set(0, 1.5, 3)
+        camera.lookAt(0, 0, 0)
+
+        // 加载模型到场景
+        const model = await FBXLoaderAsync('/models/perseverance.fbx')
+        model.scale.set(0.8, 0.8, 0.8)
+        scene.add(model)
+      }
+
+      return (
+        <Scene
+          rendererType="webgl"
+          style={{ marginTop: '10px', width: '100%', height: '300px' }}
+          onCreated={handleCreated}
+        />
+      )
+    }
+    ```
+  </TabItem>
+</Tabs>
 
 ### 参数
 
@@ -92,31 +160,63 @@ function App() {
 
 ### 默认用法
 
-<OBJLoaderFunction />
+<Tabs groupId="renderer">
+  <TabItem value="webgpu" label="WebGPU" default>
+    <OBJLoaderFunction />
 
-```tsx
-import { Scene, OBJLoaderAsync } from 'react-three-lite'
-import type * as THREE from 'three'
+    ```tsx
+    import { Scene, OBJLoaderAsync } from 'react-three-lite'
+    import type * as THREE from 'three'
 
-function App() {
-  const handleCreated = async (scene: THREE.Scene, { camera }: { camera: THREE.Camera }) => {
-    camera.position.set(0, 1.5, 3)
-    camera.lookAt(0, 0, 0)
+    function App() {
+      const handleCreated = async (scene: THREE.Scene, { camera }: { camera: THREE.Camera }) => {
+        camera.position.set(0, 1.5, 3)
+        camera.lookAt(0, 0, 0)
 
-    // 加载模型到场景
-    const model = await OBJLoaderAsync('/models/obj/perseverance.obj', '/models/obj/perseverance.mtl')
-    model.scale.set(0.8, 0.8, 0.8)
-    scene.add(model)
-  }
+        // 加载模型到场景
+        const model = await OBJLoaderAsync('/models/obj/perseverance.obj', '/models/obj/perseverance.mtl')
+        model.scale.set(0.8, 0.8, 0.8)
+        scene.add(model)
+      }
 
-  return (
-    <Scene
-      style={{ marginTop: '10px', width: '100%', height: '300px' }}
-      onCreated={handleCreated}
-    />
-  )
-}
-```
+      return (
+        <Scene
+          style={{ marginTop: '10px', width: '100%', height: '300px' }}
+          onCreated={handleCreated}
+        />
+      )
+    }
+    ```
+  </TabItem>
+  <TabItem value="webgl" label="WebGL">
+    <OBJLoaderFunction rendererType="webgl" />
+
+    ```tsx
+    import { Scene, OBJLoaderAsync } from 'react-three-lite'
+    import type * as THREE from 'three'
+
+    function App() {
+      const handleCreated = async (scene: THREE.Scene, { camera }: { camera: THREE.Camera }) => {
+        camera.position.set(0, 1.5, 3)
+        camera.lookAt(0, 0, 0)
+
+        // 加载模型到场景
+        const model = await OBJLoaderAsync('/models/obj/perseverance.obj', '/models/obj/perseverance.mtl')
+        model.scale.set(0.8, 0.8, 0.8)
+        scene.add(model)
+      }
+
+      return (
+        <Scene
+          rendererType="webgl"
+          style={{ marginTop: '10px', width: '100%', height: '300px' }}
+          onCreated={handleCreated}
+        />
+      )
+    }
+    ```
+  </TabItem>
+</Tabs>
 
 ### 参数
 

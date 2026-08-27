@@ -3,7 +3,7 @@ import { Scene, Animation, GLTFLoaderAsync } from 'react-three-lite'
 import type { SceneComponents } from 'react-three-lite'
 import type * as THREE from 'three'
 
-export default function IndexAnimationComponent() {
+export default function IndexAnimationComponent({ rendererType }: { rendererType?: 'webgpu' | 'webgl' }) {
   const sceneRef = useRef<THREE.Scene>()
 
   const handleCreated = async (scene: THREE.Scene, components: SceneComponents) => {
@@ -21,6 +21,6 @@ export default function IndexAnimationComponent() {
   }
 
   return (
-    <Scene style={{ marginTop: '10px', width: '100%', height: '100%' }} onCreated={handleCreated} axesHelper={false} />
+    <Scene rendererType={rendererType} style={{ marginTop: '10px', width: '100%', height: '100%' }} onCreated={handleCreated} axesHelper={false} />
   )
 }

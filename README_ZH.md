@@ -33,6 +33,33 @@
 - **Animation** — 模型动画播放
 - **WaveCircleMesh / FlowLineMesh** — 自定义可视化网格
 
+## 渲染器支持
+
+react-three-lite 同时支持两种现代 3D 渲染器：
+
+| 渲染器 | 默认 | 说明 |
+|--------|------|------|
+| **WebGPU** | ✅ | 来自 `three/webgpu` 的 `WebGPURenderer`，默认渲染器。当 WebGPU 不可用时会自动回退到 WebGL2 后端。 |
+| **WebGL** | | 经典 `THREE.WebGLRenderer`，通过 `WebGLNodesHandler` 将 TSL 着色器编译为 GLSL。 |
+
+通过 `rendererType` 属性按场景切换渲染器：
+
+```jsx
+import { Scene } from 'react-three-lite'
+
+function App() {
+  // WebGPU（默认）
+  return <Scene style={{ width: '100%', height: '300px' }} />
+}
+
+function AppWebGL() {
+  // WebGL
+  return <Scene rendererType="webgl" style={{ width: '100%', height: '300px' }} />
+}
+```
+
+文档站点上每个示例都通过 WebGPU / WebGL 标签页在两种渲染器下展示。
+
 ## 安装
 
 ### 安装 `Three.js`

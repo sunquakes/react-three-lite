@@ -1,21 +1,29 @@
-import { useEffect, useRef, useState, createElement } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { OrbitControls } from 'three-stdlib'
 import { generateUUID } from '../utils/UUID'
 import createScene from '../utils/Scene'
 import CameraUtil from '../utils/Camera'
 import LightUtil from '../utils/Light'
-import Renderer from '../utils/Renderer'
+import Renderer, { RendererType } from '../utils/Renderer'
 import AxesHelperUtil from '../utils/AxesHelper'
-import { SceneContext, SceneComponents, CallbackFrame, SceneSlotProps } from '../context/SceneContext'
+import Controls from '../utils/Controls'
+import {
+  SceneContext,
+  SceneComponents,
+  CallbackFrame,
+  SceneSlotProps,
+  R3LRenderer
+} from '../context/SceneContext'
 
 interface SceneProps {
   modelValue?: THREE.Scene
-  renderer?: THREE.WebGLRenderer
+  renderer?: R3LRenderer
+  rendererType?: RendererType
   bgColor?: string
   bgImage?: string
   camera?: THREE.PerspectiveCamera
-  light?: THREE.Light
+  light?: THREE.Object3D
   axesHelper?: THREE.AxesHelper | boolean
   gridHelper?: THREE.GridHelper | boolean
   controls?: OrbitControls
@@ -30,6 +38,7 @@ interface SceneProps {
 
 const SceneComponent = ({
   renderer: propRenderer,
+  rendererType = 'webgpu',
   bgColor,
   bgImage,
   camera: propCamera,
@@ -47,7 +56,7 @@ const SceneComponent = ({
   const [containerId] = useState(() => generateUUID())
   const containerRef = useRef<HTMLDivElement>(null)
   const [showSlot, setShowSlot] = useState(false)
-  
+
   // Use useState instead of useRef to ensure context updates trigger re-render
   const [sceneSlotProps, setSceneSlotProps] = useState<SceneSlotProps>({})
 
@@ -56,9 +65,9 @@ const SceneComponent = ({
   const frameCallbackSetRef = useRef(false)
   const beforeFrameSetRef = useRef(false)
   const callbackFrameRef = useRef<CallbackFrame>(
-    (renderer: THREE.WebGLRenderer, scene: THREE.Scene, components: SceneComponents) => {
+    (renderer: R3LRenderer, scene: THREE.Scene, components: SceneComponents) => {
       if (frameCallbackSetRef.current) return
-      
+
       const camera = components.camera
       if (camera) {
         if (beforeFrameSetRef.current) {
@@ -83,143 +92,205 @@ const SceneComponent = ({
       return
     }
 
-    const currentRenderer = propRenderer || Renderer()
-    const currentCamera = propCamera || CameraUtil(container)
-    const currentLight = propLight || LightUtil()
-    let currentAxesHelper: THREE.AxesHelper | undefined
-    if (propAxesHelper === false) {
-      currentAxesHelper = undefined
-    } else if (propAxesHelper instanceof THREE.AxesHelper) {
-      currentAxesHelper = propAxesHelper
-    } else {
-      currentAxesHelper = AxesHelperUtil()
-    }
-    let currentGridHelper: THREE.GridHelper | undefined
-    if (propGridHelper === false) {
-      currentGridHelper = undefined
-    } else if (propGridHelper instanceof THREE.GridHelper) {
-      currentGridHelper = propGridHelper
-    } else {
-      currentGridHelper = new THREE.GridHelper(20, 20, 0xbbbbbb, 0xdddddd)
-      currentGridHelper.position.y = 0.01
-    }
-    const currentControls = propControls || new OrbitControls(currentCamera, container)
+    let cancelled = false
+    let disposeSceneFn: (() => void) | null = null
+    let sceneInstance: THREE.Scene | null = null
+    let currentRenderer: R3LRenderer | null = null
+    let currentControls: OrbitControls | null = null
+    let currentLight: THREE.Object3D | null = null
+    let currentCamera: THREE.PerspectiveCamera | null = null
 
-    const frame = (renderer: THREE.WebGLRenderer, scene: THREE.Scene, components: SceneComponents) => {
-      callbackFrameRef.current(renderer, scene, components)
-    }
-
-    const beforeFrame = (renderer: THREE.WebGLRenderer, scene: THREE.Scene, components: SceneComponents) => {
-      onBeforeFrame?.(renderer, scene, components)
-      beforeFrameChildrenRef.current?.forEach((beforeFrameChild) => {
-        beforeFrameChild?.(renderer, scene, components)
-      })
-    }
-
-    const afterFrame = (renderer: THREE.WebGLRenderer, scene: THREE.Scene, components: SceneComponents) => {
-      onAfterFrame?.(renderer, scene, components)
-      afterFrameChildrenRef.current?.forEach((afterFrameChild) => {
-        afterFrameChild?.(renderer, scene, components)
-      })
-    }
-
-    const sceneComponents: SceneComponents = {
-      camera: currentCamera,
-      light: currentLight,
-      axesHelper: currentAxesHelper,
-      gridHelper: currentGridHelper,
-      controls: currentControls
-    }
-
-    const { scene, dispose: disposeScene } = createScene(currentRenderer, container, sceneComponents, frame, beforeFrame, afterFrame)
-
-    if (bgImage != undefined) {
-      const textureLoader = new THREE.TextureLoader()
-      textureLoader.load(
-        bgImage,
-        (texture) => {
-          console.log('Background image loaded successfully:', bgImage)
-          scene.background = texture
-        },
-        undefined,
-        (error) => {
-          console.error('Failed to load background image:', bgImage, error)
-          scene.background = new THREE.Color('#98F5F9') // fallback color
-        }
-      )
-    } else if (bgColor != undefined) {
-      scene.background = new THREE.Color(bgColor)
-    }
-
-    // Update context value with useState to trigger child component re-render
-    setSceneSlotProps({
-      container: container,
-      renderer: currentRenderer,
-      scene: scene,
-      sceneComponents: sceneComponents,
-      setFrame: (callback: CallbackFrame) => {
-        callbackFrameRef.current = callback
-        frameCallbackSetRef.current = true // Mark custom frame callback as set
-      },
-      addBeforeFrame: (callback: CallbackFrame) => {
-        beforeFrameChildrenRef.current.push(callback)
-        beforeFrameSetRef.current = true
-        return () => {
-          const index = beforeFrameChildrenRef.current.indexOf(callback)
-          if (index > -1) {
-            beforeFrameChildrenRef.current.splice(index, 1)
-          }
-        }
-      },
-      addAfterFrame: (callback: CallbackFrame) => {
-        afterFrameChildrenRef.current.push(callback)
-        return () => {
-          const index = afterFrameChildrenRef.current.indexOf(callback)
-          if (index > -1) {
-            afterFrameChildrenRef.current.splice(index, 1)
-          }
-        }
+    const start = async () => {
+      currentRenderer = propRenderer || Renderer(rendererType)
+      currentCamera = propCamera || CameraUtil(container)
+      currentLight = propLight || LightUtil()
+      let currentAxesHelper: THREE.AxesHelper | undefined
+      if (propAxesHelper === false) {
+        currentAxesHelper = undefined
+      } else if (propAxesHelper instanceof THREE.AxesHelper) {
+        currentAxesHelper = propAxesHelper
+      } else {
+        currentAxesHelper = AxesHelperUtil()
       }
+      let currentGridHelper: THREE.GridHelper | undefined
+      if (propGridHelper === false) {
+        currentGridHelper = undefined
+      } else if (propGridHelper instanceof THREE.GridHelper) {
+        currentGridHelper = propGridHelper
+      } else {
+        currentGridHelper = new THREE.GridHelper(20, 20, 0xbbbbbb, 0xdddddd)
+        currentGridHelper.position.y = 0.01
+      }
+      currentControls = propControls || Controls(currentCamera, currentRenderer)
+
+      const frame = (renderer: R3LRenderer, scene: THREE.Scene, components: SceneComponents) => {
+        callbackFrameRef.current(renderer, scene, components)
+      }
+
+      const beforeFrame = (renderer: R3LRenderer, scene: THREE.Scene, components: SceneComponents) => {
+        onBeforeFrame?.(renderer, scene, components)
+        beforeFrameChildrenRef.current?.forEach((beforeFrameChild) => {
+          beforeFrameChild?.(renderer, scene, components)
+        })
+      }
+
+      const afterFrame = (renderer: R3LRenderer, scene: THREE.Scene, components: SceneComponents) => {
+        onAfterFrame?.(renderer, scene, components)
+        afterFrameChildrenRef.current?.forEach((afterFrameChild) => {
+          afterFrameChild?.(renderer, scene, components)
+        })
+      }
+
+      const camera = currentCamera
+      const light = currentLight
+      const controls = currentControls
+      if (!camera || !light || !controls) {
+        console.error('Scene: Failed to initialize camera, light or controls.')
+        return
+      }
+      const sceneComponents: SceneComponents = {
+        camera: camera,
+        light: light,
+        axesHelper: currentAxesHelper,
+        gridHelper: currentGridHelper,
+        controls: controls
+      }
+
+      const { scene, dispose: disposeScene } = await createScene(
+        currentRenderer,
+        container,
+        sceneComponents,
+        frame,
+        beforeFrame,
+        afterFrame
+      )
+      sceneInstance = scene
+      disposeSceneFn = disposeScene
+
+      if (cancelled) return
+
+      if (bgImage != undefined) {
+        const textureLoader = new THREE.TextureLoader()
+        textureLoader.load(
+          bgImage,
+          (texture) => {
+            console.log('Background image loaded successfully:', bgImage)
+            // Background textures must be in SRGBColorSpace for correct color
+            // display in both WebGL and WebGPU.
+            texture.colorSpace = THREE.SRGBColorSpace
+            scene.background = texture
+          },
+          undefined,
+          (error) => {
+            console.error('Failed to load background image:', bgImage, error)
+            scene.background = new THREE.Color('#98F5F9') // fallback color
+          }
+        )
+      } else if (bgColor != undefined) {
+        scene.background = new THREE.Color(bgColor)
+      }
+
+      // Update context value with useState to trigger child component re-render
+      setSceneSlotProps({
+        container: container,
+        renderer: currentRenderer,
+        scene: scene,
+        sceneComponents: sceneComponents,
+        setFrame: (callback: CallbackFrame) => {
+          callbackFrameRef.current = callback
+          frameCallbackSetRef.current = true // Mark custom frame callback as set
+        },
+        addBeforeFrame: (callback: CallbackFrame) => {
+          beforeFrameChildrenRef.current.push(callback)
+          beforeFrameSetRef.current = true
+          return () => {
+            const index = beforeFrameChildrenRef.current.indexOf(callback)
+            if (index > -1) {
+              beforeFrameChildrenRef.current.splice(index, 1)
+            }
+          }
+        },
+        addAfterFrame: (callback: CallbackFrame) => {
+          afterFrameChildrenRef.current.push(callback)
+          return () => {
+            const index = afterFrameChildrenRef.current.indexOf(callback)
+            if (index > -1) {
+              afterFrameChildrenRef.current.splice(index, 1)
+            }
+          }
+        }
+      })
+
+      onCreated?.(scene, sceneComponents)
+      setShowSlot(true)
+    }
+
+    start().catch((err) => {
+      console.error('Scene: Failed to initialize renderer:', err)
     })
 
-    onCreated?.(scene, sceneComponents)
-    setShowSlot(true)
-
     return () => {
-      disposeScene()
-      // 清理背景纹理
-      if (scene.background && 'dispose' in scene.background) {
-        ;(scene.background as THREE.Texture).dispose()
-      }
-      // 清理场景中的所有对象
-      scene.traverse((child: THREE.Object3D) => {
-        const obj = child as THREE.Object3D & { geometry?: THREE.BufferGeometry; material?: THREE.Material | THREE.Material[] }
-        if (obj.geometry) {
-          obj.geometry.dispose()
-        }
-        if (obj.material) {
-          if (Array.isArray(obj.material)) {
-            obj.material.forEach((m) => m.dispose())
-          } else {
-            obj.material.dispose()
-          }
-        }
-      })
-      currentRenderer.dispose()
-      currentControls.dispose()
-      currentLight.dispose()
-      currentCamera.clear()
-    }
-  }, [])
+      cancelled = true
+      setShowSlot(false)
+      setSceneSlotProps({})
+      beforeFrameChildrenRef.current = []
+      afterFrameChildrenRef.current = []
+      frameCallbackSetRef.current = false
+      beforeFrameSetRef.current = false
 
-  return createElement(SceneContext.Provider, {
-    value: sceneSlotProps  // Use useState value
-  }, createElement('div', {
-    ref: containerRef,
-    id: containerId,
-    className: className,
-    style: { position: 'relative', width: '100%', height: '100%', ...style }
-  }, showSlot ? children : null))
+      if (disposeSceneFn) {
+        disposeSceneFn()
+        disposeSceneFn = null
+      }
+      // Cleanup background texture
+      if (sceneInstance) {
+        if (sceneInstance.background && 'dispose' in sceneInstance.background) {
+          ;(sceneInstance.background as THREE.Texture).dispose()
+        }
+        // Cleanup all objects in the scene
+        sceneInstance.traverse((child: THREE.Object3D) => {
+          const obj = child as THREE.Object3D & {
+            geometry?: THREE.BufferGeometry
+            material?: THREE.Material | THREE.Material[]
+          }
+          if (obj.geometry) {
+            obj.geometry.dispose()
+          }
+          if (obj.material) {
+            if (Array.isArray(obj.material)) {
+              obj.material.forEach((m) => m.dispose())
+            } else {
+              obj.material.dispose()
+            }
+          }
+        })
+        sceneInstance = null
+      }
+      currentRenderer?.dispose()
+      currentControls?.dispose()
+      // LightUtil may not return an object with dispose() — guard it.
+      const disposableLight = currentLight as unknown as { dispose?: () => void } | null
+      disposableLight?.dispose?.()
+      currentCamera?.clear?.()
+      currentRenderer = null
+      currentControls = null
+      currentLight = null
+      currentCamera = null
+    }
+  }, [rendererType])
+
+  return (
+    <SceneContext.Provider value={sceneSlotProps}>
+      <div
+        ref={containerRef}
+        id={containerId}
+        className={className}
+        style={{ position: 'relative', width: '100%', height: '100%', ...style }}
+      >
+        {showSlot ? children : null}
+      </div>
+    </SceneContext.Provider>
+  )
 }
 
 export default SceneComponent

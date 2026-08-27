@@ -7,50 +7,105 @@ title: SkyBox
 
 Class
 
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
 import SkyBox from '@site/src/components/SkyBox'
 
 ## Default Usage
 
-<SkyBox />
+Every example below can be viewed with either the **WebGPU** (default) or the **WebGL** renderer — switch tabs to compare.
 
-```tsx
-import { useEffect, useRef } from 'react'
-import { Scene, SkyBox } from 'react-three-lite'
-import type * as THREE from 'three'
+<Tabs groupId="renderer">
+  <TabItem value="webgpu" label="WebGPU" default>
+    <SkyBox />
 
-export default function App() {
-  const sceneRef = useRef<THREE.Scene>()
+    ```tsx
+    import { useEffect, useRef } from 'react'
+    import { Scene, SkyBox } from 'react-three-lite'
+    import type * as THREE from 'three'
 
-  const handleCreated = (scene: THREE.Scene, { camera }: { camera: THREE.Camera }) => {
-    sceneRef.current = scene
-    
-    if (camera) {
-      camera.position.set(0, 1.5, 3)
+    export default function App() {
+      const skyBoxRef = useRef<SkyBox | null>(null)
+
+      const handleCreated = (scene: THREE.Scene, { camera }: { camera: THREE.Camera }) => {
+        if (camera) {
+          camera.position.set(0, 1.5, 3)
+        }
+
+        const skyBox = new SkyBox([
+          '/images/examples/skybox/right.jpg',
+          '/images/examples/skybox/left.jpg',
+          '/images/examples/skybox/top.jpg',
+          '/images/examples/skybox/bottom.jpg',
+          '/images/examples/skybox/front.jpg',
+          '/images/examples/skybox/back.jpg'
+        ])
+        skyBoxRef.current = skyBox
+        scene.background = skyBox.scene
+      }
+
+      useEffect(() => {
+        return () => {
+          skyBoxRef.current?.scene.dispose()
+          skyBoxRef.current = null
+        }
+      }, [])
+
+      return (
+        <Scene
+          style={{ marginTop: '10px', width: '100%', height: '300px' }}
+          onCreated={handleCreated}
+        />
+      )
     }
-  }
+    ```
+  </TabItem>
+  <TabItem value="webgl" label="WebGL">
+    <SkyBox rendererType="webgl" />
 
-  useEffect(() => {
-    if (sceneRef.current) {
-      const skyBox = new SkyBox([
-        '/images/examples/skybox/right.jpg',
-        '/images/examples/skybox/left.jpg',
-        '/images/examples/skybox/top.jpg',
-        '/images/examples/skybox/bottom.jpg',
-        '/images/examples/skybox/front.jpg',
-        '/images/examples/skybox/back.jpg'
-      ])
-      sceneRef.current.background = skyBox.scene
+    ```tsx
+    import { useEffect, useRef } from 'react'
+    import { Scene, SkyBox } from 'react-three-lite'
+    import type * as THREE from 'three'
+
+    export default function App() {
+      const skyBoxRef = useRef<SkyBox | null>(null)
+
+      const handleCreated = (scene: THREE.Scene, { camera }: { camera: THREE.Camera }) => {
+        if (camera) {
+          camera.position.set(0, 1.5, 3)
+        }
+
+        const skyBox = new SkyBox([
+          '/images/examples/skybox/right.jpg',
+          '/images/examples/skybox/left.jpg',
+          '/images/examples/skybox/top.jpg',
+          '/images/examples/skybox/bottom.jpg',
+          '/images/examples/skybox/front.jpg',
+          '/images/examples/skybox/back.jpg'
+        ])
+        skyBoxRef.current = skyBox
+        scene.background = skyBox.scene
+      }
+
+      useEffect(() => {
+        return () => {
+          skyBoxRef.current?.scene.dispose()
+          skyBoxRef.current = null
+        }
+      }, [])
+
+      return (
+        <Scene
+          rendererType="webgl"
+          style={{ marginTop: '10px', width: '100%', height: '300px' }}
+          onCreated={handleCreated}
+        />
+      )
     }
-  }, [])
-
-  return (
-    <Scene 
-      style={{ marginTop: '10px', width: '100%', height: '300px' }} 
-      onCreated={handleCreated} 
-    />
-  )
-}
-```
+    ```
+  </TabItem>
+</Tabs>
 
 ## Props
 

@@ -3,6 +3,8 @@ lang: zh-CN
 title: 灯光渐变
 ---
 
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
 import LightGradient from '@site/src/components/effects/LightGradient'
 
 ## 类型
@@ -11,78 +13,158 @@ import LightGradient from '@site/src/components/effects/LightGradient'
 
 ## 默认用法
 
-<LightGradient />
+下面的每个示例都可以用 **WebGPU**（默认）或 **WebGL** 渲染器查看 —— 切换标签页进行对比。
 
-```tsx
-import { Scene, LightGradient } from 'react-three-lite'
-import { useRef, useEffect } from 'react'
-import type { SceneComponents } from 'react-three-lite'
-import * as THREE from 'three'
+<Tabs groupId="renderer">
+  <TabItem value="webgpu" label="WebGPU" default>
+    <LightGradient />
 
-function App() {
-  const gradientRef = useRef<LightGradient | null>(null)
-  const meshRef = useRef<THREE.Mesh | null>(null)
-  const isBrightRef = useRef(true)
+    ```tsx
+    import { Scene, LightGradient } from 'react-three-lite'
+    import { useRef, useEffect } from 'react'
+    import type { SceneComponents } from 'react-three-lite'
+    import * as THREE from 'three'
 
-  const handleCreated = (scene: THREE.Scene, components: SceneComponents) => {
-    const { camera, light } = components
-    if (!camera || !light) return
+    function App() {
+      const gradientRef = useRef<LightGradient | null>(null)
+      const meshRef = useRef<THREE.Mesh | null>(null)
+      const isBrightRef = useRef(true)
 
-    camera.position.set(0, 0, 4)
-    camera.lookAt(0, 0, 0)
+      const handleCreated = (scene: THREE.Scene, components: SceneComponents) => {
+        const { camera, light } = components
+        if (!camera || !light) return
 
-    const geometry = new THREE.BoxGeometry(1.5, 1.5, 1.5)
-    const material = new THREE.MeshStandardMaterial({
-      color: 0xffffff,
-      roughness: 0.5,
-      metalness: 0.5
-    })
-    meshRef.current = new THREE.Mesh(geometry, material)
-    meshRef.current.position.y = 0.75
-    scene.add(meshRef.current)
+        camera.position.set(0, 0, 4)
+        camera.lookAt(0, 0, 0)
 
-    const loopGradient = () => {
-      if (isBrightRef.current) {
-        gradientRef.current = new LightGradient(light, {
-          intensity: 20,
-          duration: 4000,
-          onComplete: () => {
-            isBrightRef.current = false
-            loopGradient()
-          }
+        const geometry = new THREE.BoxGeometry(1.5, 1.5, 1.5)
+        const material = new THREE.MeshStandardMaterial({
+          color: 0xffffff,
+          roughness: 0.5,
+          metalness: 0.5
         })
-      } else {
-        gradientRef.current = new LightGradient(light, {
-          intensity: 2,
-          duration: 4000,
-          onComplete: () => {
-            isBrightRef.current = true
-            loopGradient()
+        meshRef.current = new THREE.Mesh(geometry, material)
+        meshRef.current.position.y = 0.75
+        scene.add(meshRef.current)
+
+        const loopGradient = () => {
+          if (isBrightRef.current) {
+            gradientRef.current = new LightGradient(light, {
+              intensity: 20,
+              duration: 4000,
+              onComplete: () => {
+                isBrightRef.current = false
+                loopGradient()
+              }
+            })
+          } else {
+            gradientRef.current = new LightGradient(light, {
+              intensity: 2,
+              duration: 4000,
+              onComplete: () => {
+                isBrightRef.current = true
+                loopGradient()
+              }
+            })
           }
+        }
+
+        loopGradient()
+      }
+
+      useEffect(() => {
+        return () => {
+          gradientRef.current?.dispose()
+          gradientRef.current = null
+          if (meshRef.current) {
+            meshRef.current.geometry.dispose()
+            ;(meshRef.current.material as THREE.Material).dispose()
+            meshRef.current = null
+          }
+        }
+      }, [])
+
+      return (
+        <Scene style={{ marginTop: '10px', width: '100%', height: '300px' }} onCreated={handleCreated} />
+      )
+    }
+    ```
+  </TabItem>
+  <TabItem value="webgl" label="WebGL">
+    <LightGradient rendererType="webgl" />
+
+    ```tsx
+    import { Scene, LightGradient } from 'react-three-lite'
+    import { useRef, useEffect } from 'react'
+    import type { SceneComponents } from 'react-three-lite'
+    import * as THREE from 'three'
+
+    function App() {
+      const gradientRef = useRef<LightGradient | null>(null)
+      const meshRef = useRef<THREE.Mesh | null>(null)
+      const isBrightRef = useRef(true)
+
+      const handleCreated = (scene: THREE.Scene, components: SceneComponents) => {
+        const { camera, light } = components
+        if (!camera || !light) return
+
+        camera.position.set(0, 0, 4)
+        camera.lookAt(0, 0, 0)
+
+        const geometry = new THREE.BoxGeometry(1.5, 1.5, 1.5)
+        const material = new THREE.MeshStandardMaterial({
+          color: 0xffffff,
+          roughness: 0.5,
+          metalness: 0.5
         })
+        meshRef.current = new THREE.Mesh(geometry, material)
+        meshRef.current.position.y = 0.75
+        scene.add(meshRef.current)
+
+        const loopGradient = () => {
+          if (isBrightRef.current) {
+            gradientRef.current = new LightGradient(light, {
+              intensity: 20,
+              duration: 4000,
+              onComplete: () => {
+                isBrightRef.current = false
+                loopGradient()
+              }
+            })
+          } else {
+            gradientRef.current = new LightGradient(light, {
+              intensity: 2,
+              duration: 4000,
+              onComplete: () => {
+                isBrightRef.current = true
+                loopGradient()
+              }
+            })
+          }
+        }
+
+        loopGradient()
       }
+
+      useEffect(() => {
+        return () => {
+          gradientRef.current?.dispose()
+          gradientRef.current = null
+          if (meshRef.current) {
+            meshRef.current.geometry.dispose()
+            ;(meshRef.current.material as THREE.Material).dispose()
+            meshRef.current = null
+          }
+        }
+      }, [])
+
+      return (
+        <Scene rendererType="webgl" style={{ marginTop: '10px', width: '100%', height: '300px' }} onCreated={handleCreated} />
+      )
     }
-
-    loopGradient()
-  }
-
-  useEffect(() => {
-    return () => {
-      gradientRef.current?.dispose()
-      gradientRef.current = null
-      if (meshRef.current) {
-        meshRef.current.geometry.dispose()
-        ;(meshRef.current.material as THREE.Material).dispose()
-        meshRef.current = null
-      }
-    }
-  }, [])
-
-  return (
-    <Scene style={{ marginTop: '10px', width: '100%', height: '300px' }} onCreated={handleCreated} />
-  )
-}
-```
+    ```
+  </TabItem>
+</Tabs>
 
 ## 配置项
 

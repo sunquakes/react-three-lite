@@ -6,36 +6,73 @@ title: 弹窗
 
 类
 
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
 import PopupComponent from '@site/src/components/Popup'
 
 ## 默认用法
 
-<PopupComponent />
+下面的每个示例都可以用 **WebGPU**（默认）或 **WebGL** 渲染器查看 —— 切换标签页进行对比。
 
-```tsx
-import { Scene, Popup } from 'react-three-lite'
-import TrafficLight from './TrafficLight'
+<Tabs groupId="renderer">
+  <TabItem value="webgpu" label="WebGPU" default>
+    <PopupComponent />
 
-function App() {
-  const handleCreated = (scene, { camera }) => {
-    camera.position.set(0, 1.5, 3)
+    ```tsx
+    import { Scene, Popup } from 'react-three-lite'
+    import TrafficLight from './TrafficLight'
 
-    // 在起始位置 [0, 1, 0] 创建包含React组件的popup
-    const popup = new Popup([0, 1, 0], <TrafficLight />, {})
-    scene.add(popup.scene)
+    function App() {
+      const handleCreated = (scene, { camera }) => {
+        camera.position.set(0, 1.5, 3)
 
-    // 垂直向上移动到 [0, 2, 0]，动画持续2秒
-    popup.moveTo([0, 2, 0], 2000)
-  }
+        // 在起始位置 [0, 1, 0] 创建包含React组件的popup
+        const popup = new Popup([0, 1, 0], <TrafficLight />, {})
+        scene.add(popup.scene)
 
-  return (
-    <Scene
-      style={{ marginTop: '10px', width: '100%', height: '300px' }}
-      onCreated={handleCreated}
-    />
-  )
-}
-```
+        // 垂直向上移动到 [0, 2, 0]，动画持续2秒
+        popup.moveTo([0, 2, 0], 2000)
+      }
+
+      return (
+        <Scene
+          style={{ marginTop: '10px', width: '100%', height: '300px' }}
+          onCreated={handleCreated}
+        />
+      )
+    }
+    ```
+  </TabItem>
+  <TabItem value="webgl" label="WebGL">
+    <PopupComponent rendererType="webgl" />
+
+    ```tsx
+    import { Scene, Popup } from 'react-three-lite'
+    import TrafficLight from './TrafficLight'
+
+    function App() {
+      const handleCreated = (scene, { camera }) => {
+        camera.position.set(0, 1.5, 3)
+
+        // 在起始位置 [0, 1, 0] 创建包含React组件的popup
+        const popup = new Popup([0, 1, 0], <TrafficLight />, {})
+        scene.add(popup.scene)
+
+        // 垂直向上移动到 [0, 2, 0]，动画持续2秒
+        popup.moveTo([0, 2, 0], 2000)
+      }
+
+      return (
+        <Scene
+          rendererType="webgl"
+          style={{ marginTop: '10px', width: '100%', height: '300px' }}
+          onCreated={handleCreated}
+        />
+      )
+    }
+    ```
+  </TabItem>
+</Tabs>
 
 #### `TrafficLight.tsx`
 

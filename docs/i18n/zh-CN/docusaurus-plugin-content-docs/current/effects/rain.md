@@ -6,23 +6,46 @@ title: 雨效果
 
 组件
 
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
 import RainComponent from '@site/src/components/effects/Rain'
 
 ## 默认用法
 
-<RainComponent />
+下面的每个示例都可以用 **WebGPU**（默认）或 **WebGL** 渲染器查看 —— 切换标签页进行对比。
 
-```tsx
-import { Scene, Rain } from 'react-three-lite'
+<Tabs groupId="renderer">
+  <TabItem value="webgpu" label="WebGPU" default>
+    <RainComponent />
 
-export default function App() {
-  return (
-    <Scene bgColor="#0f172a" style={{ width: '100%', height: '300px' }}>
-      <Rain count={3000} speed={0.8} color={0x87ceeb} range={30} height={20} />
-    </Scene>
-  )
-}
-```
+    ```tsx
+    import { Scene, Rain } from 'react-three-lite'
+
+    export default function App() {
+      return (
+        <Scene bgColor="#1a1a2e" style={{ width: '100%', height: '300px' }}>
+          <Rain count={3000} speed={0.8} color={0x87ceeb} range={30} height={20} />
+        </Scene>
+      )
+    }
+    ```
+  </TabItem>
+  <TabItem value="webgl" label="WebGL">
+    <RainComponent rendererType="webgl" />
+
+    ```tsx
+    import { Scene, Rain } from 'react-three-lite'
+
+    export default function App() {
+      return (
+        <Scene bgColor="#1a1a2e" rendererType="webgl" style={{ width: '100%', height: '300px' }}>
+          <Rain count={3000} speed={0.8} color={0x87ceeb} range={30} height={20} />
+        </Scene>
+      )
+    }
+    ```
+  </TabItem>
+</Tabs>
 
 ## 属性
 

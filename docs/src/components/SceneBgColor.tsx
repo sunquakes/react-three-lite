@@ -4,9 +4,10 @@ import type { SceneComponents } from 'react-three-lite'
 
 interface SceneBgColorComponentProps {
   style?: React.CSSProperties
+  rendererType?: 'webgpu' | 'webgl'
 }
 
-export default function SceneBgColorComponent({ style }: SceneBgColorComponentProps) {
+export default function SceneBgColorComponent({ style, rendererType }: SceneBgColorComponentProps) {
   const defaultStyle: React.CSSProperties = {
     marginTop: '10px',
     marginBottom: '16px',
@@ -22,6 +23,7 @@ export default function SceneBgColorComponent({ style }: SceneBgColorComponentPr
   return (
     <Scene
       style={{ ...defaultStyle, ...style }}
+      rendererType={rendererType}
       bgColor="#98F5F9"
       gridHelper={false}
       onCreated={handleCreated}

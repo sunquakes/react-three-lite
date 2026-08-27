@@ -3,7 +3,11 @@ import { Scene, FBXLoaderAsync } from 'react-three-lite'
 import type { SceneComponents } from 'react-three-lite'
 import type * as THREE from 'three'
 
-export default function FBXLoaderFunctionComponent() {
+interface FBXLoaderFunctionProps {
+  rendererType?: 'webgpu' | 'webgl'
+}
+
+export default function FBXLoaderFunctionComponent({ rendererType }: FBXLoaderFunctionProps) {
   const handleCreated = useCallback(async (scene: THREE.Scene, components: SceneComponents) => {
     const { camera } = components
     if (!camera) return
@@ -17,7 +21,7 @@ export default function FBXLoaderFunctionComponent() {
   }, [])
 
   return (
-    <Scene style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '300px' }} bgColor="#1a1a2e" onCreated={handleCreated}>
+    <Scene rendererType={rendererType} style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '300px' }} bgColor="#1a1a2e" onCreated={handleCreated}>
     </Scene>
   )
 }

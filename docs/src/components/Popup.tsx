@@ -4,7 +4,11 @@ import type { SceneComponents } from 'react-three-lite'
 import type * as THREE from 'three'
 import TrafficLight from './TrafficLight'
 
-export default function PopupComponent() {
+interface PopupProps {
+  rendererType?: 'webgpu' | 'webgl'
+}
+
+export default function PopupComponent({ rendererType = 'webgpu' }: PopupProps = {}) {
   const sceneRef = useRef<THREE.Scene>()
 
   const handleCreated = (scene: THREE.Scene, components: SceneComponents) => {
@@ -22,6 +26,8 @@ export default function PopupComponent() {
 
   return (
     <Scene 
+      rendererType={rendererType}
+      bgColor="#ffffff"
       style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '300px' }} 
       onCreated={handleCreated} 
     />

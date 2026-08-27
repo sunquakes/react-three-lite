@@ -7,23 +7,46 @@ title: Snow
 
 Component
 
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
 import Snow from '@site/src/components/effects/Snow'
 
 ## Default Usage
 
-<Snow />
+Every example below can be viewed with either the **WebGPU** (default) or the **WebGL** renderer — switch tabs to compare.
 
-```tsx
-import { Scene, Snow } from 'react-three-lite'
+<Tabs groupId="renderer">
+  <TabItem value="webgpu" label="WebGPU" default>
+    <Snow />
 
-export default function App() {
-  return (
-    <Scene bgColor="#1e293b" style={{ width: '100%', height: '300px' }}>
-      <Snow count={2000} speed={0.5} color={0xffffff} range={25} height={18} />
-    </Scene>
-  )
-}
-```
+    ```tsx
+    import { Scene, Snow } from 'react-three-lite'
+
+    export default function App() {
+      return (
+        <Scene bgColor="#1a1a2e" style={{ width: '100%', height: '300px' }}>
+          <Snow count={2000} speed={0.5} color={0xffffff} range={25} height={18} />
+        </Scene>
+      )
+    }
+    ```
+  </TabItem>
+  <TabItem value="webgl" label="WebGL">
+    <Snow rendererType="webgl" />
+
+    ```tsx
+    import { Scene, Snow } from 'react-three-lite'
+
+    export default function App() {
+      return (
+        <Scene bgColor="#1a1a2e" rendererType="webgl" style={{ width: '100%', height: '300px' }}>
+          <Snow count={2000} speed={0.5} color={0xffffff} range={25} height={18} />
+        </Scene>
+      )
+    }
+    ```
+  </TabItem>
+</Tabs>
 
 ## Props
 

@@ -6,23 +6,46 @@ title: 雪效果
 
 组件
 
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
 import SnowComponent from '@site/src/components/effects/Snow'
 
 ## 默认用法
 
-<SnowComponent />
+下面的每个示例都可以用 **WebGPU**（默认）或 **WebGL** 渲染器查看 —— 切换标签页进行对比。
 
-```tsx
-import { Scene, Snow } from 'react-three-lite'
+<Tabs groupId="renderer">
+  <TabItem value="webgpu" label="WebGPU" default>
+    <SnowComponent />
 
-export default function App() {
-  return (
-    <Scene bgColor="#1e293b" style={{ width: '100%', height: '300px' }}>
-      <Snow count={2000} speed={0.5} color={0xffffff} range={25} height={18} />
-    </Scene>
-  )
-}
-```
+    ```tsx
+    import { Scene, Snow } from 'react-three-lite'
+
+    export default function App() {
+      return (
+        <Scene bgColor="#1a1a2e" style={{ width: '100%', height: '300px' }}>
+          <Snow count={2000} speed={0.5} color={0xffffff} range={25} height={18} />
+        </Scene>
+      )
+    }
+    ```
+  </TabItem>
+  <TabItem value="webgl" label="WebGL">
+    <SnowComponent rendererType="webgl" />
+
+    ```tsx
+    import { Scene, Snow } from 'react-three-lite'
+
+    export default function App() {
+      return (
+        <Scene bgColor="#1a1a2e" rendererType="webgl" style={{ width: '100%', height: '300px' }}>
+          <Snow count={2000} speed={0.5} color={0xffffff} range={25} height={18} />
+        </Scene>
+      )
+    }
+    ```
+  </TabItem>
+</Tabs>
 
 ## 属性
 

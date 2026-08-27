@@ -3,133 +3,264 @@ lang: en-US
 title: Flow Line Mesh
 ---
 
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+import FlowLineMesh from '@site/src/components/meshes/FlowLineMesh'
+import FlowLineMeshOptions from '@site/src/components/meshes/FlowLineMeshOptions'
+
 ## Type
 
 Class
 
-import FlowLineMesh from '@site/src/components/meshes/FlowLineMesh'
-import FlowLineMeshOptions from '@site/src/components/meshes/FlowLineMeshOptions'
-
 ## Default Usage
 
-<FlowLineMesh />
+Every example below can be viewed with either the **WebGPU** (default) or the **WebGL** renderer — switch tabs to compare.
 
-```tsx
-import { useRef } from 'react'
-import { Scene, FlowLineMesh, AxisType } from 'react-three-lite'
-import * as THREE from 'three'
+<Tabs groupId="renderer">
+  <TabItem value="webgpu" label="WebGPU" default>
+    <FlowLineMesh />
 
-export default function App() {
-  const sceneRef = useRef<THREE.Scene>()
+    ```tsx
+    import { useRef } from 'react'
+    import { Scene, FlowLineMesh, AxisType } from 'react-three-lite'
+    import * as THREE from 'three'
 
-  const handleCreated = (scene: THREE.Scene, { camera }: any) => {
-    sceneRef.current = scene
-    camera.position.set(0, 0, 3)
-    camera.lookAt(0, 0, 0)
+    export default function App() {
+      const sceneRef = useRef<THREE.Scene>()
 
-    const points = [
-      new THREE.Vector3(-2.000000, 0.000000, 0),
-      new THREE.Vector3(-1.975377, 0.312869, 0),
-      new THREE.Vector3(-1.902113, 0.618034, 0),
-      new THREE.Vector3(-1.782013, 0.907981, 0),
-      new THREE.Vector3(-1.618034, 1.175571, 0),
-      new THREE.Vector3(-1.414214, 1.414214, 0),
-      new THREE.Vector3(-1.175571, 1.618034, 0),
-      new THREE.Vector3(-0.907981, 1.782013, 0),
-      new THREE.Vector3(-0.618034, 1.902113, 0),
-      new THREE.Vector3(-0.312869, 1.975377, 0),
-      new THREE.Vector3(-0.000000, 2.000000, 0),
-      new THREE.Vector3(0.312869, 1.975377, 0),
-      new THREE.Vector3(0.618034, 1.902113, 0),
-      new THREE.Vector3(0.907981, 1.782013, 0),
-      new THREE.Vector3(1.175571, 1.618034, 0),
-      new THREE.Vector3(1.414214, 1.414214, 0),
-      new THREE.Vector3(1.618034, 1.175571, 0),
-      new THREE.Vector3(1.782013, 0.907981, 0),
-      new THREE.Vector3(1.902113, 0.618034, 0),
-      new THREE.Vector3(1.975377, 0.312869, 0),
-      new THREE.Vector3(2.000000, 0.000000, 0)
-    ]
+      const handleCreated = (scene: THREE.Scene, { camera }: any) => {
+        sceneRef.current = scene
+        camera.position.set(0, 0, 3)
+        camera.lookAt(0, 0, 0)
 
-    const mesh = new FlowLineMesh({
-      points,
-      width: 0.3,
-      axis: AxisType.Z,
-      textureRepeat: 8,
-      color: [0.0, 1.0, 1.0, 1]
-    })
+        const points = [
+          new THREE.Vector3(-2.000000, 0.000000, 0),
+          new THREE.Vector3(-1.975377, 0.312869, 0),
+          new THREE.Vector3(-1.902113, 0.618034, 0),
+          new THREE.Vector3(-1.782013, 0.907981, 0),
+          new THREE.Vector3(-1.618034, 1.175571, 0),
+          new THREE.Vector3(-1.414214, 1.414214, 0),
+          new THREE.Vector3(-1.175571, 1.618034, 0),
+          new THREE.Vector3(-0.907981, 1.782013, 0),
+          new THREE.Vector3(-0.618034, 1.902113, 0),
+          new THREE.Vector3(-0.312869, 1.975377, 0),
+          new THREE.Vector3(-0.000000, 2.000000, 0),
+          new THREE.Vector3(0.312869, 1.975377, 0),
+          new THREE.Vector3(0.618034, 1.902113, 0),
+          new THREE.Vector3(0.907981, 1.782013, 0),
+          new THREE.Vector3(1.175571, 1.618034, 0),
+          new THREE.Vector3(1.414214, 1.414214, 0),
+          new THREE.Vector3(1.618034, 1.175571, 0),
+          new THREE.Vector3(1.782013, 0.907981, 0),
+          new THREE.Vector3(1.902113, 0.618034, 0),
+          new THREE.Vector3(1.975377, 0.312869, 0),
+          new THREE.Vector3(2.000000, 0.000000, 0)
+        ]
 
-    scene.add(mesh)
-  }
+        const mesh = new FlowLineMesh({
+          points,
+          width: 0.3,
+          axis: AxisType.Z,
+          textureRepeat: 8,
+          color: [0.0, 1.0, 1.0, 1]
+        })
 
-  return (
-    <div style={{ marginTop: '10px', width: '100%', height: '300px' }}>
-      <Scene onCreated={handleCreated} />
-    </div>
-  )
-}
-```
+        scene.add(mesh)
+      }
+
+      return (
+        <div style={{ marginTop: '10px', width: '100%', height: '300px' }}>
+          <Scene onCreated={handleCreated} />
+        </div>
+      )
+    }
+    ```
+  </TabItem>
+  <TabItem value="webgl" label="WebGL">
+    <FlowLineMesh rendererType="webgl" />
+
+    ```tsx
+    import { useRef } from 'react'
+    import { Scene, FlowLineMesh, AxisType } from 'react-three-lite'
+    import * as THREE from 'three'
+
+    export default function App() {
+      const sceneRef = useRef<THREE.Scene>()
+
+      const handleCreated = (scene: THREE.Scene, { camera }: any) => {
+        sceneRef.current = scene
+        camera.position.set(0, 0, 3)
+        camera.lookAt(0, 0, 0)
+
+        const points = [
+          new THREE.Vector3(-2.000000, 0.000000, 0),
+          new THREE.Vector3(-1.975377, 0.312869, 0),
+          new THREE.Vector3(-1.902113, 0.618034, 0),
+          new THREE.Vector3(-1.782013, 0.907981, 0),
+          new THREE.Vector3(-1.618034, 1.175571, 0),
+          new THREE.Vector3(-1.414214, 1.414214, 0),
+          new THREE.Vector3(-1.175571, 1.618034, 0),
+          new THREE.Vector3(-0.907981, 1.782013, 0),
+          new THREE.Vector3(-0.618034, 1.902113, 0),
+          new THREE.Vector3(-0.312869, 1.975377, 0),
+          new THREE.Vector3(-0.000000, 2.000000, 0),
+          new THREE.Vector3(0.312869, 1.975377, 0),
+          new THREE.Vector3(0.618034, 1.902113, 0),
+          new THREE.Vector3(0.907981, 1.782013, 0),
+          new THREE.Vector3(1.175571, 1.618034, 0),
+          new THREE.Vector3(1.414214, 1.414214, 0),
+          new THREE.Vector3(1.618034, 1.175571, 0),
+          new THREE.Vector3(1.782013, 0.907981, 0),
+          new THREE.Vector3(1.902113, 0.618034, 0),
+          new THREE.Vector3(1.975377, 0.312869, 0),
+          new THREE.Vector3(2.000000, 0.000000, 0)
+        ]
+
+        const mesh = new FlowLineMesh({
+          points,
+          width: 0.3,
+          axis: AxisType.Z,
+          textureRepeat: 8,
+          color: [0.0, 1.0, 1.0, 1]
+        })
+
+        scene.add(mesh)
+      }
+
+      return (
+        <div style={{ marginTop: '10px', width: '100%', height: '300px' }}>
+          <Scene rendererType="webgl" onCreated={handleCreated} />
+        </div>
+      )
+    }
+    ```
+  </TabItem>
+</Tabs>
 
 ## Custom Options
 
-<FlowLineMeshOptions />
+<Tabs groupId="renderer">
+  <TabItem value="webgpu" label="WebGPU" default>
+    <FlowLineMeshOptions />
 
-```tsx
-import { useRef } from 'react'
-import { Scene, FlowLineMesh, AxisType } from 'react-three-lite'
-import * as THREE from 'three'
+    ```tsx
+    import { useRef } from 'react'
+    import { Scene, FlowLineMesh, AxisType } from 'react-three-lite'
+    import * as THREE from 'three'
 
-export default function App() {
-  const sceneRef = useRef<THREE.Scene>()
+    export default function App() {
+      const sceneRef = useRef<THREE.Scene>()
 
-  const handleCreated = (scene: THREE.Scene, { camera }: any) => {
-    sceneRef.current = scene
-    camera.position.set(0, 0, 3)
-    camera.lookAt(0, 0, 0)
+      const handleCreated = (scene: THREE.Scene, { camera }: any) => {
+        sceneRef.current = scene
+        camera.position.set(0, 0, 3)
+        camera.lookAt(0, 0, 0)
 
-    const points = [
-      new THREE.Vector3(-2.000000, 0.000000, 0),
-      new THREE.Vector3(-1.975377, 0.312869, 0),
-      new THREE.Vector3(-1.902113, 0.618034, 0),
-      new THREE.Vector3(-1.782013, 0.907981, 0),
-      new THREE.Vector3(-1.618034, 1.175571, 0),
-      new THREE.Vector3(-1.414214, 1.414214, 0),
-      new THREE.Vector3(-1.175571, 1.618034, 0),
-      new THREE.Vector3(-0.907981, 1.782013, 0),
-      new THREE.Vector3(-0.618034, 1.902113, 0),
-      new THREE.Vector3(-0.312869, 1.975377, 0),
-      new THREE.Vector3(-0.000000, 2.000000, 0),
-      new THREE.Vector3(0.312869, 1.975377, 0),
-      new THREE.Vector3(0.618034, 1.902113, 0),
-      new THREE.Vector3(0.907981, 1.782013, 0),
-      new THREE.Vector3(1.175571, 1.618034, 0),
-      new THREE.Vector3(1.414214, 1.414214, 0),
-      new THREE.Vector3(1.618034, 1.175571, 0),
-      new THREE.Vector3(1.782013, 0.907981, 0),
-      new THREE.Vector3(1.902113, 0.618034, 0),
-      new THREE.Vector3(1.975377, 0.312869, 0),
-      new THREE.Vector3(2.000000, 0.000000, 0)
-    ]
+        const points = [
+          new THREE.Vector3(-2.000000, 0.000000, 0),
+          new THREE.Vector3(-1.975377, 0.312869, 0),
+          new THREE.Vector3(-1.902113, 0.618034, 0),
+          new THREE.Vector3(-1.782013, 0.907981, 0),
+          new THREE.Vector3(-1.618034, 1.175571, 0),
+          new THREE.Vector3(-1.414214, 1.414214, 0),
+          new THREE.Vector3(-1.175571, 1.618034, 0),
+          new THREE.Vector3(-0.907981, 1.782013, 0),
+          new THREE.Vector3(-0.618034, 1.902113, 0),
+          new THREE.Vector3(-0.312869, 1.975377, 0),
+          new THREE.Vector3(-0.000000, 2.000000, 0),
+          new THREE.Vector3(0.312869, 1.975377, 0),
+          new THREE.Vector3(0.618034, 1.902113, 0),
+          new THREE.Vector3(0.907981, 1.782013, 0),
+          new THREE.Vector3(1.175571, 1.618034, 0),
+          new THREE.Vector3(1.414214, 1.414214, 0),
+          new THREE.Vector3(1.618034, 1.175571, 0),
+          new THREE.Vector3(1.782013, 0.907981, 0),
+          new THREE.Vector3(1.902113, 0.618034, 0),
+          new THREE.Vector3(1.975377, 0.312869, 0),
+          new THREE.Vector3(2.000000, 0.000000, 0)
+        ]
 
-    const mesh = new FlowLineMesh({
-      points,
-      color: [0.0, 1.0, 1.0, 1],
-      speed: 16,
-      width: 0.4,
-      axis: AxisType.Z,
-      textureRepeat: 10
-    })
+        const mesh = new FlowLineMesh({
+          points,
+          color: [0.0, 1.0, 1.0, 1],
+          speed: 16,
+          width: 0.4,
+          axis: AxisType.Z,
+          textureRepeat: 10
+        })
 
-    scene.add(mesh)
-  }
+        scene.add(mesh)
+      }
 
-  return (
-    <div style={{ marginTop: '10px', width: '100%', height: '300px' }}>
-      <Scene onCreated={handleCreated} />
-    </div>
-  )
-}
-```
+      return (
+        <div style={{ marginTop: '10px', width: '100%', height: '300px' }}>
+          <Scene onCreated={handleCreated} />
+        </div>
+      )
+    }
+    ```
+  </TabItem>
+  <TabItem value="webgl" label="WebGL">
+    <FlowLineMeshOptions rendererType="webgl" />
+
+    ```tsx
+    import { useRef } from 'react'
+    import { Scene, FlowLineMesh, AxisType } from 'react-three-lite'
+    import * as THREE from 'three'
+
+    export default function App() {
+      const sceneRef = useRef<THREE.Scene>()
+
+      const handleCreated = (scene: THREE.Scene, { camera }: any) => {
+        sceneRef.current = scene
+        camera.position.set(0, 0, 3)
+        camera.lookAt(0, 0, 0)
+
+        const points = [
+          new THREE.Vector3(-2.000000, 0.000000, 0),
+          new THREE.Vector3(-1.975377, 0.312869, 0),
+          new THREE.Vector3(-1.902113, 0.618034, 0),
+          new THREE.Vector3(-1.782013, 0.907981, 0),
+          new THREE.Vector3(-1.618034, 1.175571, 0),
+          new THREE.Vector3(-1.414214, 1.414214, 0),
+          new THREE.Vector3(-1.175571, 1.618034, 0),
+          new THREE.Vector3(-0.907981, 1.782013, 0),
+          new THREE.Vector3(-0.618034, 1.902113, 0),
+          new THREE.Vector3(-0.312869, 1.975377, 0),
+          new THREE.Vector3(-0.000000, 2.000000, 0),
+          new THREE.Vector3(0.312869, 1.975377, 0),
+          new THREE.Vector3(0.618034, 1.902113, 0),
+          new THREE.Vector3(0.907981, 1.782013, 0),
+          new THREE.Vector3(1.175571, 1.618034, 0),
+          new THREE.Vector3(1.414214, 1.414214, 0),
+          new THREE.Vector3(1.618034, 1.175571, 0),
+          new THREE.Vector3(1.782013, 0.907981, 0),
+          new THREE.Vector3(1.902113, 0.618034, 0),
+          new THREE.Vector3(1.975377, 0.312869, 0),
+          new THREE.Vector3(2.000000, 0.000000, 0)
+        ]
+
+        const mesh = new FlowLineMesh({
+          points,
+          color: [0.0, 1.0, 1.0, 1],
+          speed: 16,
+          width: 0.4,
+          axis: AxisType.Z,
+          textureRepeat: 10
+        })
+
+        scene.add(mesh)
+      }
+
+      return (
+        <div style={{ marginTop: '10px', width: '100%', height: '300px' }}>
+          <Scene rendererType="webgl" onCreated={handleCreated} />
+        </div>
+      )
+    }
+    ```
+  </TabItem>
+</Tabs>
 
 ## Constructor Parameters
 
