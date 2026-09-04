@@ -19,9 +19,11 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/react-three-lite.js"
+      "import": "./dist/react-three-lite.js",
+      "default": "./dist/react-three-lite.js"
     },
-    "./dist/style.css": "./dist/style.css"
+    "./dist/style.css": "./dist/style.css",
+    "./package.json": "./package.json"
   },
   "files": [
     "dist"
