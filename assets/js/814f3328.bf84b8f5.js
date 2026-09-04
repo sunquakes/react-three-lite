@@ -1,0 +1,1 @@
+"use strict";(globalThis.webpackChunkreact_three_lite_docs=globalThis.webpackChunkreact_three_lite_docs||[]).push([[472],{5513(e){e.exports=JSON.parse('{"title":"Recent posts","items":[]}')}}]);
