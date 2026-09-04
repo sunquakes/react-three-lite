@@ -16,6 +16,7 @@ const sidebars = {
     'movable-element',
     'animation',
     'model-rotator',
+    'picking',
     {
       type: 'category',
       label: 'Mesh',

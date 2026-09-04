@@ -30,6 +30,7 @@ export type SceneSlotProps = {
   renderer?: R3LRenderer
   scene?: THREE.Scene
   sceneComponents?: SceneComponents
+  picker?: import('../utils/Picker').default
   setFrame?: (callback: CallbackFrame) => void
   addBeforeFrame?: (callback: CallbackFrame) => () => void
   addAfterFrame?: (callback: CallbackFrame) => () => void

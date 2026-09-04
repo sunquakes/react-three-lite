@@ -23,9 +23,11 @@ import {
 
 import SweepLight from './utils/SweepLight'
 import ModelRotator from './utils/ModelRotator'
+import Picker from './utils/Picker'
 
 import { LightGradient, LightGradientOptions } from './utils/Light'
 import type { CalloutOptions, LineShape, BendAxis, LabelAnchor } from './utils/Callout'
+import type { PickEvent, PickEventType, PickCallback, PickerOptions } from './utils/Picker'
 
 // components
 export { Scene, GLTFLoader, FBXLoader, OBJLoader, Bloom, Rain, Snow, SceneContext, useScene }
@@ -34,9 +36,10 @@ export { Scene, GLTFLoader, FBXLoader, OBJLoader, Bloom, Rain, Snow, SceneContex
 export type { SceneComponents, CallbackFrame, R3LRenderer } from './context/SceneContext'
 export type { RendererType } from './utils/Renderer'
 export type { LightGradientOptions, CalloutOptions, LineShape, BendAxis, LabelAnchor }
+export type { PickEvent, PickEventType, PickCallback, PickerOptions }
 
 // class
-export { SkyBox, Popup, Callout, Movable, WaveCircleMesh, FlowLineMesh, Animation, SweepLight, LightGradient, ModelRotator }
+export { SkyBox, Popup, Callout, Movable, WaveCircleMesh, FlowLineMesh, Animation, SweepLight, LightGradient, ModelRotator, Picker }
 
 // function - async loaders (no hooks)
 export { GLTFLoaderFn as GLTFLoaderAsync, FBXLoaderFn as FBXLoaderAsync, OBJLoaderFn as OBJLoaderAsync }

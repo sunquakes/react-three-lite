@@ -8,6 +8,7 @@ import LightUtil from '../utils/Light'
 import Renderer, { RendererType } from '../utils/Renderer'
 import AxesHelperUtil from '../utils/AxesHelper'
 import Controls from '../utils/Controls'
+import Picker, { PickCallback } from '../utils/Picker'
 import {
   SceneContext,
   SceneComponents,
@@ -31,6 +32,10 @@ interface SceneProps {
   onBeforeFrame?: CallbackFrame
   onFrame?: CallbackFrame
   onAfterFrame?: CallbackFrame
+  onClick?: PickCallback
+  onHover?: PickCallback
+  pickFilter?: (object: THREE.Object3D) => boolean
+  pickRecursive?: boolean
   children?: React.ReactNode
   style?: React.CSSProperties
   className?: string
@@ -49,6 +54,10 @@ const SceneComponent = ({
   onCreated,
   onBeforeFrame,
   onAfterFrame,
+  onClick,
+  onHover,
+  pickFilter,
+  pickRecursive = true,
   children,
   style,
   className
@@ -59,6 +68,24 @@ const SceneComponent = ({
 
   // Use useState instead of useRef to ensure context updates trigger re-render
   const [sceneSlotProps, setSceneSlotProps] = useState<SceneSlotProps>({})
+
+  // Picking props are held in refs so that changing a callback does not tear
+  // down and rebuild the whole scene. The refs are seeded with the first render
+  // values and synced in an effect, because writing to a ref during render is
+  // not allowed.
+  const onClickRef = useRef<PickCallback | undefined>(onClick)
+  const onHoverRef = useRef<PickCallback | undefined>(onHover)
+  const pickFilterRef = useRef<((object: THREE.Object3D) => boolean) | undefined>(pickFilter)
+  const pickRecursiveRef = useRef(pickRecursive)
+
+  useEffect(() => {
+    onClickRef.current = onClick
+    onHoverRef.current = onHover
+    pickFilterRef.current = pickFilter
+    pickRecursiveRef.current = pickRecursive
+  }, [onClick, onHover, pickFilter, pickRecursive])
+
+  const pickerRef = useRef<Picker | null>(null)
 
   const beforeFrameChildrenRef = useRef<CallbackFrame[]>([])
   const afterFrameChildrenRef = useRef<CallbackFrame[]>([])
@@ -190,12 +217,21 @@ const SceneComponent = ({
         scene.background = new THREE.Color(bgColor)
       }
 
+      // The renderer canvas is attached by createScene, so the picker can now
+      // bind its pointer listeners to it.
+      const picker = new Picker(scene, camera, currentRenderer.domElement, {
+        recursive: pickRecursiveRef.current,
+        filter: (object) => (pickFilterRef.current ? pickFilterRef.current(object) : true)
+      })
+      pickerRef.current = picker
+
       // Update context value with useState to trigger child component re-render
       setSceneSlotProps({
         container: container,
         renderer: currentRenderer,
         scene: scene,
         sceneComponents: sceneComponents,
+        picker: picker,
         setFrame: (callback: CallbackFrame) => {
           callbackFrameRef.current = callback
           frameCallbackSetRef.current = true // Mark custom frame callback as set
@@ -238,6 +274,9 @@ const SceneComponent = ({
       frameCallbackSetRef.current = false
       beforeFrameSetRef.current = false
 
+      pickerRef.current?.dispose()
+      pickerRef.current = null
+
       if (disposeSceneFn) {
         disposeSceneFn()
         disposeSceneFn = null
@@ -278,6 +317,23 @@ const SceneComponent = ({
       currentCamera = null
     }
   }, [rendererType])
+
+  // Only subscribe when a handler is actually provided, so an unused picker
+  // never runs a raycast. The deps track whether a handler exists rather than
+  // its identity, so swapping the callback does not resubscribe.
+  const picker = sceneSlotProps.picker
+  const hasClickHandler = Boolean(onClick)
+  const hasHoverHandler = Boolean(onHover)
+
+  useEffect(() => {
+    if (!picker || !hasClickHandler) return
+    return picker.on('click', (event) => onClickRef.current?.(event))
+  }, [picker, hasClickHandler])
+
+  useEffect(() => {
+    if (!picker || !hasHoverHandler) return
+    return picker.on('hover', (event) => onHoverRef.current?.(event))
+  }, [picker, hasHoverHandler])
 
   return (
     <SceneContext.Provider value={sceneSlotProps}>

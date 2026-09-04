@@ -55,6 +55,10 @@
     "message": "模型旋转器",
     "description": "The label for doc 'model-rotator' in sidebar 'guideSidebar'"
   },
+  "sidebar.guideSidebar.doc.picking": {
+    "message": "拾取",
+    "description": "The label for doc 'picking' in sidebar 'guideSidebar'"
+  },
   "sidebar.guideSidebar.doc.meshes/wave-circle-mesh": {
     "message": "波浪圆环网格",
     "description": "The label for doc 'meshes/wave-circle-mesh' in sidebar 'guideSidebar'"
