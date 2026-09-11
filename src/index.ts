@@ -24,22 +24,35 @@ import {
 import SweepLight from './utils/SweepLight'
 import ModelRotator from './utils/ModelRotator'
 import Picker from './utils/Picker'
+import LightPillar from './utils/LightPillar'
 
 import { LightGradient, LightGradientOptions } from './utils/Light'
 import type { CalloutOptions, LineShape, BendAxis, LabelAnchor } from './utils/Callout'
 import type { PickEvent, PickEventType, PickCallback, PickerOptions } from './utils/Picker'
+import type { LightPillarOptions } from './utils/LightPillar'
 
 // components
-export { Scene, GLTFLoader, FBXLoader, OBJLoader, Bloom, Rain, Snow, SceneContext, useScene }
+export {
+  Scene,
+  GLTFLoader,
+  FBXLoader,
+  OBJLoader,
+  Bloom,
+  Rain,
+  Snow,
+  SceneContext,
+  useScene
+}
 
 // types
 export type { SceneComponents, CallbackFrame, R3LRenderer } from './context/SceneContext'
 export type { RendererType } from './utils/Renderer'
 export type { LightGradientOptions, CalloutOptions, LineShape, BendAxis, LabelAnchor }
 export type { PickEvent, PickEventType, PickCallback, PickerOptions }
+export type { LightPillarOptions }
 
 // class
-export { SkyBox, Popup, Callout, Movable, WaveCircleMesh, FlowLineMesh, Animation, SweepLight, LightGradient, ModelRotator, Picker }
+export { SkyBox, Popup, Callout, Movable, WaveCircleMesh, FlowLineMesh, Animation, SweepLight, LightGradient, ModelRotator, Picker, LightPillar }
 
 // function - async loaders (no hooks)
 export { GLTFLoaderFn as GLTFLoaderAsync, FBXLoaderFn as FBXLoaderAsync, OBJLoaderFn as OBJLoaderAsync }

@@ -86,5 +86,9 @@
   "sidebar.guideSidebar.doc.effects/light-gradient": {
     "message": "灯光渐变",
     "description": "The label for doc 'effects/light-gradient' in sidebar 'guideSidebar'"
+  },
+  "sidebar.guideSidebar.doc.effects/light-pillar": {
+    "message": "光柱效果",
+    "description": "The label for doc 'effects/light-pillar' in sidebar 'guideSidebar'"
   }
 }
