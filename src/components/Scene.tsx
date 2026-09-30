@@ -3,12 +3,14 @@ import * as THREE from 'three'
 import { OrbitControls } from 'three-stdlib'
 import { generateUUID } from '../utils/UUID'
 import createScene from '../utils/Scene'
-import CameraUtil from '../utils/Camera'
+import CameraUtil, { GIS_CAMERA_FAR } from '../utils/Camera'
 import LightUtil from '../utils/Light'
 import Renderer, { RendererType } from '../utils/Renderer'
 import AxesHelperUtil from '../utils/AxesHelper'
 import Controls from '../utils/Controls'
 import Picker, { PickCallback } from '../utils/Picker'
+import { GeoReference } from '../crs/GeoReference'
+import type { AxesMapping, CrsCode, DatumType, GeoPoint } from '../crs/types'
 import {
   SceneContext,
   SceneComponents,
@@ -16,6 +18,14 @@ import {
   SceneSlotProps,
   R3LRenderer
 } from '../context/SceneContext'
+
+export interface GridHelperOptions {
+  size?: number
+  divisions?: number
+  colorCenterLine?: THREE.ColorRepresentation
+  colorGrid?: THREE.ColorRepresentation
+  y?: number
+}
 
 interface SceneProps {
   modelValue?: THREE.Scene
@@ -26,8 +36,13 @@ interface SceneProps {
   camera?: THREE.PerspectiveCamera
   light?: THREE.Object3D
   axesHelper?: THREE.AxesHelper | boolean
-  gridHelper?: THREE.GridHelper | boolean
+  gridHelper?: THREE.GridHelper | GridHelperOptions | boolean
   controls?: OrbitControls
+  geo?: GeoReference
+  origin?: GeoPoint
+  crs?: CrsCode
+  datum?: DatumType
+  axes?: AxesMapping
   onCreated?: (scene: THREE.Scene, components: SceneComponents) => void
   onBeforeFrame?: CallbackFrame
   onFrame?: CallbackFrame
@@ -51,6 +66,11 @@ const SceneComponent = ({
   axesHelper: propAxesHelper,
   gridHelper: propGridHelper,
   controls: propControls,
+  geo: propGeo,
+  origin,
+  crs,
+  datum,
+  axes,
   onCreated,
   onBeforeFrame,
   onAfterFrame,
@@ -128,8 +148,31 @@ const SceneComponent = ({
     let currentCamera: THREE.PerspectiveCamera | null = null
 
     const start = async () => {
+      // A GeoReference always exists: when no GIS props are supplied it is the
+      // default WGS84/equirectangular reference centred at (0, 0), which is a
+      // no-op for every non-geographic scene.
+      const geo =
+        propGeo ??
+        new GeoReference(origin, {
+          ...(crs !== undefined ? { crs } : {}),
+          ...(datum !== undefined ? { datum } : {}),
+          ...(axes !== undefined ? { axes } : {})
+        })
+
+      // A scene built from any geographic prop works in local metres around a
+      // geographic origin and spans kilometres, so both the default camera far
+      // plane and the built-in grid need kilometre-range defaults. A scene with
+      // none of these props keeps the compact generic defaults.
+      const isGisScene =
+        propGeo !== undefined ||
+        origin !== undefined ||
+        crs !== undefined ||
+        datum !== undefined ||
+        axes !== undefined
+
       currentRenderer = propRenderer || Renderer(rendererType)
-      currentCamera = propCamera || CameraUtil(container)
+      currentCamera =
+        propCamera || CameraUtil(container, isGisScene ? { far: GIS_CAMERA_FAR } : undefined)
       currentLight = propLight || LightUtil()
       let currentAxesHelper: THREE.AxesHelper | undefined
       if (propAxesHelper === false) {
@@ -139,14 +182,42 @@ const SceneComponent = ({
       } else {
         currentAxesHelper = AxesHelperUtil()
       }
+      // A GIS scene works in local metres around a geographic origin, so the
+      // generic 20 m grid is far too small and its y = 0.01 plane is hidden
+      // under the opaque tile quads (y = 0.05). In that case scale the
+      // built-in grid to the kilometre range (50 m cells) and lift it just
+      // above the map plane; non-GIS scenes keep the compact grey grid.
+      const defaultGridOptions: Required<GridHelperOptions> = isGisScene
+        ? {
+            size: 2000,
+            divisions: 40,
+            colorCenterLine: 0x4a6fa5,
+            colorGrid: 0x2f3e5c,
+            y: 0.1
+          }
+        : {
+            size: 20,
+            divisions: 20,
+            colorCenterLine: 0xbbbbbb,
+            colorGrid: 0xdddddd,
+            y: 0.01
+          }
       let currentGridHelper: THREE.GridHelper | undefined
       if (propGridHelper === false) {
         currentGridHelper = undefined
       } else if (propGridHelper instanceof THREE.GridHelper) {
         currentGridHelper = propGridHelper
       } else {
-        currentGridHelper = new THREE.GridHelper(20, 20, 0xbbbbbb, 0xdddddd)
-        currentGridHelper.position.y = 0.01
+        // A plain object customises the built-in grid (any field falls back
+        // to the scene-aware defaults above); omitting the prop uses those
+        // defaults, and `true` is treated the same.
+        const options = propGridHelper === true ? undefined : propGridHelper
+        const { size, divisions, colorCenterLine, colorGrid, y } = {
+          ...defaultGridOptions,
+          ...(options ?? {})
+        }
+        currentGridHelper = new THREE.GridHelper(size, divisions, colorCenterLine, colorGrid)
+        currentGridHelper.position.y = y
       }
       currentControls = propControls || Controls(currentCamera, currentRenderer)
 
@@ -154,14 +225,22 @@ const SceneComponent = ({
         callbackFrameRef.current(renderer, scene, components)
       }
 
-      const beforeFrame = (renderer: R3LRenderer, scene: THREE.Scene, components: SceneComponents) => {
+      const beforeFrame = (
+        renderer: R3LRenderer,
+        scene: THREE.Scene,
+        components: SceneComponents
+      ) => {
         onBeforeFrame?.(renderer, scene, components)
         beforeFrameChildrenRef.current?.forEach((beforeFrameChild) => {
           beforeFrameChild?.(renderer, scene, components)
         })
       }
 
-      const afterFrame = (renderer: R3LRenderer, scene: THREE.Scene, components: SceneComponents) => {
+      const afterFrame = (
+        renderer: R3LRenderer,
+        scene: THREE.Scene,
+        components: SceneComponents
+      ) => {
         onAfterFrame?.(renderer, scene, components)
         afterFrameChildrenRef.current?.forEach((afterFrameChild) => {
           afterFrameChild?.(renderer, scene, components)
@@ -180,7 +259,8 @@ const SceneComponent = ({
         light: light,
         axesHelper: currentAxesHelper,
         gridHelper: currentGridHelper,
-        controls: controls
+        controls: controls,
+        geo: geo
       }
 
       const { scene, dispose: disposeScene } = await createScene(
@@ -231,6 +311,7 @@ const SceneComponent = ({
         renderer: currentRenderer,
         scene: scene,
         sceneComponents: sceneComponents,
+        geo: geo,
         picker: picker,
         setFrame: (callback: CallbackFrame) => {
           callbackFrameRef.current = callback

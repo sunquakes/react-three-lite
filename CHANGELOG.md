@@ -1,3 +1,21 @@
+## [Unreleased]
+
+### Added
+
+- Add GIS support with a geographic coordinate reference system. Geographic coordinates (`lng`, `lat`, `alt`) are normalized to WGS84, projected onto a local tangent plane and recentered around a configurable origin, preventing the float32 precision jitter that raw Web Mercator coordinates (around 1.3e7 metres) would cause.
+- Add datum conversion between WGS84, GCJ02 and BD09 (`toWGS84`, `fromWGS84`, `convertDatum`, `wgs84ToGcj02`, `gcj02ToWgs84`, `gcj02ToBd09`, `bd09ToGcj02`), with a fixed-point GCJ02 inverse.
+- Add projection helpers: recentered Web Mercator (`mercatorProject`, `mercatorUnproject`, `mercatorCRS`) and an equirectangular local tangent plane (`createLocalPlane`).
+- Add the `GeoReference` class (and the `createGeoReference` factory) for geographic-to-local conversion, with `toLocal`, `toGeo`, `setPosition` and `distance` methods. ENU axes map east to `+X`, north to `-Z` and up to `+Y`.
+- Add `origin`, `crs`, `datum`, `axes` and `geo` props to `<Scene>`. The scene always owns a `GeoReference` (the WGS84 default at `0,0` is a no-op), exposed as `components.geo` in `onCreated` and as `geo` on the `useScene()` context. Omitting the new props keeps the previous behavior unchanged.
+- Add the `GeoObject` component to declaratively anchor any `THREE.Object3D` at a geographic coordinate, with per-object datum override and in-place position updates when the coordinate changes.
+- Add the `GeoJsonLayer` component for rendering GeoJSON `Point`, `LineString`, `Polygon` (including holes), `MultiPoint`, `MultiLineString`, `MultiPolygon`, `Feature` and `FeatureCollection` data, with base and per-feature styles and datum conversion.
+- Add unit tests for datum conversion, projections, `GeoReference` and GeoJSON flattening, and extend the public API surface guard test with the new GIS exports.
+- Add WebGPU / WebGL demo components and bilingual (English and Chinese) documentation for the GIS features.
+- Allow the `gridHelper` prop of `<Scene>` to accept a `GridHelperOptions` config object (`size`, `divisions`, `colorCenterLine`, `colorGrid`, `y`), so callers can customise the built-in grid without constructing a `THREE.GridHelper` themselves. Passing a `THREE.GridHelper` instance remains supported, and the scene owns disposal of the grid in both cases.
+- Add the `TileLayer` component to project standard XYZ / slippy-map raster tiles (256 px, Web Mercator) onto the geographic ground plane. The layer fills the bounding rectangle of a set of coverage points, lazy-loads tile images with `{z}`/`{x}`/`{y}`/`{s}` URL templates, fades tiles in as they arrive and disposes every geometry, material and texture on unmount. Tile selection is datum-neutral and each tile corner is placed through the `GeoReference` in the imagery datum, so GCJ02 sources such as AMap stay seamless. A `maxTiles` safety cap prevents accidental mass requests, and `onReady` / `onTileError` report lifecycle events.
+- Add slippy-map tile math utilities: `TILE_SIZE`, `lngLatToTile`, `tileToLngLatBounds`, `tileToCorners`, `selectTiles` and `tileUrl`.
+- Add WebGPU / WebGL demo and bilingual documentation for `TileLayer`.
+
 ## [0.5.0] - 2026-08-27
 
 This release migrates the library from a WebGL-only implementation to a dual-renderer architecture built on Three.js TSL, with `WebGPURenderer` as the new default.

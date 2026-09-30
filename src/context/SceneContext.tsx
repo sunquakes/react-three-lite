@@ -2,6 +2,7 @@ import { createContext, useContext } from 'react'
 import * as THREE from 'three'
 import type { Renderer } from 'three/webgpu'
 import type { OrbitControls } from 'three-stdlib'
+import type { GeoReference } from '../crs/GeoReference'
 
 /**
  * Unified renderer type accepted by R3L utilities and components. Covers both
@@ -18,11 +19,14 @@ export type R3LRenderer = Renderer & {
 }
 
 export type SceneComponents = {
-  camera: THREE.Camera
+  // Scene always creates (or accepts) a PerspectiveCamera, so consumers can
+  // read perspective-only fields (fov/near/far) without an instanceof guard.
+  camera: THREE.PerspectiveCamera
   light: THREE.Object3D
   axesHelper: THREE.AxesHelper | undefined
   gridHelper: THREE.GridHelper | undefined
   controls: OrbitControls
+  geo: GeoReference
 }
 
 export type SceneSlotProps = {
@@ -30,6 +34,7 @@ export type SceneSlotProps = {
   renderer?: R3LRenderer
   scene?: THREE.Scene
   sceneComponents?: SceneComponents
+  geo?: GeoReference
   picker?: import('../utils/Picker').default
   setFrame?: (callback: CallbackFrame) => void
   addBeforeFrame?: (callback: CallbackFrame) => () => void

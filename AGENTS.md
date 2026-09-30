@@ -158,8 +158,6 @@ export default function App() {
 
   const handleCreated = (scene: THREE.Scene, components: SceneComponents) => {
     const { camera } = components
-    if (!camera) return
-
     camera.position.set(0, 0, 4)
     camera.lookAt(0, 0, 0)
 
@@ -359,8 +357,6 @@ function <ComponentName>Component({ rendererType }: { rendererType?: 'webgpu' | 
 
   const handleCreated = (scene: THREE.Scene, components: SceneComponents) => {
     const { camera } = components
-    if (!camera) return
-
     camera.position.set(0, 0, 4)
     camera.lookAt(0, 0, 0)
 
