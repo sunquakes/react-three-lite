@@ -109,7 +109,7 @@ Every example below can be viewed with either the **WebGPU** (default) or the
           origin={ORIGIN}
           gridHelper={grid}
           onCreated={handleCreated}
-          bgColor="#1a1a2e"
+          bgColor="rgb(40, 42, 54)"
           style={{ marginTop: '10px', width: '100%', height: '300px' }}
         />
       )
@@ -174,7 +174,7 @@ Every example below can be viewed with either the **WebGPU** (default) or the
           rendererType="webgl"
           origin={ORIGIN}
           onCreated={handleCreated}
-          bgColor="#1a1a2e"
+          bgColor="rgb(40, 42, 54)"
           style={{ marginTop: '10px', width: '100%', height: '300px' }}
         />
       )

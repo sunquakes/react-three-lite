@@ -84,7 +84,7 @@ Every example below can be viewed with either the **WebGPU** (default) or the
           origin={ORIGIN}
           gridHelper={false}
           onCreated={handleCreated}
-          bgColor="#1a1a2e"
+          bgColor="rgb(40, 42, 54)"
           style={{ marginTop: '10px', width: '100%', height: '300px' }}
         >
           <TileLayer url={TILE_URL} zoom={TILE_ZOOM} datum="WGS84" />
@@ -135,7 +135,7 @@ Every example below can be viewed with either the **WebGPU** (default) or the
           rendererType="webgl"
           origin={ORIGIN}
           onCreated={handleCreated}
-          bgColor="#1a1a2e"
+          bgColor="rgb(40, 42, 54)"
           style={{ marginTop: '10px', width: '100%', height: '300px' }}
         >
           <TileLayer url={TILE_URL} zoom={TILE_ZOOM} datum="WGS84" />

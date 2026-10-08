@@ -14,7 +14,7 @@ export default function BloomComponent({ rendererType }: BloomProps) {
     camera.position.set(0, 1.5, 3)
 
     // Set background color for better visibility
-    scene.background = new THREE.Color(0x1a1a2e)
+    scene.background = new THREE.Color('rgb(40, 42, 54)')
 
     const geometry = new THREE.BoxGeometry()
 
@@ -35,7 +35,7 @@ export default function BloomComponent({ rendererType }: BloomProps) {
 
   return (
     <div style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '300px' }}>
-      <Scene rendererType={rendererType} onCreated={handleCreated} bgColor="#1a1a2e">
+      <Scene rendererType={rendererType} onCreated={handleCreated} bgColor="rgb(40, 42, 54)">
         <Bloom layer={1} strength={2} radius={1} threshold={0} />
       </Scene>
     </div>

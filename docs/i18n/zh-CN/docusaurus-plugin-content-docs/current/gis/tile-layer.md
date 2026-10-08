@@ -70,7 +70,7 @@ OSM 影像以 WGS84 索引，因此使用 Scene 默认 datum 即可。
         <Scene
           origin={ORIGIN}
           onCreated={handleCreated}
-          bgColor="#1a1a2e"
+          bgColor="rgb(40, 42, 54)"
           style={{ marginTop: '10px', width: '100%', height: '300px' }}
         >
           <TileLayer url={TILE_URL} zoom={TILE_ZOOM} datum="WGS84" />
@@ -122,7 +122,7 @@ OSM 影像以 WGS84 索引，因此使用 Scene 默认 datum 即可。
           origin={ORIGIN}
           gridHelper={false}
           onCreated={handleCreated}
-          bgColor="#1a1a2e"
+          bgColor="rgb(40, 42, 54)"
           style={{ marginTop: '10px', width: '100%', height: '300px' }}
         >
           <TileLayer url={TILE_URL} zoom={TILE_ZOOM} datum="WGS84" />

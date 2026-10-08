@@ -100,7 +100,7 @@ import App from '@site/src/components/gis/GeoReference'
           origin={ORIGIN}
           gridHelper={grid}
           onCreated={handleCreated}
-          bgColor="#1a1a2e"
+          bgColor="rgb(40, 42, 54)"
           style={{ marginTop: '10px', width: '100%', height: '300px' }}
         />
       )
@@ -164,7 +164,7 @@ import App from '@site/src/components/gis/GeoReference'
           rendererType="webgl"
           origin={ORIGIN}
           onCreated={handleCreated}
-          bgColor="#1a1a2e"
+          bgColor="rgb(40, 42, 54)"
           style={{ marginTop: '10px', width: '100%', height: '300px' }}
         />
       )

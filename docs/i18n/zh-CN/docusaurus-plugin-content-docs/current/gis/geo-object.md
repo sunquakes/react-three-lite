@@ -70,7 +70,7 @@ import App from '@site/src/components/gis/GeoObject'
           origin={ORIGIN}
           gridHelper={grid}
           onCreated={handleCreated}
-          bgColor="#1a1a2e"
+          bgColor="rgb(40, 42, 54)"
           style={{ marginTop: '10px', width: '100%', height: '300px' }}
         >
           {MARKERS.map((coordinate, index) => (
@@ -129,7 +129,7 @@ import App from '@site/src/components/gis/GeoObject'
           origin={ORIGIN}
           gridHelper={grid}
           onCreated={handleCreated}
-          bgColor="#1a1a2e"
+          bgColor="rgb(40, 42, 54)"
           style={{ marginTop: '10px', width: '100%', height: '300px' }}
         >
           {MARKERS.map((coordinate, index) => (

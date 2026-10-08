@@ -74,7 +74,7 @@ function App({ rendererType }: { rendererType?: 'webgpu' | 'webgl' }) {
       onCreated={handleCreated}
       onClick={handleClick}
       onHover={handleHover}
-      bgColor="#1a1a2e"
+      bgColor="rgb(40, 42, 54)"
       style={{ marginTop: '10px', width: '100%', height: '300px' }}
     />
   )

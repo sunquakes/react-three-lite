@@ -90,7 +90,7 @@ export default function App({ rendererType }: AppProps) {
       origin={ORIGIN}
       gridHelper={GRID}
       onCreated={handleCreated}
-      bgColor="#1a1a2e"
+      bgColor="rgb(40, 42, 54)"
       style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '300px' }}
     >
       <GeoJsonLayer
