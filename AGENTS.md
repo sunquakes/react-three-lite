@@ -135,7 +135,7 @@ useEffect(() => {
 - Use `onCreated` callback on `<Scene>` to initialize effects (not `useScene()` hook)
 - Set camera position in `handleCreated`: `camera.position.set(0, 0, 4)`
 - Use `camera.lookAt(0, 0, 0)` to ensure proper orientation
-- **Default Scene background color: `bgColor="#1a1a2e"`** — use this for all demo Scenes by default.
+- **Default Scene background color: `bgColor="rgb(40, 42, 54)"`** — use this for all demo Scenes by default.
 - Set demo container style: `style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '300px' }}`
 - Add cleanup in `useEffect` return function and set refs to `null`
 - Use `// Cleanup on unmount` comment before useEffect
@@ -158,8 +158,6 @@ export default function App() {
 
   const handleCreated = (scene: THREE.Scene, components: SceneComponents) => {
     const { camera } = components
-    if (!camera) return
-
     camera.position.set(0, 0, 4)
     camera.lookAt(0, 0, 0)
 
@@ -175,7 +173,7 @@ export default function App() {
   }, [])
 
   return (
-    <Scene bgColor="#1a1a2e" style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '300px' }} onCreated={handleCreated} />
+    <Scene bgColor="rgb(40, 42, 54)" style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '300px' }} onCreated={handleCreated} />
   )
 }
 ```
@@ -215,7 +213,7 @@ When creating particle effects like Rain or Snow, follow this workflow:
 **5. Create Demo Component**
 - Set front-facing camera: `camera.position.set(0, 0, 4)`
 - Use `camera.lookAt(0, 0, 0)` to ensure proper orientation
-- Default Scene background color: `bgColor="#1a1a2e"` — use it for all demos by default
+- Default Scene background color: `bgColor="rgb(40, 42, 54)"` — use it for all demos by default
 - Adjust camera distance for visibility
 - Set demo container style: `style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '300px' }}`
 
@@ -243,6 +241,30 @@ pnpm format       # Format with Prettier
 ```bash
 pnpm build        # Build for production
 ```
+
+### Releasing
+
+Releases are cut from `main`, never directly from `develop`. Follow this order
+exactly - the tag is the last step because pushing it triggers the
+`Create Release` workflow (GitHub Release, NPM publish, docs deploy):
+
+1. Update `CHANGELOG.md`: rename the `## [Unreleased]` heading to
+   `## [x.y.z] - YYYY-MM-DD` (keep the accumulated sections; do not use the
+   placeholder the release script injects).
+2. Bump the version: update `package.json` with the target version, or run
+   `node scripts/release.js x.y.z` - but if the script creates a tag, delete it
+   (`git tag -d x.y.z`); the script commits `package.json`/`CHANGELOG.md`, which
+   is fine.
+3. Commit the release preparation on `develop`
+   (`chore: release version x.y.z`).
+4. Push `develop` and open a pull request from `develop` to `main`.
+5. After the PR is reviewed and merged into `main`, create the tag on the
+   `main` merge commit (`git checkout main && git pull && git tag x.y.z`) and
+   push only then (`git push origin x.y.z`).
+6. Verify the `Create Release` GitHub Actions run completes.
+
+Never create or push a release tag before the code is merged to `main`, and
+never run `pnpm publish` manually.
 
 ## Common Patterns
 
@@ -359,8 +381,6 @@ function <ComponentName>Component({ rendererType }: { rendererType?: 'webgpu' | 
 
   const handleCreated = (scene: THREE.Scene, components: SceneComponents) => {
     const { camera } = components
-    if (!camera) return
-
     camera.position.set(0, 0, 4)
     camera.lookAt(0, 0, 0)
 
@@ -375,7 +395,7 @@ function <ComponentName>Component({ rendererType }: { rendererType?: 'webgpu' | 
   }, [])
 
   return (
-    <Scene rendererType={rendererType} bgColor="#1a1a2e" style={{ marginTop: '10px', width: '100%', height: '300px' }} onCreated={handleCreated} />
+    <Scene rendererType={rendererType} bgColor="rgb(40, 42, 54)" style={{ marginTop: '10px', width: '100%', height: '300px' }} onCreated={handleCreated} />
   )
 }
 ```

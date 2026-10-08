@@ -15,6 +15,26 @@
     "message": "效果",
     "description": "The label for category 'Effect' in sidebar 'guideSidebar'"
   },
+  "sidebar.guideSidebar.category.GIS": {
+    "message": "GIS",
+    "description": "The label for category 'GIS' in sidebar 'guideSidebar'"
+  },
+  "sidebar.guideSidebar.doc.gis/geo-reference": {
+    "message": "地理参考系",
+    "description": "The label for doc 'gis/geo-reference' in sidebar 'guideSidebar'"
+  },
+  "sidebar.guideSidebar.doc.gis/geo-object": {
+    "message": "GeoObject 地理对象",
+    "description": "The label for doc 'gis/geo-object' in sidebar 'guideSidebar'"
+  },
+  "sidebar.guideSidebar.doc.gis/geojson-layer": {
+    "message": "GeoJsonLayer 地理图层",
+    "description": "The label for doc 'gis/geojson-layer' in sidebar 'guideSidebar'"
+  },
+  "sidebar.guideSidebar.doc.gis/tile-layer": {
+    "message": "TileLayer 瓦片底图",
+    "description": "The label for doc 'gis/tile-layer' in sidebar 'guideSidebar'"
+  },
   "sidebar.guideSidebar.doc.getting-started": {
     "message": "快速开始",
     "description": "The label for doc 'getting-started' in sidebar 'guideSidebar'"
@@ -55,6 +75,10 @@
     "message": "模型旋转器",
     "description": "The label for doc 'model-rotator' in sidebar 'guideSidebar'"
   },
+  "sidebar.guideSidebar.doc.picking": {
+    "message": "拾取",
+    "description": "The label for doc 'picking' in sidebar 'guideSidebar'"
+  },
   "sidebar.guideSidebar.doc.meshes/wave-circle-mesh": {
     "message": "波浪圆环网格",
     "description": "The label for doc 'meshes/wave-circle-mesh' in sidebar 'guideSidebar'"
@@ -82,5 +106,9 @@
   "sidebar.guideSidebar.doc.effects/light-gradient": {
     "message": "灯光渐变",
     "description": "The label for doc 'effects/light-gradient' in sidebar 'guideSidebar'"
+  },
+  "sidebar.guideSidebar.doc.effects/light-pillar": {
+    "message": "光柱效果",
+    "description": "The label for doc 'effects/light-pillar' in sidebar 'guideSidebar'"
   }
 }
