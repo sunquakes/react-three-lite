@@ -1,11 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import {
-  wgs84ToGcj02,
-  gcj02ToWgs84,
-  gcj02ToBd09,
-  bd09ToGcj02,
-  convertDatum
-} from '../crs/Datum'
+import { wgs84ToGcj02, gcj02ToWgs84, gcj02ToBd09, bd09ToGcj02, convertDatum } from '../crs/Datum'
 
 const BEIJING = { lng: 116.404, lat: 39.915 }
 

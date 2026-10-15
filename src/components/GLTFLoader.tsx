@@ -34,7 +34,7 @@ const GLTFLoader = ({
 
   useEffect(() => {
     let cancelled = false
-    
+
     const init = async () => {
       const scene = propScene || sceneContext?.scene
       if (!scene) {
@@ -47,7 +47,7 @@ const GLTFLoader = ({
         onProgress?.(event)
       )
       if (cancelled) return
-      
+
       model.scale.set(...scale)
       scene.add(model)
       modelRef.current = model
@@ -64,7 +64,17 @@ const GLTFLoader = ({
         modelRef.current = null
       }
     }
-  }, [propScene, sceneContext?.scene, modelUrl, scale, cache, dracoDecoderPath, useDraco, onProgress, onLoaded])
+  }, [
+    propScene,
+    sceneContext?.scene,
+    modelUrl,
+    scale,
+    cache,
+    dracoDecoderPath,
+    useDraco,
+    onProgress,
+    onLoaded
+  ])
 
   return null
 }

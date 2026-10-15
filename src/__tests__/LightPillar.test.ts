@@ -9,7 +9,11 @@ import { installFakeRaf, type FakeRaf } from './helpers/fakeRaf'
 // instead of widening the public API.
 interface LightPillarInternals {
   animationId: number | null
-  bundles: { timeUniform: { value: number }; colorUniform: { value: THREE.Color }; material: THREE.Material }[]
+  bundles: {
+    timeUniform: { value: number }
+    colorUniform: { value: THREE.Color }
+    material: THREE.Material
+  }[]
   geometries: THREE.BufferGeometry[]
   onAdded: () => void
 }
@@ -117,8 +121,12 @@ describe('LightPillar', () => {
 
   it('releases every geometry and material on dispose', () => {
     const pillar = new LightPillar()
-    const geometrySpies = internals(pillar).geometries.map((geometry) => vi.spyOn(geometry, 'dispose'))
-    const materialSpies = internals(pillar).bundles.map((bundle) => vi.spyOn(bundle.material, 'dispose'))
+    const geometrySpies = internals(pillar).geometries.map((geometry) =>
+      vi.spyOn(geometry, 'dispose')
+    )
+    const materialSpies = internals(pillar).bundles.map((bundle) =>
+      vi.spyOn(bundle.material, 'dispose')
+    )
 
     pillar.dispose()
 
@@ -184,7 +192,9 @@ describe('LightPillar', () => {
 
     scene.add(pillar)
 
-    expect(internals(pillar).bundles[0].colorUniform.value.getHex()).toBe(new THREE.Color(0x336699).getHex())
+    expect(internals(pillar).bundles[0].colorUniform.value.getHex()).toBe(
+      new THREE.Color(0x336699).getHex()
+    )
 
     pillar.dispose()
   })

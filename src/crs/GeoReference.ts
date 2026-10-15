@@ -21,7 +21,9 @@ function parseAxis(spec: string): AxisSpec {
   const negative = spec.trim().startsWith('-')
   const name = spec.trim().replace(/^[+-]/, '')
   if (name !== 'x' && name !== 'y' && name !== 'z') {
-    throw new Error(`GeoReference: invalid axis "${spec}", expected one of x/y/z with optional sign`)
+    throw new Error(
+      `GeoReference: invalid axis "${spec}", expected one of x/y/z with optional sign`
+    )
   }
   return { axis: (name.charCodeAt(0) - 120) as 0 | 1 | 2, sign: negative ? -1 : 1 }
 }
@@ -131,9 +133,6 @@ export class GeoReference {
 }
 
 /** Convenience factory mirroring the functional style of the other utilities. */
-export function createGeoReference(
-  origin?: GeoPoint,
-  options?: GeoReferenceOptions
-): GeoReference {
+export function createGeoReference(origin?: GeoPoint, options?: GeoReferenceOptions): GeoReference {
   return new GeoReference(origin, options)
 }

@@ -61,14 +61,14 @@ class Picker {
   private pendingMove: PointerEvent | null = null
   private listeners: Record<PickEventType, Set<PickCallback>> = {
     click: new Set(),
-    hover: new Set(),
+    hover: new Set()
   }
 
   constructor(
     scene: THREE.Scene,
     camera: THREE.Camera,
     domElement: HTMLElement,
-    options: PickerOptions = {},
+    options: PickerOptions = {}
   ) {
     const {
       targets,
@@ -78,7 +78,7 @@ class Picker {
       clickThreshold = 5,
       layers,
       near,
-      far,
+      far
     } = options
 
     this.scene = scene
@@ -141,7 +141,7 @@ class Picker {
       intersection,
       intersections,
       pointer: this.pointer.clone(),
-      nativeEvent,
+      nativeEvent
     }
   }
 

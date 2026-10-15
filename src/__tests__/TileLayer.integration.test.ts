@@ -30,16 +30,16 @@ describe('TileLayer request pipeline (integration)', () => {
   beforeEach(() => {
     requests = []
     afterFrames = []
-    loadSpy = vi.spyOn(THREE.TextureLoader.prototype, 'load').mockImplementation(
-      (url, onLoad, _onProgress, onError) => {
+    loadSpy = vi
+      .spyOn(THREE.TextureLoader.prototype, 'load')
+      .mockImplementation((url, onLoad, _onProgress, onError) => {
         requests.push({
           url,
           onLoad: onLoad as CapturedRequest['onLoad'],
           onError: onError as CapturedRequest['onError']
         })
         return new THREE.Texture()
-      }
-    )
+      })
   })
 
   afterEach(() => {
@@ -84,7 +84,7 @@ describe('TileLayer request pipeline (integration)', () => {
       geo,
       renderer: { domElement: { clientHeight: 300 } } as unknown as SceneSlotProps['renderer'],
       addAfterFrame: (cb) => {
-        afterFrames.push(cb as typeof afterFrames[number])
+        afterFrames.push(cb as (typeof afterFrames)[number])
         return () => {}
       }
     }

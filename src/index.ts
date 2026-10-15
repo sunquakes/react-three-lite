@@ -5,6 +5,7 @@ import OBJLoader from './components/OBJLoader'
 import Bloom from './components/Bloom'
 import Rain from './components/Rain'
 import Snow from './components/Snow'
+import HeightFog from './components/HeightFog'
 import GeoObject from './components/GeoObject'
 import GeoJsonLayer from './components/GeoJsonLayer'
 import TileLayer from './components/TileLayer'
@@ -28,6 +29,7 @@ import SweepLight from './utils/SweepLight'
 import ModelRotator from './utils/ModelRotator'
 import Picker from './utils/Picker'
 import LightPillar from './utils/LightPillar'
+import Fireworks from './utils/Fireworks'
 import {
   fitCameraToBox,
   fitCameraToObject,
@@ -41,6 +43,7 @@ import { LightGradient, LightGradientOptions } from './utils/Light'
 import type { CalloutOptions, LineShape, BendAxis, LabelAnchor } from './utils/Callout'
 import type { PickEvent, PickEventType, PickCallback, PickerOptions } from './utils/Picker'
 import type { LightPillarOptions } from './utils/LightPillar'
+import type { FireworksOptions } from './utils/Fireworks'
 import type { CameraFitOptions } from './utils/CameraFit'
 
 // components
@@ -52,6 +55,7 @@ export {
   Bloom,
   Rain,
   Snow,
+  HeightFog,
   GeoObject,
   GeoJsonLayer,
   TileLayer,
@@ -124,6 +128,7 @@ export type { RendererType } from './utils/Renderer'
 export type { LightGradientOptions, CalloutOptions, LineShape, BendAxis, LabelAnchor }
 export type { PickEvent, PickEventType, PickCallback, PickerOptions }
 export type { LightPillarOptions }
+export type { FireworksOptions }
 export type { CameraFitOptions }
 export type { FitCameraOptions } from './utils/FitCamera'
 
@@ -141,6 +146,7 @@ export {
   ModelRotator,
   Picker,
   LightPillar,
+  Fireworks,
   FitCamera
 }
 

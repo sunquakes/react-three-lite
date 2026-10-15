@@ -1,4 +1,14 @@
-import { Mesh, Group, Object3D, AnimationMixer, AnimationClip, AnimationAction, LoopOnce, LoopRepeat, LoopPingPong } from 'three'
+import {
+  Mesh,
+  Group,
+  Object3D,
+  AnimationMixer,
+  AnimationClip,
+  AnimationAction,
+  LoopOnce,
+  LoopRepeat,
+  LoopPingPong
+} from 'three'
 
 export default class Animation {
   /**
@@ -17,8 +27,7 @@ export default class Animation {
    * Animation loop type.
    * @defaultValue `LoopRepeat`
    */
-  loop: typeof LoopOnce | typeof LoopRepeat | typeof LoopPingPong =
-    LoopRepeat
+  loop: typeof LoopOnce | typeof LoopRepeat | typeof LoopPingPong = LoopRepeat
 
   /**
    * Animation delta time.
@@ -87,9 +96,7 @@ export default class Animation {
    * Set animation loop type.
    * @param loop - Animation loop type.
    */
-  setLoop(
-    loop: typeof LoopOnce | typeof LoopRepeat | typeof LoopPingPong
-  ): Animation {
+  setLoop(loop: typeof LoopOnce | typeof LoopRepeat | typeof LoopPingPong): Animation {
     this.setProperty('loop', loop)
     this.loop = loop
     return this

@@ -18,7 +18,7 @@ import {
   mix,
   sin,
   distance,
-  oneMinus,
+  oneMinus
 } from 'three/tsl'
 
 export interface LightPillarOptions {
@@ -103,10 +103,19 @@ function createConeMaterial(color: number, speed: number, opacity: number): Mate
     return vec4(uColor.rgb, alpha)
   })()
 
-  return { material, timeUniform: uTime as unknown as { value: number }, colorUniform: uColor as unknown as { value: THREE.Color } }
+  return {
+    material,
+    timeUniform: uTime as unknown as { value: number },
+    colorUniform: uColor as unknown as { value: THREE.Color }
+  }
 }
 
-function createGlowMaterial(color: number, size: number, speed: number, opacity: number): MaterialBundle {
+function createGlowMaterial(
+  color: number,
+  size: number,
+  speed: number,
+  opacity: number
+): MaterialBundle {
   const uTime = uniform(0)
   const uColor = uniform(new THREE.Color(color))
   const uSize = uniform(size)
@@ -143,7 +152,11 @@ function createGlowMaterial(color: number, size: number, speed: number, opacity:
     return vec4(uColor.rgb, core.mul(uOpacity))
   })()
 
-  return { material, timeUniform: uTime as unknown as { value: number }, colorUniform: uColor as unknown as { value: THREE.Color } }
+  return {
+    material,
+    timeUniform: uTime as unknown as { value: number },
+    colorUniform: uColor as unknown as { value: THREE.Color }
+  }
 }
 
 // Both pulse rings share one material; the half cycle offset between them comes
@@ -178,7 +191,11 @@ function createRingMaterial(color: number, speed: number, opacity: number): Mate
     return vec4(uColor.rgb, alpha)
   })()
 
-  return { material, timeUniform: uTime as unknown as { value: number }, colorUniform: uColor as unknown as { value: THREE.Color } }
+  return {
+    material,
+    timeUniform: uTime as unknown as { value: number },
+    colorUniform: uColor as unknown as { value: THREE.Color }
+  }
 }
 
 function fillAttribute(geometry: THREE.BufferGeometry, name: string, value: number): void {
@@ -233,7 +250,7 @@ export default class LightPillar extends THREE.Group {
       segments = 32,
       glow = true,
       ring = true,
-      ringRadius = radius * 3,
+      ringRadius = radius * 3
     } = options
 
     this.origColor = new THREE.Color(color)

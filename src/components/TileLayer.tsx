@@ -257,11 +257,7 @@ function boundsCenter(bounds: GroundRect): { x: number; z: number } {
  * Compute a tile's local-space ground bounds, in metres, from its geographic
  * corners (without the render overlap). The result is cached on the node.
  */
-function computeBounds(
-  node: TileLayerNode,
-  geo: GeoReference,
-  datum: DatumType
-): GroundRect {
+function computeBounds(node: TileLayerNode, geo: GeoReference, datum: DatumType): GroundRect {
   if (node.bounds) return node.bounds
   const { nw, ne, se, sw } = tileToCorners(node.index)
   const pNW = geo.toLocal(nw, datum)
@@ -564,9 +560,7 @@ const TileLayer = ({
               ? Math.sqrt(Math.max(orbitDistance * orbitDistance - height * height, 0))
               : 0
           const rangeCap = height * MAX_GROUND_RANGE_FACTOR
-          const edgeDistance = Math.sqrt(
-            Math.max(rangeCap - horizontal, 0) ** 2 + height * height
-          )
+          const edgeDistance = Math.sqrt(Math.max(rangeCap - horizontal, 0) ** 2 + height * height)
           layerFog.near = Math.max(
             edgeDistance * 0.55,
             orbitDistance > 0 ? orbitDistance * 1.1 : height * 2
@@ -671,8 +665,7 @@ const TileLayer = ({
         nodes.forEach((node) => {
           if (node.rendering && !node.mesh) buildNodeMesh(node)
           if (node.mesh) {
-            node.mesh.visible =
-              node.rendering || underlayRefs.has(tileKey(node.index))
+            node.mesh.visible = node.rendering || underlayRefs.has(tileKey(node.index))
           }
           if (node.rendering) anyVisible = true
           if (!node.rendering) endFade(node)
@@ -879,10 +872,7 @@ const TileLayer = ({
       // (2 d tan(fov/2)) pixels; it needs refining once that exceeds the
       // threshold. The vertical gap to the plane counts toward d so a
       // top-down view uses its height, not a near-zero distance.
-      const screenSpaceError = (
-        node: TileLayerNode,
-        camera: THREE.PerspectiveCamera
-      ): number => {
+      const screenSpaceError = (node: TileLayerNode, camera: THREE.PerspectiveCamera): number => {
         const bounds = computeBounds(node, geo, effectiveDatum)
         const center = boundsCenter(bounds)
         const groundWidth = Math.max(bounds.maxX - bounds.minX, bounds.maxZ - bounds.minZ)
@@ -920,11 +910,7 @@ const TileLayer = ({
         )
         const centerGeo = geo.toGeo(footprintCenter, effectiveDatum)
         const leafCenterTile = lngLatToTile(centerGeo.lng, centerGeo.lat, zoom)
-        const leafBounds = computeBounds(
-          pyramid.getOrCreate(leafCenterTile),
-          geo,
-          effectiveDatum
-        )
+        const leafBounds = computeBounds(pyramid.getOrCreate(leafCenterTile), geo, effectiveDatum)
         const leafGroundSize = Math.max(
           leafBounds.maxX - leafBounds.minX,
           leafBounds.maxZ - leafBounds.minZ,

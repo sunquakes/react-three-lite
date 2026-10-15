@@ -1,9 +1,8 @@
-***
-
+---
 id: picking
 lang: en-US
 title: Picking
---------------
+---
 
 import Tabs from '@theme/Tabs'
 import TabItem from '@theme/TabItem'

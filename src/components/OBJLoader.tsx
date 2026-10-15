@@ -37,9 +37,7 @@ const OBJLoader = ({
       const scene = propScene || sceneContext?.scene
       if (!scene) return
 
-      const model = await OBJLoaderUtil(modelUrl, mtlUrl, cache, (event) =>
-        onProgress?.(event)
-      )
+      const model = await OBJLoaderUtil(modelUrl, mtlUrl, cache, (event) => onProgress?.(event))
       if (cancelled) return
 
       model.scale.set(...scale)

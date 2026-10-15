@@ -1,6 +1,21 @@
 import * as THREE from 'three'
 import { NodeMaterial } from 'three/webgpu'
-import { Fn, uniform, float, vec2, vec4, uv, texture, varying, abs, smoothstep, mix, max, fract, oneMinus } from 'three/tsl'
+import {
+  Fn,
+  uniform,
+  float,
+  vec2,
+  vec4,
+  uv,
+  texture,
+  varying,
+  abs,
+  smoothstep,
+  mix,
+  max,
+  fract,
+  oneMinus
+} from 'three/tsl'
 import { AxisType } from '../enums/AxisType'
 
 // V-shaped arrow drawing ported from the previous ShaderMaterial version
@@ -112,11 +127,15 @@ function createLineGeometry(
     const offset = normal.clone().multiplyScalar(width / 2)
 
     positions.push(
-      point.x - offset.x, point.y - offset.y, point.z - offset.z,
-      point.x + offset.x, point.y + offset.y, point.z + offset.z
+      point.x - offset.x,
+      point.y - offset.y,
+      point.z - offset.z,
+      point.x + offset.x,
+      point.y + offset.y,
+      point.z + offset.z
     )
 
-    const uvX = (lengths[i] / totalLength) / width
+    const uvX = lengths[i] / totalLength / width
     uvs.push(uvX, 0, uvX, 1)
 
     if (i < smoothPoints.length - 1) {
@@ -190,7 +209,13 @@ function getLineMaterial(
     return vec4(finalColor, finalAlpha)
   })()
 
-  return { material, texture: arrowTexture, timeUniform: uTime, lineColorUniform: uLineColor, arrowColorUniform: uArrowColor }
+  return {
+    material,
+    texture: arrowTexture,
+    timeUniform: uTime,
+    lineColorUniform: uLineColor,
+    arrowColorUniform: uArrowColor
+  }
 }
 
 interface FlowLineMeshOptions {
@@ -239,7 +264,11 @@ export default class FlowLineMesh extends THREE.Mesh {
     const speed = options.speed ?? 4.0
 
     const { geometry } = createLineGeometry(points, width, axis)
-    const { material, texture, timeUniform, lineColorUniform, arrowColorUniform } = getLineMaterial(color, arrowColor, textureRepeat)
+    const { material, texture, timeUniform, lineColorUniform, arrowColorUniform } = getLineMaterial(
+      color,
+      arrowColor,
+      textureRepeat
+    )
     super(geometry, material)
     this.timeUniform = timeUniform
     this.lineColorUniform = lineColorUniform

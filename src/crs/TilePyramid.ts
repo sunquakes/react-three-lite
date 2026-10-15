@@ -181,9 +181,7 @@ export class TilePyramid<N extends TileNodeBase = TileNodeBase> {
         if (
           ideal &&
           idealChildren.length > 0 &&
-          idealChildren.every(
-            (child) => this.nodes.get(tileKey(child))?.state === TileState.Loaded
-          )
+          idealChildren.every((child) => this.nodes.get(tileKey(child))?.state === TileState.Loaded)
         ) {
           idealChildren.forEach((child) => visit(child, true))
           return

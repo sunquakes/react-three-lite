@@ -41,7 +41,10 @@ const DEFAULT_STYLE: Required<Omit<GeoJsonStyle, 'extrudeHeight'>> & {
   opacity: 0.85
 }
 
-function resolveStyle(base: GeoJsonStyle | undefined, override?: GeoJsonStyle | null): GeoJsonStyle {
+function resolveStyle(
+  base: GeoJsonStyle | undefined,
+  override?: GeoJsonStyle | null
+): GeoJsonStyle {
   return { ...DEFAULT_STYLE, ...(base ?? {}), ...(override ?? {}) }
 }
 
@@ -90,7 +93,14 @@ function buildPolygonMesh(
   return new THREE.Mesh(geometry, material)
 }
 
-const GeoJsonLayer = ({ data, datum, style, featureStyle, onReady, scene: propScene }: GeoJsonLayerProps) => {
+const GeoJsonLayer = ({
+  data,
+  datum,
+  style,
+  featureStyle,
+  onReady,
+  scene: propScene
+}: GeoJsonLayerProps) => {
   const sceneContext = useScene()
   const groupRef = useRef<THREE.Group | null>(null)
   const effectiveDatum = datum ?? sceneContext?.geo?.datum
@@ -164,11 +174,7 @@ const GeoJsonLayer = ({ data, datum, style, featureStyle, onReady, scene: propSc
       // extrusion heights stay possible. Features are flattened individually to
       // preserve the feature -> style mapping.
       const features =
-        data.type === 'FeatureCollection'
-          ? data.features
-          : data.type === 'Feature'
-            ? [data]
-            : null
+        data.type === 'FeatureCollection' ? data.features : data.type === 'Feature' ? [data] : null
       const featureGeometries: { rings: GeoJsonRingSet; override?: GeoJsonStyle | null }[] = []
       if (features) {
         features.forEach((feature) => {

@@ -61,14 +61,18 @@ function getGeometry(axis: AxisType, radius: number): THREE.CircleGeometry {
 function getMaterial(
   radius?: number,
   color?: Array4
-): { material: NodeMaterial; timeUniform: ReturnType<typeof uniform>; colorUniform: { value: THREE.Vector4 } } {
+): {
+  material: NodeMaterial
+  timeUniform: ReturnType<typeof uniform>
+  colorUniform: { value: THREE.Vector4 }
+} {
   const uTime = uniform(0)
   const uRadius = uniform(radius ?? 1)
   const uCenter = uniform(new THREE.Vector3(0, 0, 0))
 
   // Correct color taken from the WebGL screenshot [R,G,B,A]; pre-correction is
   // applied later based on the renderer type.
-  const origColor = color ?? [0.52, 0.78, 0.80, 1]
+  const origColor = color ?? [0.52, 0.78, 0.8, 1]
   const uColor = uniform(new THREE.Vector4(origColor[0], origColor[1], origColor[2], origColor[3]))
 
   const material = new NodeMaterial()
@@ -124,7 +128,7 @@ export default class WaveCircleMesh extends THREE.Mesh {
 
     this.timeUniform = timeUniform
     this.colorUniform = colorUniform
-    this.origColor = (options.color ?? [0.52, 0.78, 0.80, 1]).slice() as Array4
+    this.origColor = (options.color ?? [0.52, 0.78, 0.8, 1]).slice() as Array4
 
     // Auto-detect the renderer from the scene the mesh belongs to: WebGPU
     // converts linear to sRGB on final output, so pre-correct the color so it

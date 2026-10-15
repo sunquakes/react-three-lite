@@ -95,9 +95,7 @@ describe('GeoReference custom axis mapping', () => {
     const up = geo.toLocal({ ...BEIJING, alt: 10 })
     expect(up.z).toBeCloseTo(10, 6)
 
-    expect(
-      () => new GeoReference(BEIJING, { axes: { east: 'x', north: 'x', up: 'z' } })
-    ).toThrow()
+    expect(() => new GeoReference(BEIJING, { axes: { east: 'x', north: 'x', up: 'z' } })).toThrow()
   })
 })
 
