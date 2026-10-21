@@ -15,7 +15,7 @@ export default function RainComponent({ rendererType }: RainProps) {
   }
 
   return (
-    <Scene rendererType={rendererType} onCreated={handleCreated} bgColor="#1a1a2e" style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '300px' }}>
+    <Scene rendererType={rendererType} onCreated={handleCreated} bgColor="rgb(40, 42, 54)" style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '300px' }}>
       <Rain count={3000} speed={0.8} color={0x87ceeb} range={30} height={20} />
     </Scene>
   )

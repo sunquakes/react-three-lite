@@ -82,7 +82,7 @@ import Callout from '@site/src/components/Callout'
 
       return (
         <Scene
-          bgColor="#1a1a2e"
+          bgColor="rgb(40, 42, 54)"
           style={{ marginTop: '10px', width: '100%', height: '360px' }}
           onCreated={handleCreated}
         />
@@ -157,7 +157,7 @@ import Callout from '@site/src/components/Callout'
       return (
         <Scene
           rendererType="webgl"
-          bgColor="#1a1a2e"
+          bgColor="rgb(40, 42, 54)"
           style={{ marginTop: '10px', width: '100%', height: '360px' }}
           onCreated={handleCreated}
         />

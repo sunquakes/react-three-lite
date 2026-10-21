@@ -16,6 +16,7 @@ const sidebars = {
     'movable-element',
     'animation',
     'model-rotator',
+    'picking',
     {
       type: 'category',
       label: 'Mesh',
@@ -26,7 +27,18 @@ const sidebars = {
       type: 'category',
       label: 'Effect',
       collapsible: true,
-      items: ['effects/bloom', 'effects/rain', 'effects/snow', 'effects/sweep-light', 'effects/light-gradient'],
+      items: ['effects/bloom', 'effects/rain', 'effects/snow', 'effects/water', 'effects/height-fog', 'effects/sweep-light', 'effects/light-gradient', 'effects/light-pillar', 'effects/fireworks'],
+    },
+    {
+      type: 'category',
+      label: 'GIS',
+      collapsible: true,
+      items: [
+        'gis/geo-reference',
+        'gis/geo-object',
+        'gis/geojson-layer',
+        'gis/tile-layer',
+      ],
     },
   ],
 };

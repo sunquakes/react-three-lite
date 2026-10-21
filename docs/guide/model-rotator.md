@@ -55,7 +55,7 @@ Every example below can be viewed with either the **WebGPU** (default) or the **
       }, [])
 
       return (
-        <Scene bgColor="#1a1a2e" style={{ marginTop: '10px', width: '100%', height: '300px' }} onCreated={handleCreated} />
+        <Scene bgColor="rgb(40, 42, 54)" style={{ marginTop: '10px', width: '100%', height: '300px' }} onCreated={handleCreated} />
       )
     }
     ```
@@ -98,7 +98,7 @@ Every example below can be viewed with either the **WebGPU** (default) or the **
       }, [])
 
       return (
-        <Scene rendererType="webgl" bgColor="#1a1a2e" style={{ marginTop: '10px', width: '100%', height: '300px' }} onCreated={handleCreated} />
+        <Scene rendererType="webgl" bgColor="rgb(40, 42, 54)" style={{ marginTop: '10px', width: '100%', height: '300px' }} onCreated={handleCreated} />
       )
     }
     ```

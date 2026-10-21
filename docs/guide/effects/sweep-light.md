@@ -46,7 +46,7 @@ Every example below can be viewed with either the **WebGPU** (default) or the **
 
       return (
         <Scene
-          bgColor="#1a1a2e"
+          bgColor="rgb(40, 42, 54)"
           onCreated={handleCreated}
           style={{ marginTop: '10px', width: '100%', height: '300px' }}
         />
@@ -83,7 +83,7 @@ Every example below can be viewed with either the **WebGPU** (default) or the **
 
       return (
         <Scene
-          bgColor="#1a1a2e"
+          bgColor="rgb(40, 42, 54)"
           onCreated={handleCreated}
           rendererType="webgl"
           style={{ marginTop: '10px', width: '100%', height: '300px' }}

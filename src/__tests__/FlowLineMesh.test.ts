@@ -118,7 +118,10 @@ describe('FlowLineMesh', () => {
   it('keeps raw colors when the scene renders through WebGL', () => {
     const scene = new THREE.Scene()
     scene.userData.renderer = { isWebGPURenderer: false }
-    const mesh = new FlowLineMesh({ color: [0.5, 0.25, 0.125, 0.5], arrowColor: [0.5, 0.25, 0.125] })
+    const mesh = new FlowLineMesh({
+      color: [0.5, 0.25, 0.125, 0.5],
+      arrowColor: [0.5, 0.25, 0.125]
+    })
 
     scene.add(mesh)
 
@@ -133,7 +136,10 @@ describe('FlowLineMesh', () => {
   it('pre-corrects line and arrow colors when the scene renders through WebGPU', () => {
     const scene = new THREE.Scene()
     scene.userData.renderer = { isWebGPURenderer: true }
-    const mesh = new FlowLineMesh({ color: [0.5, 0.25, 0.125, 0.5], arrowColor: [0.5, 0.25, 0.125] })
+    const mesh = new FlowLineMesh({
+      color: [0.5, 0.25, 0.125, 0.5],
+      arrowColor: [0.5, 0.25, 0.125]
+    })
 
     scene.add(mesh)
 

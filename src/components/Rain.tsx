@@ -185,12 +185,7 @@ const Rain = ({
         oneMinus(smoothstep(0.0, 0.05, t).mul(0.5)).sub(smoothstep(0.95, 1.0, t).mul(0.5))
       )
 
-      return vec4(
-        centerClip.x.add(offsetX),
-        centerClip.y.add(offsetY),
-        centerClip.z,
-        centerClip.w
-      )
+      return vec4(centerClip.x.add(offsetX), centerClip.y.add(offsetY), centerClip.z, centerClip.w)
     })()
 
     // Fragment shader: rain drop shape using UV coordinates

@@ -15,7 +15,7 @@ export default function SnowComponent({ rendererType }: SnowProps) {
   }
 
   return (
-    <Scene rendererType={rendererType} onCreated={handleCreated} bgColor="#1a1a2e" style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '300px' }}>
+    <Scene rendererType={rendererType} onCreated={handleCreated} bgColor="rgb(40, 42, 54)" style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '300px' }}>
       <Snow count={2000} speed={0.5} color={0xffffff} range={25} height={18} windX={0.3} windZ={0.1} />
     </Scene>
   )

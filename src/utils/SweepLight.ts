@@ -18,7 +18,7 @@ import {
   min,
   mod,
   floor,
-  If,
+  If
 } from 'three/tsl'
 
 export interface SweepLightOptions {
@@ -53,17 +53,12 @@ interface SweepMaterialOptions {
 // why the sweep used to silently disappear on the WebGL renderer.) The per-mesh
 // sweep range is therefore supplied through the `aSweepBounds` geometry
 // attribute instead of a per-material uniform.
-function createSweepMaterial(
-  options: SweepMaterialOptions
-): { material: NodeMaterial; timeUniform: ReturnType<typeof uniform>; colorUniform: { value: THREE.Color } } {
-  const {
-    color,
-    speed,
-    width,
-    intensity,
-    direction,
-    loopType,
-  } = options
+function createSweepMaterial(options: SweepMaterialOptions): {
+  material: NodeMaterial
+  timeUniform: ReturnType<typeof uniform>
+  colorUniform: { value: THREE.Color }
+} {
+  const { color, speed, width, intensity, direction, loopType } = options
 
   const uTime = uniform(0)
   const uColor = uniform(new THREE.Color(color))
@@ -133,16 +128,9 @@ function createSweepMaterial(
     const band = pow(float(1.0).sub(smoothstep(float(0.0), bandWidth, dist)), float(1.5))
 
     const trailWidth = bandWidth.mul(3.0)
-    const trail = pow(
-      max(float(0.0), float(1.0).sub(dist.div(trailWidth))),
-      float(2.0)
-    ).mul(0.4)
+    const trail = pow(max(float(0.0), float(1.0).sub(dist.div(trailWidth))), float(2.0)).mul(0.4)
 
-    const alpha = clamp(
-      band.add(trail).mul(uIntensity),
-      float(0.0),
-      float(1.0)
-    )
+    const alpha = clamp(band.add(trail).mul(uIntensity), float(0.0), float(1.0))
 
     return vec4(uColor.rgb, alpha)
   })()
@@ -166,10 +154,7 @@ class SweepLight {
   private isPaused: boolean = false
   private animationId: number | null = null
 
-  constructor(
-    target: SweepTarget,
-    options: SweepLightOptions = {}
-  ) {
+  constructor(target: SweepTarget, options: SweepLightOptions = {}) {
     this.target = target
     const {
       color = 0x00ffff,
@@ -177,7 +162,7 @@ class SweepLight {
       width = 0.3,
       intensity = 1.5,
       direction = 0,
-      loop = THREE.LoopRepeat,
+      loop = THREE.LoopRepeat
     } = options
 
     const loopType = loop === THREE.LoopOnce ? 0 : loop === THREE.LoopPingPong ? 2 : 1
@@ -201,7 +186,7 @@ class SweepLight {
       width,
       intensity,
       direction,
-      loopType,
+      loopType
     })
     this.material = material
     this.timeUniform = timeUniform
@@ -258,10 +243,7 @@ class SweepLight {
         boundsArray[i * 2] = minPos
         boundsArray[i * 2 + 1] = maxPos
       }
-      sweepGeometry.setAttribute(
-        'aSweepBounds',
-        new THREE.BufferAttribute(boundsArray, 2)
-      )
+      sweepGeometry.setAttribute('aSweepBounds', new THREE.BufferAttribute(boundsArray, 2))
       this.geometries.push(sweepGeometry)
 
       const sweepMesh = new THREE.Mesh(sweepGeometry, material)

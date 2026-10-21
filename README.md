@@ -22,7 +22,10 @@ Visit [r3l.sunquakes.com](https://r3l.sunquakes.com).
 - **Scene** — Core 3D scene container with camera, renderer, lights, and controls
 - **Model Loaders** — GLTF / FBX / OBJ loaders with Draco compression support
 - **Bloom** — Post-processing glow effect
+- **HeightFog** — Screen-space exponential height fog
+- **Fireworks** — Shader-driven firework launch with gravity-bent burst trails
 - **Rain / Snow** — Particle effects with custom GLSL shaders
+- **Water** — Cinematic shallow ocean with planar reflection and refraction
 - **SweepLight** — Model sweep light animation
 - **LightGradient** — Dynamic lighting gradient effect
 - **Callout** — Leader line annotation with auto-anchor camera tracking

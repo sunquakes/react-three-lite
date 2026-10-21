@@ -67,12 +67,7 @@ export class LightGradient {
   private onComplete?: () => void
 
   constructor(light: THREE.Light | THREE.Object3D, options: LightGradientOptions = {}) {
-    const {
-      color: targetColor,
-      intensity: targetIntensity,
-      duration = 1000,
-      onComplete
-    } = options
+    const { color: targetColor, intensity: targetIntensity, duration = 1000, onComplete } = options
 
     // Support both single Light and Group (Object3D with Light children).
     const collected: THREE.Light[] = []
@@ -94,9 +89,7 @@ export class LightGradient {
       targetColor ? new THREE.Color(targetColor) : this.startColors[0].clone()
     )
     this.startIntensities = this.targets.map((t) => t.intensity)
-    this.endIntensities = this.targets.map(
-      () => targetIntensity ?? this.startIntensities[0]
-    )
+    this.endIntensities = this.targets.map(() => targetIntensity ?? this.startIntensities[0])
     this.duration = duration
     this.startTime = performance.now()
     this.onComplete = onComplete

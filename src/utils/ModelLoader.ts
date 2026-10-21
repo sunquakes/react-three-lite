@@ -1,5 +1,12 @@
 import * as THREE from 'three'
-import { GLTFLoader as THREEGLTFLoader, FBXLoader as THREEFBXLoader, OBJLoader as THREEOBJLoader, MTLLoader as THREEMTLLoader, DRACOLoader, mergeVertices } from 'three-stdlib'
+import {
+  GLTFLoader as THREEGLTFLoader,
+  FBXLoader as THREEFBXLoader,
+  OBJLoader as THREEOBJLoader,
+  MTLLoader as THREEMTLLoader,
+  DRACOLoader,
+  mergeVertices
+} from 'three-stdlib'
 
 interface LoadEvent {
   type: 'cache' | 'fetch' | 'parse'
@@ -98,15 +105,15 @@ function refreshTextures(model: THREE.Group): void {
 // Helper function to validate if ArrayBuffer contains valid model data (not HTML)
 function isValidModelData(buffer: ArrayBuffer): boolean {
   if (buffer.byteLength < 4) return false
-  
+
   const view = new Uint8Array(buffer, 0, Math.min(buffer.byteLength, 100))
   const text = new TextDecoder('utf-8').decode(view.slice(0, Math.min(view.length, 50)))
-  
+
   // Check if it starts with HTML tags
   if (text.trim().startsWith('<!DOCTYPE') || text.trim().startsWith('<html')) {
     return false
   }
-  
+
   return true
 }
 
@@ -161,7 +168,7 @@ function normalizeMaterials(model: THREE.Group): void {
         // Use white instead to display the texture at its intended brightness.
         const color = legacy.map
           ? new THREE.Color(0xffffff)
-          : legacy.color?.clone() ?? new THREE.Color(0xffffff)
+          : (legacy.color?.clone() ?? new THREE.Color(0xffffff))
         mats[i] = new THREE.MeshStandardMaterial({
           color,
           map: legacy.map ?? null,
@@ -276,12 +283,14 @@ export default function fileLoader(
               const deleteObjectStore = deleteTransaction.objectStore(OBJECT_STORE)
               deleteObjectStore.delete(key)
               // Fetch fresh data
-              fetchWithProgress(url, onProgress).then((data) => {
-                const writeTransaction = db.transaction([OBJECT_STORE], 'readwrite')
-                const writeObjectStore = writeTransaction.objectStore(OBJECT_STORE)
-                writeObjectStore.put(data, key)
-                resolve(data)
-              }).catch(reject)
+              fetchWithProgress(url, onProgress)
+                .then((data) => {
+                  const writeTransaction = db.transaction([OBJECT_STORE], 'readwrite')
+                  const writeObjectStore = writeTransaction.objectStore(OBJECT_STORE)
+                  writeObjectStore.put(data, key)
+                  resolve(data)
+                })
+                .catch(reject)
               return
             }
             onProgress?.({ type: 'cache', progress: 100 })
@@ -312,19 +321,26 @@ export default function fileLoader(
   })
 }
 
-async function fetchWithProgress(url: string, onProgress?: (event: LoadEvent) => void): Promise<ArrayBuffer> {
+async function fetchWithProgress(
+  url: string,
+  onProgress?: (event: LoadEvent) => void
+): Promise<ArrayBuffer> {
   const response = await fetch(url)
-  
+
   // Validate response content type to prevent HTML error pages from being treated as model data
   const contentType = response.headers.get('content-type')
   if (contentType && contentType.includes('text/html')) {
-    throw new Error(`Failed to load model from ${url}: Server returned HTML instead of model data. Check if the file exists and the URL is correct.`)
+    throw new Error(
+      `Failed to load model from ${url}: Server returned HTML instead of model data. Check if the file exists and the URL is correct.`
+    )
   }
-  
+
   if (!response.ok) {
-    throw new Error(`Failed to load model from ${url}: HTTP ${response.status} ${response.statusText}`)
+    throw new Error(
+      `Failed to load model from ${url}: HTTP ${response.status} ${response.statusText}`
+    )
   }
-  
+
   const contentLength = response.headers.get('content-length')
   const total = contentLength ? parseInt(contentLength, 10) : 0
   const reader = response.body?.getReader()

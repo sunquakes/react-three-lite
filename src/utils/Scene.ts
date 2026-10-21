@@ -6,6 +6,7 @@ import { PMREMGenerator as NodePMREMGenerator } from 'three/webgpu'
 import { PMREMGenerator as LegacyPMREMGenerator } from 'three'
 import { OrbitControls } from 'three-stdlib'
 import CSS2DRenderer from './CSS2DRenderer'
+import { bindSceneGeo } from '../crs/SceneGeo'
 import type { SceneComponents, CallbackFrame, R3LRenderer } from '../context/SceneContext'
 
 export default async function (
@@ -23,6 +24,11 @@ export default async function (
   // can read isWebGPURenderer at runtime to adapt to rendering differences
   // such as color output.
   scene.userData.renderer = renderer
+
+  // Always install scene.setPosition so cameras and objects can be placed
+  // without threading the reference around. With no GeoReference the helper
+  // still works, treating lng/lat/alt (and x/y/z) as plain local metres.
+  bindSceneGeo(scene, components.geo)
 
   if (components.light) {
     scene.add(components.light)
@@ -75,13 +81,17 @@ export default async function (
 
     if (isNodeRenderer) {
       // Node-based PMREM — works directly with WebGPURenderer.
-      const pmrem = new NodePMREMGenerator(renderer as unknown as ConstructorParameters<typeof NodePMREMGenerator>[0])
+      const pmrem = new NodePMREMGenerator(
+        renderer as unknown as ConstructorParameters<typeof NodePMREMGenerator>[0]
+      )
       defaultEnvTarget = pmrem.fromScene(envScene, 0.04)
       scene.environment = defaultEnvTarget.texture
       pmrem.dispose()
     } else {
       // Legacy WebGLRenderer path — use the old PMREMGenerator.
-      const pmrem = new LegacyPMREMGenerator(renderer as unknown as ConstructorParameters<typeof LegacyPMREMGenerator>[0])
+      const pmrem = new LegacyPMREMGenerator(
+        renderer as unknown as ConstructorParameters<typeof LegacyPMREMGenerator>[0]
+      )
       pmrem.compileEquirectangularShader()
       defaultEnvTarget = pmrem.fromScene(envScene, 0.04)
       scene.environment = defaultEnvTarget.texture
@@ -149,6 +159,12 @@ export default async function (
     updateSize()
   })
   resizeObserver.observe(container)
+  // The first ResizeObserver callback is async, but onCreated runs right after
+  // this setup and a caller-supplied camera (e.g. a FitCamera framing content
+  // in onCreated) needs the real aspect immediately. Sync once up front; the
+  // call is idempotent and a camera created by the default factory already has
+  // the same aspect.
+  updateSize()
 
   window.addEventListener('resize', updateSize)
 

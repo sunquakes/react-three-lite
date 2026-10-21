@@ -24,7 +24,7 @@ export default function GLTFLoaderComponentComponent({ rendererType }: GLTFLoade
   }, [])
 
   return (
-    <Scene rendererType={rendererType} style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '300px', border: '1px solid #eee', borderRadius: '4px', overflow: 'hidden' }} bgColor="#1a1a2e" onCreated={handleCreated}>
+    <Scene rendererType={rendererType} style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '300px', border: '1px solid #eee', borderRadius: '4px', overflow: 'hidden' }} bgColor="rgb(40, 42, 54)" onCreated={handleCreated}>
       {GLTFLoader && <GLTFLoader modelUrl="/models/perseverance-draco.glb" scale={[0.8, 0.8, 0.8]} useDraco />}
     </Scene>
   )

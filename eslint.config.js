@@ -47,6 +47,6 @@ export default [
     },
   },
   {
-    ignores: ['dist', '.eslintrc.cjs'],
+    ignores: ['dist', '.eslintrc.cjs', 'docs'],
   },
 ];

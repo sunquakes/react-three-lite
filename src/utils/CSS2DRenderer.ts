@@ -42,7 +42,8 @@ export default function (
 
   if (webgpu) {
     const originalRender = renderer.render.bind(renderer)
-    const regex = /translate\((-?\d+(?:\.\d+)?%(?:,-?\d+(?:\.\d+)?%)?)\)translate\((-?\d+(?:\.\d+)?)px,(-?\d+(?:\.\d+)?)px\)/
+    const regex =
+      /translate\((-?\d+(?:\.\d+)?%(?:,-?\d+(?:\.\d+)?%)?)\)translate\((-?\d+(?:\.\d+)?)px,(-?\d+(?:\.\d+)?)px\)/
 
     renderer.render = function (scene: THREE.Scene, camera: THREE.Camera) {
       originalRender(scene, camera)
@@ -66,7 +67,8 @@ export default function (
             // upstream  y = -ndcY*half + half  (WebGL)
             // desired   y' =  ndcY*half + half  (WebGPU)
             // => y' = height - y
-            const h = (renderer as unknown as { getSize: () => { height: number } }).getSize().height
+            const h = (renderer as unknown as { getSize: () => { height: number } }).getSize()
+              .height
             const flippedY = h - yPx
             element.style.transform = `translate(${centerTranslate})translate(${xPx}px,${flippedY.toFixed(3)}px)`
           }

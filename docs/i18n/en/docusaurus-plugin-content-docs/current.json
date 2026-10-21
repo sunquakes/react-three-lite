@@ -14,5 +14,25 @@
   "sidebar.guideSidebar.category.Effect": {
     "message": "Effect",
     "description": "The label for category 'Effect' in sidebar 'guideSidebar'"
+  },
+  "sidebar.guideSidebar.category.GIS": {
+    "message": "GIS",
+    "description": "The label for category 'GIS' in sidebar 'guideSidebar'"
+  },
+  "sidebar.guideSidebar.doc.gis/geo-reference": {
+    "message": "Geographic Reference",
+    "description": "The label for doc 'gis/geo-reference' in sidebar 'guideSidebar'"
+  },
+  "sidebar.guideSidebar.doc.gis/geo-object": {
+    "message": "GeoObject",
+    "description": "The label for doc 'gis/geo-object' in sidebar 'guideSidebar'"
+  },
+  "sidebar.guideSidebar.doc.gis/geojson-layer": {
+    "message": "GeoJsonLayer",
+    "description": "The label for doc 'gis/geojson-layer' in sidebar 'guideSidebar'"
+  },
+  "sidebar.guideSidebar.doc.gis/tile-layer": {
+    "message": "Tile Layer",
+    "description": "The label for doc 'gis/tile-layer' in sidebar 'guideSidebar'"
   }
 }

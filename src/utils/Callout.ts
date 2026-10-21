@@ -11,12 +11,17 @@ export type LabelAnchor = 'center' | 'top-left' | 'top-right' | 'bottom-left' | 
 /** Maps a LabelAnchor name to the CSS2DObject.center Vector2 used by CSS2DRenderer. */
 function labelAnchorToVector2(anchor: LabelAnchor): THREE.Vector2 {
   switch (anchor) {
-    case 'top-left':      return new THREE.Vector2(0, 0)
-    case 'top-right':     return new THREE.Vector2(1, 0)
-    case 'bottom-left':   return new THREE.Vector2(0, 1)
-    case 'bottom-right':  return new THREE.Vector2(1, 1)
+    case 'top-left':
+      return new THREE.Vector2(0, 0)
+    case 'top-right':
+      return new THREE.Vector2(1, 0)
+    case 'bottom-left':
+      return new THREE.Vector2(0, 1)
+    case 'bottom-right':
+      return new THREE.Vector2(1, 1)
     case 'center':
-    default:              return new THREE.Vector2(0.5, 0.5)
+    default:
+      return new THREE.Vector2(0.5, 0.5)
   }
 }
 
@@ -112,12 +117,7 @@ export default class Callout {
   private camera: THREE.Camera | null = null
   private anchorFrameId: number | null = null
 
-  constructor(
-    start: Position,
-    end: Position,
-    component: ReactNode,
-    options: CalloutOptions = {}
-  ) {
+  constructor(start: Position, end: Position, component: ReactNode, options: CalloutOptions = {}) {
     const {
       color = 0xffffff,
       lineWidth = 1,
@@ -149,9 +149,7 @@ export default class Callout {
     this.group = new THREE.Group()
 
     // Line geometry: 3 points for broken (start→corner→end), 2 points for straight (start→end)
-    this.lineGeometry = new THREE.BufferGeometry().setFromPoints(
-      this.buildLinePoints()
-    )
+    this.lineGeometry = new THREE.BufferGeometry().setFromPoints(this.buildLinePoints())
 
     if (dashed) {
       this.lineMaterial = new THREE.LineDashedMaterial({

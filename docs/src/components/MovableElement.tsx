@@ -32,7 +32,7 @@ export default function MovableElementComponent({ rendererType = 'webgpu' }: Mov
     <Scene 
       rendererType={rendererType}
       style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '300px' }} 
-      bgColor="#1a1a2e"
+      bgColor="rgb(40, 42, 54)"
       onCreated={handleCreated} 
     />
   )

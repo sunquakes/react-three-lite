@@ -56,7 +56,7 @@ export default function FlowLineMeshOptionsComponent({ rendererType }: FlowLineM
 
   return (
     <div style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '300px' }}>
-      <Scene rendererType={rendererType} bgColor="#1a1a2e" onCreated={handleCreated} />
+      <Scene rendererType={rendererType} bgColor="rgb(40, 42, 54)" onCreated={handleCreated} />
     </div>
   )
 }

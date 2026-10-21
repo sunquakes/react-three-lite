@@ -17,7 +17,7 @@ export default function PopupComponent({ rendererType = 'webgpu' }: PopupProps =
     camera.position.set(0, 1.5, 3)
 
     // Create popup with React component at starting position [0, 0.5, 0]
-    const popup = new Popup([0, 0.5, 0], <TrafficLight />, {})
+    const popup = new Popup([0, 0.5, 0], <TrafficLight />)
     scene.add(popup.scene!)
     
     // Move popup vertically upward to [0, 1.2, 0] with 2 seconds animation
