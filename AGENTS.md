@@ -257,7 +257,10 @@ exactly - the tag is the last step because pushing it triggers the
    is fine.
 3. Commit the release preparation on `develop`
    (`chore: release version x.y.z`).
-4. Push `develop` and open a pull request from `develop` to `main`.
+4. Push `develop` and open a pull request from `develop` to `main`. The `gh`
+   CLI is not installed in this environment, so never attempt `gh pr create`;
+   open the pull request in the browser instead:
+   `https://github.com/sunquakes/react-three-lite/compare/main...develop?expand=1`.
 5. After the PR is reviewed and merged into `main`, create the tag on the
    `main` merge commit (`git checkout main && git pull && git tag x.y.z`) and
    push only then (`git push origin x.y.z`).
