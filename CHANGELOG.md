@@ -1,3 +1,14 @@
+## [0.7.0] - 2026-10-21
+
+### Added
+
+- Add the `Water` component: a displaced plane driven by a 14 wave directional spectrum that is shared with a CPU sampler, so the waterline test follows the surface the shader renders. Shading covers Fresnel reflectance, GGX sun glitter, foam ribbons, depth based water colors, planar reflection and refraction, and an eased transition when the camera crosses the surface.
+- Capture planar reflections and refractions explicitly on the WebGL backend, while WebGPU resolves both through the `reflector()` and `viewportSharedTexture()` nodes. Captures are sized from the drawing buffer and skipped while the camera is underwater.
+- Add the `HeightFog` component: a screen-space exponential fog layer whose density falls off with world height, with flowing noise and directional inscattering towards a configurable light azimuth and elevation.
+- Add the `Fireworks` class: one shader-driven shell that launches a streak and bursts into gravity-bent ribbon trails, with options for burst height, scale, color, timing and trail geometry resolution.
+- Add WebGPU / WebGL demos and bilingual (English and Chinese) documentation for the three new effects, and extend the public API surface guard test with the new exports.
+- Add unit tests for the wave spectrum sampler, the procedural noise map, the water material graph and the WebGL mirror camera projection.
+
 ## [0.6.0] - 2026-10-08
 
 ### Added
