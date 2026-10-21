@@ -14,16 +14,76 @@ import HeightFogComponent from '@site/src/components/effects/HeightFog'
 
 屏幕空间高度雾：密度随世界高度指数衰减的雾层，支持雾面流动噪声与朝向光源的方向散射。下面的每个示例都可以用 **WebGPU**（默认）或 **WebGL** 渲染器查看 —— 切换标签页进行对比。
 
+下方示例放置了一个地面和一排向远处延伸的立柱，让雾气覆盖在几何体之上，从而清晰展示高度渐变效果。
+
 <Tabs groupId="renderer">
   <TabItem value="webgpu" label="WebGPU" default>
     <HeightFogComponent />
 
     ```tsx
+    import { useRef, useEffect } from 'react'
+    import * as THREE from 'three'
     import { Scene, HeightFog } from 'react-three-lite'
+    import type { SceneComponents } from 'react-three-lite'
+
+    // 向远处延伸的立柱：[x, z, width, height]
+    const pillars: [number, number, number, number][] = [
+      [-5, 5, 2.8, 13],
+      [6, 2, 3.2, 17],
+      [-2, -4, 2.6, 11],
+      [8, -9, 3.4, 21],
+      [-9, -15, 3.0, 15],
+      [3, -22, 2.8, 19],
+      [-6, -30, 3.4, 23]
+    ]
 
     export default function App() {
+      const meshesRef = useRef<THREE.Mesh[]>([])
+
+      const handleCreated = (scene: THREE.Scene, components: SceneComponents) => {
+        const { camera } = components
+        camera.position.set(0, 5, 14)
+        camera.lookAt(0, 7, -12)
+
+        const ground = new THREE.Mesh(
+          new THREE.PlaneGeometry(400, 400),
+          new THREE.MeshStandardMaterial({ color: 0x2f3440, roughness: 1 })
+        )
+        ground.rotation.x = -Math.PI / 2
+
+        const geometry = new THREE.BoxGeometry(1, 1, 1)
+        const material = new THREE.MeshStandardMaterial({ color: 0x5c6579, roughness: 0.85 })
+        const columns = pillars.map(([x, z, width, height]) => {
+          const column = new THREE.Mesh(geometry, material)
+          column.position.set(x, height / 2, z)
+          column.scale.set(width, height, width)
+          return column
+        })
+
+        meshesRef.current = [ground, ...columns]
+        scene.add(...meshesRef.current)
+      }
+
+      // 卸载时清理
+      useEffect(() => {
+        return () => {
+          meshesRef.current.forEach((mesh) => {
+            mesh.parent?.remove(mesh)
+            mesh.geometry.dispose()
+            const meshMaterial = mesh.material as THREE.Material
+            meshMaterial.dispose()
+          })
+          meshesRef.current = []
+        }
+      }, [])
+
       return (
-        <Scene bgColor="#1a1a2e" style={{ width: '100%', height: '300px' }}>
+        <Scene
+          bgColor="rgb(40, 42, 54)"
+          gridHelper={{ size: 400, divisions: 40, colorGrid: 0x3a4050, colorCenterLine: 0x4d5570, y: 0.02 }}
+          style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '300px' }}
+          onCreated={handleCreated}
+        >
           <HeightFog />
         </Scene>
       )
@@ -34,11 +94,70 @@ import HeightFogComponent from '@site/src/components/effects/HeightFog'
     <HeightFogComponent rendererType="webgl" />
 
     ```tsx
+    import { useRef, useEffect } from 'react'
+    import * as THREE from 'three'
     import { Scene, HeightFog } from 'react-three-lite'
+    import type { SceneComponents } from 'react-three-lite'
+
+    // 向远处延伸的立柱：[x, z, width, height]
+    const pillars: [number, number, number, number][] = [
+      [-5, 5, 2.8, 13],
+      [6, 2, 3.2, 17],
+      [-2, -4, 2.6, 11],
+      [8, -9, 3.4, 21],
+      [-9, -15, 3.0, 15],
+      [3, -22, 2.8, 19],
+      [-6, -30, 3.4, 23]
+    ]
 
     export default function App() {
+      const meshesRef = useRef<THREE.Mesh[]>([])
+
+      const handleCreated = (scene: THREE.Scene, components: SceneComponents) => {
+        const { camera } = components
+        camera.position.set(0, 5, 14)
+        camera.lookAt(0, 7, -12)
+
+        const ground = new THREE.Mesh(
+          new THREE.PlaneGeometry(400, 400),
+          new THREE.MeshStandardMaterial({ color: 0x2f3440, roughness: 1 })
+        )
+        ground.rotation.x = -Math.PI / 2
+
+        const geometry = new THREE.BoxGeometry(1, 1, 1)
+        const material = new THREE.MeshStandardMaterial({ color: 0x5c6579, roughness: 0.85 })
+        const columns = pillars.map(([x, z, width, height]) => {
+          const column = new THREE.Mesh(geometry, material)
+          column.position.set(x, height / 2, z)
+          column.scale.set(width, height, width)
+          return column
+        })
+
+        meshesRef.current = [ground, ...columns]
+        scene.add(...meshesRef.current)
+      }
+
+      // 卸载时清理
+      useEffect(() => {
+        return () => {
+          meshesRef.current.forEach((mesh) => {
+            mesh.parent?.remove(mesh)
+            mesh.geometry.dispose()
+            const meshMaterial = mesh.material as THREE.Material
+            meshMaterial.dispose()
+          })
+          meshesRef.current = []
+        }
+      }, [])
+
       return (
-        <Scene bgColor="#1a1a2e" rendererType="webgl" style={{ width: '100%', height: '300px' }}>
+        <Scene
+          rendererType="webgl"
+          bgColor="rgb(40, 42, 54)"
+          gridHelper={{ size: 400, divisions: 40, colorGrid: 0x3a4050, colorCenterLine: 0x4d5570, y: 0.02 }}
+          style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '300px' }}
+          onCreated={handleCreated}
+        >
           <HeightFog />
         </Scene>
       )
