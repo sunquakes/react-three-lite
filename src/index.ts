@@ -6,6 +6,7 @@ import Bloom from './components/Bloom'
 import Rain from './components/Rain'
 import Snow from './components/Snow'
 import HeightFog from './components/HeightFog'
+import Water from './components/Water'
 import GeoObject from './components/GeoObject'
 import GeoJsonLayer from './components/GeoJsonLayer'
 import TileLayer from './components/TileLayer'
@@ -56,6 +57,7 @@ export {
   Rain,
   Snow,
   HeightFog,
+  Water,
   GeoObject,
   GeoJsonLayer,
   TileLayer,
@@ -117,6 +119,7 @@ export type {
   GeoJsonPosition
 } from './crs/GeoJson'
 export type { GeoObjectProps } from './components/GeoObject'
+export type { WaterProps } from './components/Water'
 export type { GeoJsonLayerProps, GeoJsonStyle } from './components/GeoJsonLayer'
 export type { TileLayerProps } from './components/TileLayer'
 export type { TileIndex, TileBounds, TileCorners } from './crs/Tiles'

@@ -99,6 +99,10 @@
     "message": "下雪效果",
     "description": "The label for doc 'effects/snow' in sidebar 'guideSidebar'"
   },
+  "sidebar.guideSidebar.doc.effects/water": {
+    "message": "海洋水面",
+    "description": "The label for doc 'effects/water' in sidebar 'guideSidebar'"
+  },
   "sidebar.guideSidebar.doc.effects/height-fog": {
     "message": "高度雾",
     "description": "The label for doc 'effects/height-fog' in sidebar 'guideSidebar'"
