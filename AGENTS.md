@@ -254,12 +254,16 @@ exact order. Do not stop halfway and do not reorder them:
    `package.json` so `package.json` and `CHANGELOG.md` stay in sync.
 2. **Commit and push to `develop`.** Commit the release preparation as
    `chore: release version x.y.z` and push it (`git push origin develop`).
-3. **Create the pull request to `main`.** Open a PR from `develop` to `main`.
-   The `gh` CLI is not installed in this environment, so never attempt
-   `gh pr create`; open the PR in the browser instead:
-   `https://github.com/sunquakes/react-three-lite/compare/main...develop?expand=1`.
+3. **Create and merge the pull request to `main`.** The `gh` CLI is installed and
+   authenticated as `sunquakes`. Because the sandbox forbids writes to the
+   default config directory, set `$env:GH_CONFIG_DIR = "$env:TEMP\gh-config"`
+   before calling it. Then run
+   `gh pr create --base main --head develop --title "chore: release version x.y.z" --body "..."`
+   and merge the new PR with `gh pr merge <number> --merge`.
 4. **Create the tag on `main`.** After the PR is merged, switch to `main`, pull,
-   and create the annotated tag `x.y.z` on the merge commit.
+   and create a lightweight tag `x.y.z` on the merge commit
+   (`git tag x.y.z`). Stash unrelated local edits first if `git pull` refuses to
+   run.
 5. **Push the tag to the remote.** `git push origin x.y.z` - this is the last
    step because pushing the tag triggers the `Create Release` workflow (GitHub
    Release, NPM publish, docs deploy). Verify that the workflow run completes.
