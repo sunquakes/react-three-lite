@@ -7,6 +7,10 @@
     "message": "指南",
     "description": "Navbar item label 'Guide'"
   },
+  "item.label.Demo": {
+    "message": "演示",
+    "description": "Navbar item label 'Demo'"
+  },
   "item.label.GitHub": {
     "message": "GitHub",
     "description": "Navbar item label 'GitHub'"

@@ -163,6 +163,38 @@ describe('Movable', () => {
       expect(raf.pending.size).toBe(0)
     })
 
+    it('starts the next move from a fresh clock after an idle gap', () => {
+      const group = new THREE.Group()
+      const movable = new Movable(group, [0, 0, 0])
+      movable.moveTo([10, 0, 0], 1000)
+
+      raf.flush(0)
+      raf.flush(1000)
+      expect(group.position.x).toBeCloseTo(10)
+      expect(internals(movable).state).toBe(false)
+
+      // A new move requested long after the previous one ended must not treat
+      // the idle gap as elapsed movement time (that made the element jump).
+      movable.moveTo([20, 0, 0], 1000)
+      raf.flush(5000)
+      expect(group.position.x).toBeCloseTo(10)
+      raf.flush(5500)
+      expect(group.position.x).toBeCloseTo(15)
+    })
+
+    it('clamps the remaining duration when a frame overshoots the move', () => {
+      const group = new THREE.Group()
+      const movable = new Movable(group, [0, 0, 0])
+      movable.moveTo([10, 0, 0], 1000)
+
+      raf.flush(0)
+      raf.flush(1300)
+
+      expect(group.position.x).toBeCloseTo(10)
+      expect(internals(movable).duration).toBe(0)
+      expect(internals(movable).start).toBeUndefined()
+    })
+
     it('turns the group to face the direction of travel', () => {
       const group = new THREE.Group()
       const movable = new Movable(group, [0, 0, 0])

@@ -1,3 +1,22 @@
+## [Unreleased]
+
+## [0.8.0] - 2026-10-29
+
+### Added
+
+- Add the `SkyDome` class: a gradient sky dome whose four color bands rise from the horizon to the zenith, plus a halo and a sun disc placed along a configurable sun direction. Written in TSL, so the classic `WebGLRenderer` compiles it through `WebGLNodesHandler` as well.
+- Add the `RadarSweep` class: a ground pulse that expands outward and trails a weaker echo band behind its crest, with noise details. A `heightAt` sampler displaces the ring onto the terrain so the pulse follows the ground, and setting `period` makes the sweep animate itself without per-frame code.
+- Add the `SignalWave` class: a billboarded arc that travels along a world-space bearing, fading in as it leaves the origin and widening as it goes. `travel` drives position, scale and life from its own clock, and `count` / `phase` stagger several pulses.
+- Add the `GlowSprite` class: a camera-facing halo sprite backed by a generated radial-gradient canvas texture, with an optional breathing pulse.
+- Add unit tests for `SkyDome`, `RadarSweep`, `SignalWave` and `GlowSprite`, and extend the public API surface guard test with the four new exports.
+- Add WebGPU / WebGL demos and bilingual (English and Chinese) documentation for the four new effects.
+- Add a full-screen demo page at `/demo` (linked from the navbar and from a Live Demo banner on the home page) showing a complete Mars base scene assembled from the library's components, with bilingual captions and asset credits.
+
+### Fixed
+
+- Fix `Movable` swallowing the idle gap after a completed move: the animation now resets its clock sample when it finishes, and a non-positive remaining duration completes in a single step instead of over-shooting the target.
+- Fix `GLTFLoader` failing with `RangeError: Invalid typed array length` for models that reference external resources. Relative `.bin` and texture URIs are now resolved against the model's own directory instead of the page URL.
+
 ## [0.7.0] - 2026-10-21
 
 ### Added

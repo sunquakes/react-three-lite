@@ -87,11 +87,11 @@ export default class Movable {
 
     this.start = timestamp
 
-    const timeRatio = Math.min(deltaTime / this.duration, 1) // Time ratio, ensure in [0, 1] range
+    const timeRatio = this.duration > 0 ? Math.min(deltaTime / this.duration, 1) : 1
     const deltaX = this.lerp(0, this.deltaX, timeRatio)
     const deltaY = this.lerp(0, this.deltaY, timeRatio)
     const deltaZ = this.lerp(0, this.deltaZ, timeRatio)
-    this.duration -= deltaTime
+    this.duration = Math.max(this.duration - deltaTime, 0)
     this.deltaX -= deltaX
     this.deltaY -= deltaY
     this.deltaZ -= deltaZ
@@ -108,8 +108,19 @@ export default class Movable {
     if (this.duration > 0) {
       this.animationId = requestAnimationFrame(this.update)
     } else {
-      this.state = false
+      this.finish()
     }
+  }
+
+  /**
+   * Release the frame loop and forget the clock sample, so a move requested
+   * after an idle gap starts from a fresh timestamp and is interpolated over
+   * its own duration instead of swallowing the whole gap as one step.
+   */
+  private finish() {
+    this.state = false
+    this.animationId = null
+    this.start = undefined
   }
 
   /**

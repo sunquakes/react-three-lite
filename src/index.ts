@@ -31,6 +31,10 @@ import ModelRotator from './utils/ModelRotator'
 import Picker from './utils/Picker'
 import LightPillar from './utils/LightPillar'
 import Fireworks from './utils/Fireworks'
+import SkyDome from './utils/SkyDome'
+import RadarSweep from './utils/RadarSweep'
+import SignalWave from './utils/SignalWave'
+import GlowSprite from './utils/GlowSprite'
 import {
   fitCameraToBox,
   fitCameraToObject,
@@ -45,6 +49,10 @@ import type { CalloutOptions, LineShape, BendAxis, LabelAnchor } from './utils/C
 import type { PickEvent, PickEventType, PickCallback, PickerOptions } from './utils/Picker'
 import type { LightPillarOptions } from './utils/LightPillar'
 import type { FireworksOptions } from './utils/Fireworks'
+import type { SkyDomeOptions } from './utils/SkyDome'
+import type { RadarSweepOptions } from './utils/RadarSweep'
+import type { SignalWaveOptions } from './utils/SignalWave'
+import type { GlowSpriteOptions } from './utils/GlowSprite'
 import type { CameraFitOptions } from './utils/CameraFit'
 
 // components
@@ -132,6 +140,10 @@ export type { LightGradientOptions, CalloutOptions, LineShape, BendAxis, LabelAn
 export type { PickEvent, PickEventType, PickCallback, PickerOptions }
 export type { LightPillarOptions }
 export type { FireworksOptions }
+export type { SkyDomeOptions }
+export type { RadarSweepOptions }
+export type { SignalWaveOptions }
+export type { GlowSpriteOptions }
 export type { CameraFitOptions }
 export type { FitCameraOptions } from './utils/FitCamera'
 
@@ -150,6 +162,10 @@ export {
   Picker,
   LightPillar,
   Fireworks,
+  SkyDome,
+  RadarSweep,
+  SignalWave,
+  GlowSprite,
   FitCamera
 }
 

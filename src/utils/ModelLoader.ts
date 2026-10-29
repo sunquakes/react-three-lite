@@ -381,6 +381,17 @@ function getDRACOLoader(decoderPath?: string): DRACOLoader {
   return dracoLoader
 }
 
+/**
+ * A `.gltf` file references its `.bin` buffer and textures through relative
+ * URIs. GLTFLoader resolves those against the path handed to `parse()`, so
+ * hand it the model's own directory: an empty path would resolve them against
+ * the page URL and fetch the wrong file (an HTML route, for instance).
+ */
+function getResourcePath(url: string): string {
+  const absolute = typeof document === 'undefined' ? url : new URL(url, document.baseURI).href
+  return absolute.slice(0, absolute.lastIndexOf('/') + 1)
+}
+
 export async function GLTFLoader(
   url: string,
   useDraco?: boolean,
@@ -395,7 +406,7 @@ export async function GLTFLoader(
   }
   return new Promise((resolve) => {
     onProgress?.({ type: 'parse', progress: 0 })
-    loader.parse(data, '', (gltf) => {
+    loader.parse(data, getResourcePath(url), (gltf) => {
       const model = gltf.scene as THREE.Group
       model.animations = gltf.animations as THREE.AnimationClip[]
       normalizeMaterials(model)

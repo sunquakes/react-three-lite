@@ -1,7 +1,7 @@
 // @ts-ignore
 /** @type {import('@docusaurus/plugin-content-docs').SidebarsConfig} */
 const sidebars = {
-  guideSidebar: [
+  mainSidebar: [
     'getting-started',
     'scene',
     'sky-box',
@@ -27,7 +27,7 @@ const sidebars = {
       type: 'category',
       label: 'Effect',
       collapsible: true,
-      items: ['effects/bloom', 'effects/rain', 'effects/snow', 'effects/water', 'effects/height-fog', 'effects/sweep-light', 'effects/light-gradient', 'effects/light-pillar', 'effects/fireworks'],
+      items: ['effects/bloom', 'effects/rain', 'effects/snow', 'effects/water', 'effects/height-fog', 'effects/sweep-light', 'effects/light-gradient', 'effects/light-pillar', 'effects/fireworks', 'effects/sky-dome', 'effects/radar-sweep', 'effects/signal-wave', 'effects/glow-sprite'],
     },
     {
       type: 'category',

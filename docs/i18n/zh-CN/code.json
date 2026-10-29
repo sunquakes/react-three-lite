@@ -1,4 +1,56 @@
 {
+  "demo.page.title": {
+    "message": "火星奇遇",
+    "description": "The title of the Mars scene demo page"
+  },
+  "demo.page.description": {
+    "message": "使用 React Three Lite 构建的完整火星场景",
+    "description": "The meta description of the Mars scene demo page"
+  },
+  "demo.page.back": {
+    "message": "← 返回指南",
+    "description": "The link back to the docs from the Mars scene demo page"
+  },
+  "demo.page.blurb": {
+    "message": "求索号火星车驶过锈红色的沙丘，来到一处撞击坑边缘，停靠在深空网络中继站旁，将数据传向黑色天幕上那颗淡蓝色的地球；与此同时，它身旁的沙地里冒出一丛蕨类植物。",
+    "description": "The introduction paragraph of the Mars scene demo page"
+  },
+  "demo.page.orbitHint": {
+    "message": "拖动旋转 · 滚轮缩放",
+    "description": "The camera controls hint on the Mars scene demo page"
+  },
+  "demo.page.credits": {
+    "message": "3D 模型：NASA/JPL-Caltech · 蕨类植物：Poly Haven（CC0）",
+    "description": "The asset credits on the Mars scene demo page"
+  },
+  "demo.caption.intro": {
+    "message": "求索号 · 火星之梦",
+    "description": "Caption shown at the start of the Mars scene demo"
+  },
+  "demo.caption.survey": {
+    "message": "巡检点 · 停下采样，扫描脚下沙地",
+    "description": "Caption shown while the rover halts at a survey stop"
+  },
+  "demo.caption.driving": {
+    "message": "第 118 个火星日 · 在沙丘平原上巡回搜寻",
+    "description": "Caption shown while the rover drives across the dunes"
+  },
+  "demo.caption.parked": {
+    "message": "停在坑缘，等待与中继站建立链路",
+    "description": "Caption shown once the rover parks at the crater rim"
+  },
+  "demo.caption.acquiring": {
+    "message": "正在锁定深空网络下行链路",
+    "description": "Caption shown while the downlink is being acquired"
+  },
+  "demo.caption.finding": {
+    "message": "沙地里冒出一丛绿",
+    "description": "Caption shown when the fern patch is revealed"
+  },
+  "demo.caption.downlink": {
+    "message": "链路锁定 · 把求索号的数据传回地球",
+    "description": "Caption shown once the downlink to Earth is locked"
+  },
   "theme.ErrorPageContent.title": {
     "message": "页面已崩溃。",
     "description": "The title of the fallback page when the page crashed"
