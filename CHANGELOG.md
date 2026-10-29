@@ -14,7 +14,7 @@
 
 ### Fixed
 
-- Fix `Movable` swallowing the idle gap after a completed move: the animation now resets its clock sample when it finishes, and a zero or negative duration completes in one step instead of producing fractional `NaN` values.
+- Fix `Movable` swallowing the idle gap after a completed move: the animation now resets its clock sample when it finishes, and a non-positive remaining duration completes in a single step instead of over-shooting the target.
 - Fix `GLTFLoader` failing with `RangeError: Invalid typed array length` for models that reference external resources. Relative `.bin` and texture URIs are now resolved against the model's own directory instead of the page URL.
 
 ## [0.7.0] - 2026-10-21
