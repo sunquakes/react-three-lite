@@ -183,9 +183,14 @@ const config = {
         items: [
           {
             type: 'docSidebar',
-            sidebarId: 'guideSidebar',
+            sidebarId: 'mainSidebar',
             position: 'left',
             label: 'Guide',
+          },
+          {
+            to: '/demo',
+            label: 'Demo',
+            position: 'left',
           },
           {
             type: 'localeDropdown',

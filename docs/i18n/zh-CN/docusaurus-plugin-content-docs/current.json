@@ -122,5 +122,21 @@
   "sidebar.guideSidebar.doc.effects/fireworks": {
     "message": "烟花效果",
     "description": "The label for doc 'effects/fireworks' in sidebar 'guideSidebar'"
+  },
+  "sidebar.guideSidebar.doc.effects/sky-dome": {
+    "message": "渐变天空穹顶",
+    "description": "The label for doc 'effects/sky-dome' in sidebar 'guideSidebar'"
+  },
+  "sidebar.guideSidebar.doc.effects/radar-sweep": {
+    "message": "地面雷达脉冲",
+    "description": "The label for doc 'effects/radar-sweep' in sidebar 'guideSidebar'"
+  },
+  "sidebar.guideSidebar.doc.effects/signal-wave": {
+    "message": "信号波弧",
+    "description": "The label for doc 'effects/signal-wave' in sidebar 'guideSidebar'"
+  },
+  "sidebar.guideSidebar.doc.effects/glow-sprite": {
+    "message": "光晕精灵",
+    "description": "The label for doc 'effects/glow-sprite' in sidebar 'guideSidebar'"
   }
 }
