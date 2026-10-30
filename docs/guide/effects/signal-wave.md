@@ -155,4 +155,5 @@ Every example below can be viewed with either the **WebGPU** (default) or the **
 | constructor | (options?: SignalWaveOptions) | Create the pulse. It extends `THREE.Mesh`, so position and scale it, then add it to the scene |
 | setDirection | (x: number, y: number) => void | Aim the arc inside the quad plane (manual mode) |
 | faceCamera | (camera: THREE.Camera) => void | Turn the quad towards the camera so the arc is never lost edge-on (manual mode) |
+| setOrigin | (x: number, y: number, z: number) => void | Move the start point of the travel in world space, so the stream follows a moving emitter (automatic mode) |
 | dispose | () => void | Dispose the geometry, material and staggered child pulses, then detach from the scene |

@@ -70,9 +70,14 @@ const ROVER = { x: 1.8, z: -10.4 }
 // The downlink beacon on the flat plain just outside the rim: far enough not
 // to sit in the crater, close enough to stay in frame next to the rover.
 const STATION = { x: -7.6, z: -11.2 }
-// The transport that set Qiusuo down: a Mars ascent vehicle left standing on
-// the far plain, well away from the station and the crater the rover surveys.
-const ASCENT_VEHICLE = { x: -62, z: -44 }
+// The transport that set Qiusuo down: the cargo lander that carried the rover
+// to Mars and can lift it back off, standing on the far plain well away from
+// the station and the crater the rover surveys.
+const LANDER = { x: -76, z: -52 }
+// NASA's Viking lander model is authored nine units tall over a sixteen-unit
+// leg span; scaling it by height keeps the whole ship in proportion and makes
+// it dwarf the 2.8-unit rover on the plain.
+const LANDER_HEIGHT = 9
 // NASA's catalogue ships no biological models, so the living specimen is a
 // CC0 fern patch from Poly Haven (https://polyhaven.com/a/fern_02); it sprouts
 // on the near rim crest, in view of the parked rover.
@@ -172,7 +177,10 @@ function terrainHeight(x: number, z: number): number {
     Math.sin((x + z) * 0.115 + 0.6) * 0.3 +
     Math.sin(x * 0.19 - z * 0.13 + 2.1) * 0.12
   const flattenNearRover = THREE.MathUtils.smoothstep(Math.hypot(x - ROVER.x, z - ROVER.z), 3.2, 12)
-  const dunes = duneNoise * flattenNearRover
+  // The lander's leg span is far wider than the rover, so the dunes are levelled
+  // into a landing pad beneath it; every foot then rests on the same ground.
+  const flattenNearLander = THREE.MathUtils.smoothstep(Math.hypot(x - LANDER.x, z - LANDER.z), 6, 22)
+  const dunes = duneNoise * flattenNearRover * flattenNearLander
 
   const distance = Math.hypot(x - CRATER.x, z - CRATER.z)
   const t = distance / CRATER.radius
@@ -427,123 +435,6 @@ function createBurnScar(cx: number, cz: number, inner: number, outer: number) {
   scorch.renderOrder = 1
   scorch.position.set(cx, baseY, cz)
   return scorch
-}
-
-// A Mars Ascent Vehicle: NASA's two-stage solid rocket for lifting a sample
-// container off the Martian surface. Slender white composite stages, a dark
-// interstage and aft skirt, a rounded payload fairing, and a compact four-leg
-// cradle that keeps the nozzle clear of the regolith. Built in metres at world
-// scale, so it stands a little over five units tall.
-function createAscentVehicle() {
-  const vehicle = new THREE.Group()
-
-  const composite = new THREE.MeshStandardMaterial({
-    color: 0xe6e4df,
-    roughness: 0.55,
-    metalness: 0.08
-  })
-  const dark = new THREE.MeshStandardMaterial({
-    color: 0x2b2d33,
-    roughness: 0.72,
-    metalness: 0.28
-  })
-  const engine = new THREE.MeshStandardMaterial({
-    color: 0x504a44,
-    roughness: 0.42,
-    metalness: 0.85
-  })
-
-  const skirtBase = 0.62
-  const skirtHeight = 0.6
-  const skirtTop = skirtBase + skirtHeight
-  const stage1Height = 1.9
-  const interstageHeight = 0.26
-  const stage2Height = 1.35
-  const noseHeight = 0.88
-
-  const stage1Base = skirtTop
-  const interstageBase = stage1Base + stage1Height
-  const stage2Base = interstageBase + interstageHeight
-  const noseBase = stage2Base + stage2Height
-
-  // Aft skirt: the dark thrust structure the legs and nozzle hang from.
-  const skirt = new THREE.Mesh(new THREE.CylinderGeometry(0.56, 0.6, skirtHeight, 24), dark)
-  skirt.position.y = skirtBase + skirtHeight / 2
-  vehicle.add(skirt)
-
-  // Nozzle bell, tucked between the legs and clear of the sand.
-  const nozzle = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.42, 0.5, 20, 1, true), engine)
-  nozzle.position.y = skirtBase - 0.25
-  vehicle.add(nozzle)
-
-  // Four landing legs holding the stack upright on the dunes.
-  const legGeometry = new THREE.CylinderGeometry(0.055, 0.055, 1, 8)
-  const padGeometry = new THREE.CylinderGeometry(0.16, 0.19, 0.07, 12)
-  const up = new THREE.Vector3(0, 1, 0)
-  for (let i = 0; i < 4; i += 1) {
-    const angle = Math.PI / 4 + (i * Math.PI) / 2
-    const top = new THREE.Vector3(
-      Math.cos(angle) * 0.58,
-      skirtBase + skirtHeight * 0.85,
-      Math.sin(angle) * 0.58
-    )
-    const bottom = new THREE.Vector3(Math.cos(angle) * 1.28, 0.04, Math.sin(angle) * 1.28)
-    const direction = new THREE.Vector3().subVectors(bottom, top)
-
-    const leg = new THREE.Mesh(legGeometry, dark)
-    leg.position.copy(top).addScaledVector(direction, 0.5)
-    leg.quaternion.setFromUnitVectors(up, direction.clone().normalize())
-    leg.scale.y = direction.length()
-    vehicle.add(leg)
-
-    const pad = new THREE.Mesh(padGeometry, dark)
-    pad.position.set(bottom.x, 0.045, bottom.z)
-    vehicle.add(pad)
-  }
-
-  // First stage: the long white solid motor.
-  const stage1 = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, stage1Height, 28), composite)
-  stage1.position.y = stage1Base + stage1Height / 2
-  vehicle.add(stage1)
-
-  // Interstage: the dark band where the second stage separates.
-  const interstage = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.505, 0.505, interstageHeight, 28),
-    dark
-  )
-  interstage.position.y = interstageBase + interstageHeight / 2
-  vehicle.add(interstage)
-
-  // Second stage: shorter and slightly tapered toward the payload.
-  const stage2 = new THREE.Mesh(new THREE.CylinderGeometry(0.44, 0.46, stage2Height, 28), composite)
-  stage2.position.y = stage2Base + stage2Height / 2
-  vehicle.add(stage2)
-
-  // Payload fairing: a cosine ogive lathed from the stage-two radius to a point.
-  const noseProfile: THREE.Vector2[] = []
-  const noseSegments = 14
-  for (let i = 0; i <= noseSegments; i += 1) {
-    const t = i / noseSegments
-    noseProfile.push(new THREE.Vector2(0.44 * Math.cos((t * Math.PI) / 2) + 0.001, t * noseHeight))
-  }
-  const nose = new THREE.Mesh(new THREE.LatheGeometry(noseProfile, 28), composite)
-  nose.position.y = noseBase
-  vehicle.add(nose)
-
-  // Thin dark bands and a cable raceway give the white hull its scale.
-  const bandGeometry = new THREE.CylinderGeometry(0.503, 0.503, 0.05, 28)
-  const bandHeights = [stage1Base + 0.3, stage1Base + stage1Height - 0.32]
-  bandHeights.forEach((y) => {
-    const band = new THREE.Mesh(bandGeometry, dark)
-    band.position.y = y
-    vehicle.add(band)
-  })
-
-  const raceway = new THREE.Mesh(new THREE.BoxGeometry(0.07, stage1Height - 0.12, 0.1), dark)
-  raceway.position.set(-0.5, stage1Base + stage1Height / 2, 0)
-  vehicle.add(raceway)
-
-  return vehicle
 }
 
 // The GLB stores all six wheels as the three material-layer primitives of a
@@ -1546,23 +1437,42 @@ export default function ComplexSceneDemo({
       extraRef.current.push(mesa)
     })
 
-    // --- Mars ascent vehicle on the far plain -------------------------------
-    // The rocket that will lift Qiusuo's samples back off Mars stands on its
-    // landing cradle far out across the plain, well clear of the relay station
-    // and the crater; the scorched sand of its descent burn is baked into the
-    // dunes.
-    const ascentVehicle = createAscentVehicle()
-    ascentVehicle.position.set(
-      ASCENT_VEHICLE.x,
-      terrainHeight(ASCENT_VEHICLE.x, ASCENT_VEHICLE.z),
-      ASCENT_VEHICLE.z
-    )
-    scene.add(ascentVehicle)
-    extraRef.current.push(ascentVehicle)
+    // --- Mars cargo lander on the far plain ---------------------------------
+    // The transfer ship that carried Qiusuo to Mars: NASA's own Viking lander
+    // model, downloaded from the 3D Resources hub. It is a 1.8 MB glTF of nine
+    // PBR materials, scaled up on the plain so the ship dwarfs the rover, and
+    // the scorched ring of its descent burn is baked into the dunes around it.
+    const landerGroup = new THREE.Group()
+    landerGroup.position.set(LANDER.x, terrainHeight(LANDER.x, LANDER.z), LANDER.z)
+    landerGroup.rotation.y = Math.atan2(ROVER.x - LANDER.x, ROVER.z - LANDER.z)
+    scene.add(landerGroup)
+    extraRef.current.push(landerGroup)
 
-    const ascentScar = createBurnScar(ASCENT_VEHICLE.x, ASCENT_VEHICLE.z, 1.15, 2.7)
-    scene.add(ascentScar)
-    extraRef.current.push(ascentScar)
+    void GLTFLoaderAsync('/models/viking-lander.glb', false)
+      .then((model) => {
+        if (disposedRef.current) {
+          disposeModel(model)
+          return
+        }
+
+        // Scale by height: the model's leg span follows from its own
+        // proportions, so the ship stays in shape at any size.
+        const bounds = new THREE.Box3().setFromObject(model)
+        const size = new THREE.Vector3()
+        bounds.getSize(size)
+        model.scale.setScalar(LANDER_HEIGHT / Math.max(size.y, 0.001))
+
+        // Rest the footpads on the group's local ground plane.
+        bounds.setFromObject(model)
+        model.position.set(0, -bounds.min.y, 0)
+        landerGroup.add(model)
+      })
+
+    // The scar is wider than the sixteen-unit leg span, so the ring still shows
+    // beyond the footpads the way a real descent burn would.
+    const landerScar = createBurnScar(LANDER.x, LANDER.z, 4.6, 11)
+    scene.add(landerScar)
+    extraRef.current.push(landerScar)
 
     // --- Scattered rocks ---------------------------------------------------
     // Real rock silhouettes instead of a dodecahedron: three asteroid shape
@@ -1635,7 +1545,7 @@ export default function ComplexSceneDemo({
           if (Math.hypot(x - STATION.x, z - STATION.z) < 4.6) return
           if (Math.hypot(x - PLANT.x, z - PLANT.z) < 2.2) return
           if (Math.hypot(x - ROVER.x, z - ROVER.z) < 2.4) return
-          if (Math.hypot(x - ASCENT_VEHICLE.x, z - ASCENT_VEHICLE.z) < 6) return
+          if (Math.hypot(x - LANDER.x, z - LANDER.z) < 13) return
           if (distanceToPath(x, z) < clearance) return
 
           placements.push({
@@ -1908,9 +1818,11 @@ export default function ComplexSceneDemo({
 
     // --- Signal wave launched from the vehicle toward Earth ----------------
     // A stream of signal pulses instead of a solid line: each arc leaves the
-    // parked rover, swells as it climbs along the Earth bearing and fades out,
-    // so the downlink reads as the vehicle broadcasting its own data. The wave
-    // animates itself along the bearing; the demo only toggles visibility.
+    // rover's mast, swells as it climbs along the Earth bearing and fades out,
+    // so the broadcast reads as coming from the vehicle itself. The wave
+    // animates itself along the bearing and stays hidden until the fern is
+    // found; from that beat on, the demo re-anchors its origin to the rover
+    // every frame so the stream stays glued to the vehicle.
     const roverY = terrainHeight(ROVER.x, ROVER.z)
     const signalOrigin = new THREE.Vector3(ROVER.x, roverY + 1.7, ROVER.z)
     const signalWaves = new SignalWave({
@@ -2105,10 +2017,20 @@ export default function ComplexSceneDemo({
         loupe.scene.element.style.opacity = String(loupeOpacity)
       }
     }
-    // Signal waves: the pulses animate themselves along the Earth bearing; the
-    // demo only fades the stream in once the link locks on.
-    if (signalWavesRef.current) {
-      signalWavesRef.current.visible = reveal > 0.85
+    // Signal waves: silent until Qiusuo finds the fern, then the pulses animate
+    // themselves along the Earth bearing with their origin re-anchored to the
+    // mast every frame - so from the discovery beat on, the stream stays glued
+    // to the vehicle and broadcasts the find.
+    const signalWaves = signalWavesRef.current
+    if (signalWaves) {
+      if (drive) {
+        signalWaves.setOrigin(
+          drive.roverGroup.position.x,
+          drive.roverGroup.position.y + 1.7,
+          drive.roverGroup.position.z
+        )
+      }
+      signalWaves.visible = reveal >= 0.55
     }
 
     // Storytelling: a cinematic caption walks the viewer through the mission,
