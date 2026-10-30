@@ -154,4 +154,5 @@ import SignalWave from '@site/src/components/effects/SignalWave'
 | constructor | (options?: SignalWaveOptions) | 创建脉冲。它继承自 `THREE.Mesh`，可设置位置与缩放并加入场景 |
 | setDirection | (x: number, y: number) => void | 在四边形平面内瞄准弧线（手动模式） |
 | faceCamera | (camera: THREE.Camera) => void | 让四边形朝向相机，弧线不会侧对镜头消失（手动模式） |
+| setOrigin | (x: number, y: number, z: number) => void | 在世界空间中移动脉冲的起点，使信号流跟随移动的发射源（自动模式） |
 | dispose | () => void | 销毁几何体、材质与错相的子脉冲，并从场景中移除 |

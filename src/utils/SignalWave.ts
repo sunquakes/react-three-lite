@@ -224,6 +224,17 @@ export default class SignalWave extends THREE.Mesh<THREE.PlaneGeometry, NodeMate
     this.quaternion.copy(camera.quaternion)
   }
 
+  /**
+   * Move the start point of the travel in world space, so the stream can be
+   * emitted by something that moves. Applies to the staggered child pulses too.
+   */
+  public setOrigin(x: number, y: number, z: number): void {
+    this.originVector.set(x, y, z)
+    for (const child of this.children) {
+      if (child instanceof SignalWave) child.setOrigin(x, y, z)
+    }
+  }
+
   public dispose(): void {
     if (this.disposed) return
     this.disposed = true
