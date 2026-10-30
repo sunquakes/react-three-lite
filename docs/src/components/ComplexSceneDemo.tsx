@@ -146,14 +146,31 @@ const SURVEY_HEADING = -1.62
 const SCAN_RADIUS = 7
 const SCAN_PERIOD = 2.6
 
+// Past the playable plain the ground sags away like the surface of a very large
+// sphere. The curve drops the far edge of the terrain below the horizon, so the
+// boundary of the mesh can never be seen from inside the scene.
+function terrainCurvature(x: number, z: number): number {
+  const beyond = Math.max(0, Math.hypot(x, z) - 150)
+  return -(beyond * beyond) / 2000
+}
+
+// The dune field's crest line, shared by the height field and the ground
+// shading. A long transverse swell runs downwind (roughly toward +Z), its
+// crests are sharpened against broad troughs, and a shorter crossing train
+// breaks each ridge into separate dunes.
+function duneCrest(x: number, z: number): number {
+  const phase = Math.sin(x * 0.075 - z * 0.04 + Math.sin(z * 0.03) * 1.6)
+  return Math.sign(phase) * Math.pow(Math.abs(phase), 1.5)
+}
+
 // Shared height field so terrain, rocks, rover and the station all agree on
 // where the ground is. The plain around the parking spot is flattened, the
 // crater is carved out of it and lifted into a rim.
 function terrainHeight(x: number, z: number): number {
   const duneNoise =
-    Math.sin(x * 0.14) * Math.cos(z * 0.11) * 0.42 +
-    Math.sin((x + z) * 0.06) * 0.7 +
-    Math.sin(x * 0.045 - z * 0.055) * 0.95
+    duneCrest(x, z) * 1.05 +
+    Math.sin((x + z) * 0.115 + 0.6) * 0.3 +
+    Math.sin(x * 0.19 - z * 0.13 + 2.1) * 0.12
   const flattenNearRover = THREE.MathUtils.smoothstep(Math.hypot(x - ROVER.x, z - ROVER.z), 3.2, 12)
   const dunes = duneNoise * flattenNearRover
 
@@ -162,7 +179,7 @@ function terrainHeight(x: number, z: number): number {
   const bowl = t < 1 ? -CRATER.depth * Math.pow(1 - t * t, 1.35) : 0
   const rim = CRATER.rim * Math.exp(-Math.pow((t - 1) / 0.2, 2))
 
-  return dunes + bowl + rim
+  return dunes + bowl + rim + terrainCurvature(x, z)
 }
 
 function createRandom(seed: number) {
@@ -173,11 +190,105 @@ function createRandom(seed: number) {
   }
 }
 
+// Ground detail map: sand grain, wind streaks and embedded grit tiled over the
+// plain. The vertex colours still carry the large-scale regolith tones; this
+// canvas adds the fine surface the terrain mesh is far too coarse to resolve.
+function createRegolithTexture(): THREE.CanvasTexture | null {
+  const size = 512
+  const canvas = document.createElement('canvas')
+  canvas.width = size
+  canvas.height = size
+  const context = canvas.getContext('2d')
+  if (!context) return null
+
+  const random = createRandom(48271)
+
+  const grain = context.createImageData(size, size)
+  for (let i = 0; i < grain.data.length; i += 4) {
+    const value = 210 + random() * 45
+    grain.data[i] = value
+    grain.data[i + 1] = value * 0.95
+    grain.data[i + 2] = value * 0.89
+    grain.data[i + 3] = 255
+  }
+  context.putImageData(grain, 0, 0)
+
+  // Wind streaks: shallow bands of lighter and darker sand, drawn once per
+  // wrapped corner so the pattern stays seamless when the tile repeats.
+  for (let i = 0; i < 220; i += 1) {
+    const light = random() > 0.45
+    const x = random() * size
+    const y = random() * size
+    const length = 40 + random() * 220
+    const alpha = (0.03 + random() * 0.05).toFixed(3)
+    context.strokeStyle = light ? `rgba(255, 240, 218, ${alpha})` : `rgba(94, 50, 32, ${alpha})`
+    context.lineWidth = 0.6 + random() * 2.2
+    for (const offsetX of [0, -size]) {
+      for (const offsetY of [0, -size]) {
+        context.beginPath()
+        context.moveTo(x + offsetX, y + offsetY)
+        context.lineTo(x + offsetX + length, y + offsetY + length * 0.35)
+        context.stroke()
+      }
+    }
+  }
+
+  // Wind ripples: short trains of shallow crest-and-trough arcs. At the tiling
+  // used by the terrain they read as blown sand ripples underfoot, the detail
+  // the 512-segment mesh is far too coarse to model.
+  for (let i = 0; i < 30; i += 1) {
+    const originX = random() * size
+    const originY = random() * size
+    const gap = 5 + random() * 7
+    const bend = 1.2 + random() * 2.6
+    const length = 60 + random() * 140
+    const phase = random() * Math.PI * 2
+    const lines = 3 + Math.floor(random() * 4)
+    for (let k = 0; k < lines; k += 1) {
+      context.strokeStyle =
+        k % 2 === 0 ? 'rgba(255, 240, 218, 0.22)' : 'rgba(84, 44, 26, 0.22)'
+      context.lineWidth = 1 + random() * 0.8
+      for (const offsetX of [0, -size]) {
+        for (const offsetY of [0, -size]) {
+          context.beginPath()
+          for (let step = 0; step <= 10; step += 1) {
+            const progress = step / 10
+            const px = originX + offsetX + progress * length
+            const py = originY + offsetY + k * gap + Math.sin(progress * Math.PI * 2 + phase) * bend
+            if (step === 0) context.moveTo(px, py)
+            else context.lineTo(px, py)
+          }
+          context.stroke()
+        }
+      }
+    }
+  }
+
+  // Grit and small pebbles bedded in the sand.
+  for (let i = 0; i < 900; i += 1) {
+    const radius = 0.4 + random() * 1.3
+    context.fillStyle = random() > 0.5 ? 'rgba(255, 236, 208, 0.2)' : 'rgba(84, 42, 26, 0.28)'
+    context.beginPath()
+    context.arc(random() * size, random() * size, radius, 0, Math.PI * 2)
+    context.fill()
+  }
+
+  const texture = new THREE.CanvasTexture(canvas)
+  texture.wrapS = THREE.RepeatWrapping
+  texture.wrapT = THREE.RepeatWrapping
+  texture.colorSpace = THREE.SRGBColorSpace
+  texture.anisotropy = 8
+  return texture
+}
+
 function disposeObject(root: THREE.Object3D) {
   root.traverse((child) => {
     const node = child as THREE.Object3D & {
       geometry?: THREE.BufferGeometry
       material?: THREE.Material | THREE.Material[]
+    }
+    if ((node as THREE.InstancedMesh).isInstancedMesh) {
+      ;(node as THREE.InstancedMesh).dispose()
     }
     if (node.geometry) node.geometry.dispose()
     const material = node.material
@@ -1326,15 +1437,17 @@ export default function ComplexSceneDemo({
     scene.add(hemisphere)
     extraRef.current.push(hemisphere)
 
-    // Sky dome, replaces the default scene background.
+    // Sky dome, replaces the default scene background. Its radius has to stay
+    // outside the widened terrain but inside the camera far plane.
     const sky = new SkyDome({
+      radius: 900,
       sunDirection: [SUN_DIRECTION.x, SUN_DIRECTION.y, SUN_DIRECTION.z]
     })
     scene.add(sky)
     extraRef.current.push(sky)
 
     // --- Terrain: dust plain with the impact crater ------------------------
-    const terrainGeometry = new THREE.PlaneGeometry(320, 320, 256, 256)
+    const terrainGeometry = new THREE.PlaneGeometry(1100, 1100, 512, 512)
     terrainGeometry.rotateX(-Math.PI / 2)
     const positions = terrainGeometry.attributes.position as THREE.BufferAttribute
     const colors = new Float32Array(positions.count * 3)
@@ -1350,9 +1463,18 @@ export default function ComplexSceneDemo({
       const y = terrainHeight(x, z)
       positions.setY(i, y)
 
-      const elevation = THREE.MathUtils.smoothstep(y, -2.4, 1.2)
+      // Colour from the terrain's own height, ignoring the horizon curve so the
+      // far plain keeps the same regolith tone instead of fading to shadow.
+      const elevation = THREE.MathUtils.smoothstep(
+        y - terrainCurvature(x, z),
+        -2.4,
+        1.2
+      )
       sampleColor.lerpColors(lowColor, midColor, elevation)
-      sampleColor.lerp(highColor, THREE.MathUtils.smoothstep(y, 0.3, 1.8) * 0.7)
+      sampleColor.lerp(
+        highColor,
+        THREE.MathUtils.smoothstep(y - terrainCurvature(x, z), 0.3, 1.8) * 0.7
+      )
 
       // The crater interior sits in shadow, darker than the sunlit plain.
       const inside = THREE.MathUtils.clamp(
@@ -1361,6 +1483,18 @@ export default function ComplexSceneDemo({
         1
       )
       sampleColor.multiplyScalar(1 - inside * 0.3)
+
+      // Dune crests are scoured lighter than the troughs, so the ridges read as
+      // blown sand instead of a flat coloured plain.
+      const flatten = THREE.MathUtils.smoothstep(
+        Math.hypot(x - ROVER.x, z - ROVER.z),
+        3.2,
+        12
+      )
+      sampleColor.lerp(
+        dustColor,
+        THREE.MathUtils.smoothstep(duneCrest(x, z), 0.2, 1) * 0.18 * flatten
+      )
 
       // Thin wind streaks of pale dust over the rust regolith.
       const streak = 0.5 + 0.5 * Math.sin(x * 0.8 + z * 0.55)
@@ -1373,9 +1507,19 @@ export default function ComplexSceneDemo({
     terrainGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3))
     terrainGeometry.computeVertexNormals()
 
+    // The detail map is tiled roughly every 25 units, small enough to read as
+    // grain underfoot and large enough to survive the camera's orbit.
+    const regolithTexture = createRegolithTexture()
+    regolithTexture?.repeat.set(44, 44)
+
     const terrain = new THREE.Mesh(
       terrainGeometry,
-      new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, metalness: 0.02 })
+      new THREE.MeshStandardMaterial({
+        vertexColors: true,
+        map: regolithTexture ?? undefined,
+        roughness: 1,
+        metalness: 0.02
+      })
     )
     scene.add(terrain)
     extraRef.current.push(terrain)
@@ -1462,34 +1606,133 @@ export default function ComplexSceneDemo({
         const rockMaterials = [0x6d3320, 0x83402a, 0x55271b].map(
           (color) => new THREE.MeshStandardMaterial({ color, roughness: 0.95, flatShading: true })
         )
-        // Keep the drive path clear so the rover does not plough through boulders.
+        // Keep the drive path clear so the rover does not plough through stones.
         const pathSamples: THREE.Vector3[] = []
         for (let i = 0; i <= 200; i += 1) {
           pathSamples.push(DRIVE_CURVE.getPointAt(i / 200))
         }
-        for (let i = 0; i < 90; i += 1) {
-          const angle = random() * Math.PI * 2
-          const radius = 6 + random() * 88
-          const x = Math.cos(angle) * radius
-          const z = Math.sin(angle) * radius
-          if (Math.hypot(x - STATION.x, z - STATION.z) < 4.6) continue
-          if (Math.hypot(x - PLANT.x, z - PLANT.z) < 2.2) continue
-          if (Math.hypot(x - ROVER.x, z - ROVER.z) < 3) continue
-          if (Math.hypot(x - ASCENT_VEHICLE.x, z - ASCENT_VEHICLE.z) < 6) continue
-          if (pathSamples.some((sample) => Math.hypot(x - sample.x, z - sample.z) < 2.2)) continue
-
-          const scale = 0.32 + random() * 1.4
-          const rock = new THREE.Mesh(
-            rockGeometries[i % rockGeometries.length],
-            rockMaterials[i % rockMaterials.length]
-          )
-          rock.position.set(x, terrainHeight(x, z) + scale * 0.3, z)
-          rock.scale.set(scale * (0.8 + random() * 0.5), scale * (0.6 + random() * 0.5), scale)
-          // Only a slight tilt: these are real boulder shapes resting on sand.
-          rock.rotation.set((random() - 0.5) * 0.6, random() * Math.PI * 2, (random() - 0.5) * 0.6)
-          scene.add(rock)
-          extraRef.current.push(rock)
+        const distanceToPath = (x: number, z: number) => {
+          let nearest = Infinity
+          for (const sample of pathSamples) {
+            const distance = Math.hypot(x - sample.x, z - sample.z)
+            if (distance < nearest) nearest = distance
+          }
+          return nearest
         }
+
+        // Every stone the field will hold: shape, tint, resting tilt, and the
+        // size of the footprint it covers.
+        const placements: Array<{
+          shape: number
+          material: number
+          x: number
+          z: number
+          scale: THREE.Vector3
+          rotation: THREE.Euler
+        }> = []
+
+        const addStone = (x: number, z: number, size: number, clearance: number) => {
+          if (Math.hypot(x - STATION.x, z - STATION.z) < 4.6) return
+          if (Math.hypot(x - PLANT.x, z - PLANT.z) < 2.2) return
+          if (Math.hypot(x - ROVER.x, z - ROVER.z) < 2.4) return
+          if (Math.hypot(x - ASCENT_VEHICLE.x, z - ASCENT_VEHICLE.z) < 6) return
+          if (distanceToPath(x, z) < clearance) return
+
+          placements.push({
+            shape: Math.floor(random() * rockGeometries.length),
+            material: Math.floor(random() * rockMaterials.length),
+            x,
+            z,
+            // Stones settle a little wider than they are tall, the way broken
+            // rock beds into sand.
+            scale: new THREE.Vector3(
+              size * (0.8 + random() * 0.5),
+              size * (0.55 + random() * 0.45),
+              size
+            ),
+            rotation: new THREE.Euler(
+              (random() - 0.5) * 0.5,
+              random() * Math.PI * 2,
+              (random() - 0.5) * 0.5
+            )
+          })
+        }
+
+        // Boulders out across the dune plain.
+        for (let i = 0; i < 80; i += 1) {
+          const angle = random() * Math.PI * 2
+          const radius = 7 + random() * 95
+          addStone(
+            Math.cos(angle) * radius,
+            Math.sin(angle) * radius,
+            0.45 + random() * 1.25,
+            2.2
+          )
+        }
+
+        // Pebbles and grit around the play area: small, dense and close enough
+        // to give the ground a real sense of scale under the rover.
+        for (let i = 0; i < 260; i += 1) {
+          const angle = random() * Math.PI * 2
+          const radius = 2.5 + Math.pow(random(), 0.7) * 34
+          addStone(
+            Math.cos(angle) * radius,
+            Math.sin(angle) * radius,
+            0.05 + random() * 0.22,
+            0.9
+          )
+        }
+
+        // Scree fields: fans of debris gathered below the dune crests.
+        for (let i = 0; i < 18; i += 1) {
+          const angle = random() * Math.PI * 2
+          const radius = 6 + random() * 52
+          const centreX = Math.cos(angle) * radius
+          const centreZ = Math.sin(angle) * radius
+          const count = 4 + Math.floor(random() * 5)
+          for (let k = 0; k < count; k += 1) {
+            const spread = 0.5 + random() * 2.4
+            const offset = random() * Math.PI * 2
+            addStone(
+              centreX + Math.cos(offset) * spread,
+              centreZ + Math.sin(offset) * spread,
+              0.14 + random() * 0.32,
+              1.1
+            )
+          }
+        }
+
+        // One instanced mesh per shape and tint keeps the whole stone field at a
+        // handful of draw calls instead of several hundred.
+        const matrix = new THREE.Matrix4()
+        const position = new THREE.Vector3()
+        const quaternion = new THREE.Quaternion()
+        rockGeometries.forEach((geometry, shape) => {
+          rockMaterials.forEach((material, materialIndex) => {
+            const batch = placements.filter(
+              (stone) => stone.shape === shape && stone.material === materialIndex
+            )
+            if (batch.length === 0) return
+
+            const stones = new THREE.InstancedMesh(geometry, material, batch.length)
+            batch.forEach((stone, index) => {
+              // Sink the stone into the sand so it looks bedded in the regolith
+              // rather than dropped on top of it.
+              position.set(
+                stone.x,
+                terrainHeight(stone.x, stone.z) + stone.scale.y * 0.55,
+                stone.z
+              )
+              quaternion.setFromEuler(stone.rotation)
+              matrix.compose(position, quaternion, stone.scale)
+              stones.setMatrixAt(index, matrix)
+            })
+            stones.instanceMatrix.needsUpdate = true
+            stones.computeBoundingSphere()
+            scene.add(stones)
+            extraRef.current.push(stones)
+          })
+        })
       })
       .catch(() => {
         // The rocks are scenery: if the asset cannot be fetched the story
