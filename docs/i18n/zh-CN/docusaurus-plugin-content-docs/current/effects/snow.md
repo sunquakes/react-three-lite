@@ -58,5 +58,6 @@ import SnowComponent from '@site/src/components/effects/Snow'
 | height | number | 15 | 下落高度范围 |
 | windX | number | 0.2 | X轴风力 |
 | windZ | number | 0.1 | Z轴风力 |
+| turbulence | number | 0.8 | 风场扰动强度，设为 0 时退化为均匀漂移 |
 | opacity | number | 0.9 | 雪花不透明度 |
 | size | number | 1 | 雪花大小倍率 |

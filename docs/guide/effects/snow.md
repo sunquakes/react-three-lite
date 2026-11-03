@@ -59,5 +59,6 @@ Every example below can be viewed with either the **WebGPU** (default) or the **
 | height | number | 15 | Falling height range |
 | windX | number | 0.2 | Wind force on X axis |
 | windZ | number | 0.1 | Wind force on Z axis |
+| turbulence | number | 0.8 | Strength of the wind field turbulence; 0 falls back to a uniform drift |
 | opacity | number | 0.9 | Snowflake opacity |
 | size | number | 1 | Snowflake size multiplier |
