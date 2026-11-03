@@ -1,5 +1,9 @@
 ## [Unreleased]
 
+### Changed
+
+- Enable three's GPU-driven `MeshletDrawingPipeline` by default on the WebGPU renderer when the installed three ships it (r187+). Geometries are split into meshlets with a chain of simplified levels of detail, and hidden clusters are culled on the GPU. Objects and materials the pipeline does not support keep using the standard pipeline, and the WebGL backend is unaffected. The module is loaded lazily, so the minimum supported three version is unchanged (`>= 0.180`) and older releases simply keep the standard pipeline.
+
 ## [0.8.0] - 2026-10-29
 
 ### Added
