@@ -94,3 +94,5 @@ import MovableElement from '@site/src/components/MovableElement'
 | ----------- | ---------------------------------------------------------------- | ----------------------------------------------------------------- |
 | constructor | (model: THREE.Group, position: [number, number, number]) => void | `model` 操作的模型；`position` 初始位置。                         |
 | moveTo      | (position: [number, number, number], duration: number) => void   | `duration` 是从一个位置移动到另一个位置的持续时间，单位为毫秒。 |
+| pause       | () => void                                                       | 在当前所在位置暂停移动，并保留剩余距离与剩余时间。               |
+| resume      | () => void                                                       | 从暂停处继续移动，暂停期间的时间不计入移动耗时。                 |

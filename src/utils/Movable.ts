@@ -46,6 +46,12 @@ export default class Movable {
    */
   private animationId: number | null = null
 
+  /**
+   * Whether the movement is temporarily halted while keeping the remaining
+   * distance and duration.
+   */
+  private paused = false
+
   constructor(scene: Group, position: Position) {
     this.scene = scene
     this.duration = 0
@@ -69,7 +75,38 @@ export default class Movable {
     this.deltaY += position[1] - this.position[1]
     this.deltaZ += position[2] - this.position[2]
     this.position = position
-    if (this.state === false) {
+    if (this.paused === false && this.state === false) {
+      this.state = true
+      this.animationId = requestAnimationFrame(this.update)
+    }
+  }
+
+  /**
+   * Halt the movement without dropping the remaining distance, so the element
+   * can continue from where it stopped.
+   */
+  pause(): void {
+    if (this.paused) {
+      return
+    }
+    this.paused = true
+    if (this.animationId !== null) {
+      cancelAnimationFrame(this.animationId)
+      this.animationId = null
+    }
+    this.state = false
+    this.start = undefined
+  }
+
+  /**
+   * Continue a paused movement with the remaining distance and duration.
+   */
+  resume(): void {
+    if (this.paused === false) {
+      return
+    }
+    this.paused = false
+    if (this.duration > 0 && this.state === false) {
       this.state = true
       this.animationId = requestAnimationFrame(this.update)
     }
@@ -80,6 +117,9 @@ export default class Movable {
    * @param timestamp
    */
   update(timestamp: number) {
+    if (this.paused) {
+      return
+    }
     if (this.start === undefined) {
       this.start = timestamp
     }
