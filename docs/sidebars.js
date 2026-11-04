@@ -27,7 +27,45 @@ const sidebars = {
       type: 'category',
       label: 'Effect',
       collapsible: true,
-      items: ['effects/bloom', 'effects/rain', 'effects/snow', 'effects/water', 'effects/height-fog', 'effects/sweep-light', 'effects/light-gradient', 'effects/light-pillar', 'effects/fireworks', 'effects/sky-dome', 'effects/radar-sweep', 'effects/signal-wave', 'effects/glow-sprite'],
+      items: [
+        {
+          type: 'category',
+          label: 'Nature',
+          collapsible: true,
+          items: [
+            'effects/rain',
+            'effects/snow',
+            'effects/water',
+            'effects/water-pool',
+            'effects/sandy-beach',
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Sky & Atmosphere',
+          collapsible: true,
+          items: ['effects/sky-dome', 'effects/height-fog', 'effects/nebula-galaxy'],
+        },
+        {
+          type: 'category',
+          label: 'Light',
+          collapsible: true,
+          items: [
+            'effects/bloom',
+            'effects/sweep-light',
+            'effects/light-gradient',
+            'effects/light-pillar',
+            'effects/radar-sweep',
+            'effects/signal-wave',
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Particles & Sprites',
+          collapsible: true,
+          items: ['effects/fireworks', 'effects/text-fireworks', 'effects/glow-sprite'],
+        },
+      ],
     },
     {
       type: 'category',

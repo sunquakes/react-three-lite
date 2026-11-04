@@ -1,5 +1,13 @@
 ## [Unreleased]
 
+### Added
+
+- Add the `NebulaGalaxy` class: a four-armed spiral galaxy built from additive billboard particles (arms, core and dust) plus a procedural haze plane and distant background stars. Drag tilts the disc, wheel or pinch zooms it within limits, and a click sends a light wave from the core; the internal loop drives the spin, tilt, zoom and palette transitions so no per-frame code is required. `setPalette()`, `setSpeed()`, `setPaused()` and `pulse()` control it at runtime, and reduced-motion preferences disable the idle rotation and click wave by default.
+- Add WebGPU / WebGL demos and bilingual (English and Chinese) documentation for the new effect, plus unit tests for the star distribution, timeline, pointer interaction, uniform color handling and resource cleanup.
+- Add the `TextFireworks` class: a sentence is sampled from an offscreen canvas into particles, lifted into four staggered colour bursts from left to right, then pulled back onto the original glyphs. A delayed, dimmer copy of the same particles forms the trail, and `setText()` / `launch()` resample and replay the effect.
+- Add the `layoutText` and `sampleTextParticles` utilities that measure, wrap, shrink and sample text for the particle cloud.
+- Add WebGPU / WebGL demos and bilingual (English and Chinese) documentation for the new effect, plus unit tests for the text sampling utilities, the particle timeline and the public API surface.
+
 ### Changed
 
 - Enable three's GPU-driven `MeshletDrawingPipeline` by default on the WebGPU renderer when the installed three ships it (r187+). Geometries are split into meshlets with a chain of simplified levels of detail, and hidden clusters are culled on the GPU. Objects and materials the pipeline does not support keep using the standard pipeline, and the WebGL backend is unaffected. The module is loaded lazily, so the minimum supported three version is unchanged (`>= 0.180`) and older releases simply keep the standard pipeline.
