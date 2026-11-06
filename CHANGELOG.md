@@ -7,6 +7,8 @@
 - Add the `TextFireworks` class: a sentence is sampled from an offscreen canvas into particles, lifted into four staggered colour bursts from left to right, then pulled back onto the original glyphs. A delayed, dimmer copy of the same particles forms the trail, and `setText()` / `launch()` resample and replay the effect.
 - Add the `layoutText` and `sampleTextParticles` utilities that measure, wrap, shrink and sample text for the particle cloud.
 - Add WebGPU / WebGL demos and bilingual (English and Chinese) documentation for the new effect, plus unit tests for the text sampling utilities, the particle timeline and the public API surface.
+- Add snow accumulation to the `Snow` component: enabling `accumulate` gives every eligible scene mesh a normal-displaced snow shell that grows from flat tops down to steeper slopes over `accumulationDuration` seconds and then stays at `accumulationThickness`. `accumulationTargets` restricts it to chosen objects, late-loaded models are picked up automatically, and the cover material is written in TSL so the WebGPU and WebGL renderers share it.
+- Extend the `Snow` demo and bilingual documentation with a scene of snow-covered ground, rocks and blocks, and add unit tests for the accumulation targets, growth timeline and cleanup.
 
 ### Changed
 

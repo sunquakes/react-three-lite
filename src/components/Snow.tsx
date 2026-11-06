@@ -25,6 +25,7 @@ import {
   viewportSize
 } from 'three/tsl'
 import { useScene } from '../context/SceneContext'
+import { SnowCover } from '../utils/SnowCover'
 
 interface SnowProps {
   count?: number
@@ -37,6 +38,11 @@ interface SnowProps {
   turbulence?: number
   opacity?: number
   size?: number
+  accumulate?: boolean
+  accumulationTargets?: THREE.Object3D | THREE.Object3D[]
+  accumulationThickness?: number
+  accumulationDuration?: number
+  accumulationColor?: string | number | THREE.Color
 }
 
 const Snow = ({
@@ -49,7 +55,12 @@ const Snow = ({
   windZ = 0.1,
   turbulence = 0.8,
   opacity = 0.9,
-  size = 1
+  size = 1,
+  accumulate = false,
+  accumulationTargets,
+  accumulationThickness = 0.1,
+  accumulationDuration = 6,
+  accumulationColor = 0xffffff
 }: SnowProps) => {
   const sceneContext = useScene()
   const meshRef = useRef<THREE.Mesh | null>(null)
@@ -57,6 +68,7 @@ const Snow = ({
   const geometryRef = useRef<THREE.BufferGeometry | null>(null)
   const timeUniformRef = useRef<ReturnType<typeof uniform> | null>(null)
   const animationIdRef = useRef<number | null>(null)
+  const coverRef = useRef<SnowCover | null>(null)
 
   useEffect(() => {
     const { scene, sceneComponents, renderer } = sceneContext
@@ -344,14 +356,34 @@ const Snow = ({
 
     scene.add(mesh)
 
+    // Snow settles on the surrounding scene meshes: a shell is added to every
+    // eligible surface and grows to its final thickness over
+    // `accumulationDuration` seconds, then stays put.
+    if (accumulate) {
+      coverRef.current = new SnowCover({
+        scene,
+        targets: accumulationTargets,
+        thickness: accumulationThickness,
+        duration: accumulationDuration,
+        color: accumulationColor,
+        renderer
+      })
+    }
+
     // Use a dedicated requestAnimationFrame loop instead of addBeforeFrame to
     // avoid triggering the Scene's beforeFrameSetRef render path (which skips
     // renderer.clear() and background — problematic on WebGPU).
-    const animate = () => {
+    let lastTime = performance.now()
+    const animate = (now = performance.now()) => {
       const uTime = timeUniformRef.current
       if (uTime) {
         ;(uTime as { value: number }).value += 0.016 * speed
       }
+      // The cover advances in real seconds so its growth does not depend on
+      // the snowfall speed or on the frame rate.
+      const delta = Math.min(Math.max((now - lastTime) / 1000, 0), 0.1)
+      lastTime = now
+      coverRef.current?.update(delta)
       animationIdRef.current = requestAnimationFrame(animate)
     }
     animationIdRef.current = requestAnimationFrame(animate)
@@ -362,6 +394,8 @@ const Snow = ({
         cancelAnimationFrame(animationIdRef.current)
         animationIdRef.current = null
       }
+      coverRef.current?.dispose()
+      coverRef.current = null
       geometry.dispose()
       material.dispose()
       snowTexture.dispose()
@@ -373,7 +407,24 @@ const Snow = ({
       materialRef.current = null
       timeUniformRef.current = null
     }
-  }, [sceneContext, count, color, speed, range, height, windX, windZ, turbulence, opacity, size])
+  }, [
+    sceneContext,
+    count,
+    color,
+    speed,
+    range,
+    height,
+    windX,
+    windZ,
+    turbulence,
+    opacity,
+    size,
+    accumulate,
+    accumulationTargets,
+    accumulationThickness,
+    accumulationDuration,
+    accumulationColor
+  ])
 
   return null
 }
