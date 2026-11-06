@@ -9,6 +9,9 @@
 - Add WebGPU / WebGL demos and bilingual (English and Chinese) documentation for the new effect, plus unit tests for the text sampling utilities, the particle timeline and the public API surface.
 - Add snow accumulation to the `Snow` component: enabling `accumulate` gives every eligible scene mesh a normal-displaced snow shell that grows from flat tops down to steeper slopes over `accumulationDuration` seconds and then stays at `accumulationThickness`. `accumulationTargets` restricts it to chosen objects, late-loaded models are picked up automatically, and the cover material is written in TSL so the WebGPU and WebGL renderers share it.
 - Extend the `Snow` demo and bilingual documentation with a scene of snow-covered ground, rocks and blocks, and add unit tests for the accumulation targets, growth timeline and cleanup.
+- Add height-map collision to the `Rain` component: drops sample a grayscale `heightMap` in the vertex shader and stop at the displaced surface instead of falling through it. `heightMapSize`, `heightMapAmplitude` and `groundHeight` map the texture onto world space, the sampling matches a plane's UVs so terrain displaced by the same image lines up with the impacts, and wind drift is corrected by re-sampling the landing point.
+- Add landing splashes to `Rain`: every impact draws an expanding ripple flush with the surface, sharing the drop geometry. `splash`, `splashColor`, `splashSize` and `splashDuration` tune or disable it.
+- Add a collision demo plus bilingual documentation for the new rain options, and unit tests for the ground resolution and splash window.
 
 ### Changed
 

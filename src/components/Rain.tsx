@@ -6,6 +6,7 @@ import {
   uniform,
   float,
   vec2,
+  vec3,
   vec4,
   uv,
   attribute,
@@ -17,9 +18,15 @@ import {
   smoothstep,
   oneMinus,
   length,
+  max,
+  mix,
+  saturate,
+  texture,
   viewportSize
 } from 'three/tsl'
+import type { Node } from 'three/webgpu'
 import { useScene } from '../context/SceneContext'
+import { RAIN_FALL_RATE, createFlatHeightMap, resolveRainGround } from '../utils/RainGround'
 
 interface RainProps {
   count?: number
@@ -30,6 +37,21 @@ interface RainProps {
   windX?: number
   windZ?: number
   opacity?: number
+  /** Grayscale height map (URL or texture) the drops collide with. */
+  heightMap?: string | THREE.Texture
+  /** World size covered by the height map, centred on the origin. */
+  heightMapSize?: number
+  /** Vertical extent added by the height map above `groundHeight`. */
+  heightMapAmplitude?: number
+  /** Base ground Y. Defaults to the bottom of the rain volume. */
+  groundHeight?: number
+  /** Render an expanding ripple where each drop lands. */
+  splash?: boolean
+  splashColor?: string | number | THREE.Color
+  /** World radius of the ripple at its widest. */
+  splashSize?: number
+  /** Lifetime of a ripple in seconds. */
+  splashDuration?: number
 }
 
 const Rain = ({
@@ -40,7 +62,15 @@ const Rain = ({
   height = 15,
   windX = 0.1,
   windZ = 0,
-  opacity = 0.8
+  opacity = 0.8,
+  heightMap,
+  heightMapSize,
+  heightMapAmplitude,
+  groundHeight,
+  splash = true,
+  splashColor = 0xd6ecff,
+  splashSize = 0.9,
+  splashDuration = 0.6
 }: RainProps) => {
   const sceneContext = useScene()
   const meshRef = useRef<THREE.Mesh | null>(null)
@@ -54,6 +84,18 @@ const Rain = ({
     if (!scene || !sceneComponents?.camera) {
       return
     }
+
+    const fallHeight = Math.max(height, 0.001)
+    const ground = resolveRainGround({
+      height: fallHeight,
+      range,
+      groundHeight,
+      heightMapAmplitude,
+      heightMapSize,
+      splashDuration,
+      speed
+    })
+    const splashRadius = Math.max(splashSize, 0.01)
 
     // Quad-based particle geometry: 4 vertices per particle, 6 indices per
     // particle. Each particle is a billboard quad; per-particle attributes are
@@ -120,26 +162,97 @@ const Rain = ({
     geometry.setIndex(new THREE.BufferAttribute(indices, 1))
     geometryRef.current = geometry
 
+    // Height map sampling: a constant zero map keeps the ground flat, so the
+    // shaders can sample unconditionally.
+    const flatHeightMap = createFlatHeightMap()
+    const heightMapNode = texture(flatHeightMap)
+    let loadedHeightMap: THREE.Texture | null = null
+    let disposed = false
+
+    if (typeof heightMap === 'string') {
+      new THREE.TextureLoader().load(heightMap, (loaded) => {
+        if (disposed) {
+          loaded.dispose()
+          return
+        }
+        loaded.wrapS = THREE.ClampToEdgeWrapping
+        loaded.wrapT = THREE.ClampToEdgeWrapping
+        loaded.generateMipmaps = false
+        loaded.minFilter = THREE.LinearFilter
+        loaded.colorSpace = THREE.NoColorSpace
+        loadedHeightMap = loaded
+        heightMapNode.value = loaded
+      })
+    } else if (heightMap) {
+      heightMapNode.value = heightMap
+    }
+
     // TSL uniforms
     const uTime = uniform(0)
-    const uHeightRange = uniform(height)
+    const uHeightRange = uniform(fallHeight)
     const uWindX = uniform(windX)
     const uWindZ = uniform(windZ)
     const uColor = uniform(new THREE.Color(color))
+    const uSplashColor = uniform(new THREE.Color(splashColor))
     // Custom TSL materials go through a linear to sRGB conversion on WebGPU
     // final output (making colors brighter), while WebGL writes the raw value
     // directly, so pre-correct on WebGPU to make both backends match.
     if (renderer?.isWebGPURenderer === true) {
       const brightness = 0.86
-      const { r, g, b } = uColor.value
-      uColor.value.setRGB(
-        Math.pow(r, 2.2) * brightness,
-        Math.pow(g, 2.2) * brightness,
-        Math.pow(b, 2.2) * brightness
-      )
+      ;[uColor, uSplashColor].forEach((uniformColor) => {
+        const { r, g, b } = uniformColor.value
+        uniformColor.value.setRGB(
+          Math.pow(r, 2.2) * brightness,
+          Math.pow(g, 2.2) * brightness,
+          Math.pow(b, 2.2) * brightness
+        )
+      })
     }
     const uOpacity = uniform(opacity)
+    const uGroundY = uniform(ground.base)
+    const uMapAmplitude = uniform(ground.amplitude)
+    const uMapSize = uniform(ground.mapSize)
+    const uSplashWindow = uniform(ground.splashWindow)
+    const uSplashSize = uniform(splashRadius)
     timeUniformRef.current = uTime
+
+    const halfHeight = uHeightRange.mul(0.5)
+
+    // Height map -> ground Y. The map covers `mapSize` world units centred on
+    // the origin and is sampled with plane UVs (u = x / size + 0.5, v = 0.5 - z
+    // / size), matching a rotated PlaneGeometry used as terrain.
+    const sampleGround = (x: Node<'float'>, z: Node<'float'>): Node<'float'> => {
+      const u = x.div(uMapSize).add(0.5)
+      const v = float(0.5).sub(z.div(uMapSize))
+      return texture(heightMapNode, vec2(u, v)).r.mul(uMapAmplitude).add(uGroundY)
+    }
+
+    // Per-drop state shared by the rain and the splash shaders. `impact` is the
+    // fall progress at which the drop reaches the surface; the ground is sampled
+    // once below the spawn point and once below the wind-drifted landing point
+    // so drops do not sink into a slope.
+    const dropNodes = (aInitialPos: Node<'vec3'>, aSpeed: Node<'float'>) => {
+      const t = mod(aInitialPos.y.add(uTime.mul(aSpeed).mul(RAIN_FALL_RATE)), 1.0)
+
+      const spawnGround = sampleGround(aInitialPos.x, aInitialPos.z)
+      const spawnImpact = max(
+        saturate(halfHeight.sub(spawnGround).div(uHeightRange)),
+        float(0.001)
+      )
+      const driftedX = aInitialPos.x.add(uWindX.mul(spawnImpact).mul(2.0))
+      const driftedZ = aInitialPos.z.add(uWindZ.mul(spawnImpact).mul(2.0))
+
+      const surfaceY = sampleGround(driftedX, driftedZ)
+      const impact = max(saturate(halfHeight.sub(surfaceY).div(uHeightRange)), float(0.001))
+
+      return {
+        t,
+        surfaceY,
+        impact,
+        landX: aInitialPos.x.add(uWindX.mul(impact).mul(2.0)),
+        landZ: aInitialPos.z.add(uWindZ.mul(impact).mul(2.0))
+      }
+    }
 
     // vAlpha varying shared between vertex and fragment
     const vAlpha = varying(float(0))
@@ -156,11 +269,12 @@ const Rain = ({
       const aInitialPos = attribute<'vec3'>('aInitialPos', 'vec3')
       const aSpeed = attribute<'float'>('aSpeed', 'float')
 
-      const t = mod(aInitialPos.y.add(uTime.mul(aSpeed).mul(0.3)), 1.0)
+      const { t, surfaceY, impact } = dropNodes(aInitialPos, aSpeed)
 
-      // Particle center in local space
+      // Particle center in local space. The drop stops at the surface it
+      // collided with and stays there (hidden) until the cycle wraps again.
       const centerX = aInitialPos.x.add(uWindX.mul(t).mul(2.0))
-      const centerY = oneMinus(t).mul(uHeightRange).sub(uHeightRange.mul(0.5))
+      const centerY = max(oneMinus(t).mul(uHeightRange).sub(halfHeight), surfaceY)
       const centerZ = aInitialPos.z.add(uWindZ.mul(t).mul(2.0))
 
       // Transform center to view space
@@ -180,10 +294,10 @@ const Rain = ({
       const offsetX = positionLocal.x.mul(ndcSizeX).mul(centerClip.w)
       const offsetY = positionLocal.y.mul(ndcSizeY).mul(centerClip.w)
 
-      // vAlpha varying: fade in/out at top and bottom of travel
-      vAlpha.assign(
-        oneMinus(smoothstep(0.0, 0.05, t).mul(0.5)).sub(smoothstep(0.95, 1.0, t).mul(0.5))
-      )
+      // Fade in at the top of the volume and dissolve into the surface it hits
+      const fadeIn = oneMinus(smoothstep(0.0, 0.05, t).mul(0.5))
+      const fadeImpact = oneMinus(smoothstep(impact.sub(0.02), impact, t))
+      vAlpha.assign(fadeIn.mul(fadeImpact))
 
       return vec4(centerClip.x.add(offsetX), centerClip.y.add(offsetY), centerClip.z, centerClip.w)
     })()
@@ -210,6 +324,68 @@ const Rain = ({
 
     scene.add(mesh)
 
+    // Splash pass: one horizontal quad per drop, laid on the surface the drop
+    // collided with. It shares the particle geometry and attributes.
+    let splashMaterial: NodeMaterial | null = null
+    let splashMesh: THREE.Mesh | null = null
+    const vSplashFade = varying(float(0))
+    const vSplashProgress = varying(float(0))
+
+    if (splash) {
+      splashMaterial = new NodeMaterial()
+      splashMaterial.transparent = true
+      splashMaterial.depthWrite = false
+      splashMaterial.blending = THREE.AdditiveBlending
+      splashMaterial.side = THREE.DoubleSide
+
+      splashMaterial.vertexNode = Fn(() => {
+        const aInitialPos = attribute<'vec3'>('aInitialPos', 'vec3')
+        const aSpeed = attribute<'float'>('aSpeed', 'float')
+
+        const { t, surfaceY, impact, landX, landZ } = dropNodes(aInitialPos, aSpeed)
+
+        // Splash age in fall cycles. The modulo wraps the tail of a cycle past
+        // the respawn, so a drop landing on the lowest ground - at the very end
+        // of its fall - still gets a full splash.
+        const age = mod(t.sub(impact), 1.0)
+        const progress = saturate(age.div(max(uSplashWindow.mul(aSpeed), float(0.0001))))
+        const size = uSplashSize.mul(float(0.35).add(progress.mul(0.65)))
+        const center = vec3(landX, surfaceY.add(0.05), landZ)
+        const worldPos = center.add(
+          vec3(positionLocal.x.mul(size), 0.0, positionLocal.y.mul(size))
+        )
+        const clip = cameraProjectionMatrix.mul(modelViewMatrix.mul(vec4(worldPos, 1.0)))
+
+        const fade = oneMinus(progress)
+        vSplashFade.assign(fade.mul(fade))
+        vSplashProgress.assign(progress)
+
+        return clip
+      })()
+
+      // Fragment shader: expanding ripple ring plus a short-lived bright core
+      splashMaterial.fragmentNode = Fn(() => {
+        const dist = length(uv().sub(0.5).mul(2.0))
+        const radius = mix(0.12, 0.9, vSplashProgress)
+        const width = mix(0.22, 0.05, vSplashProgress)
+        const ring = smoothstep(radius.sub(width), radius, dist).mul(
+          oneMinus(smoothstep(radius, radius.add(width), dist))
+        )
+        const core = oneMinus(smoothstep(0.0, 0.45, dist)).mul(oneMinus(vSplashProgress))
+        const alpha = ring
+          .mul(0.9)
+          .add(core.mul(0.5))
+          .mul(vSplashFade)
+          .mul(uOpacity)
+        return vec4(uSplashColor.rgb, alpha)
+      })()
+
+      splashMesh = new THREE.Mesh(geometry, splashMaterial)
+      splashMesh.name = 'RainSplash'
+      splashMesh.frustumCulled = false
+      scene.add(splashMesh)
+    }
+
     // Use a dedicated requestAnimationFrame loop instead of addBeforeFrame to
     // avoid triggering the Scene's beforeFrameSetRef render path (which skips
     // renderer.clear() and background — problematic on WebGPU).
@@ -224,21 +400,46 @@ const Rain = ({
 
     // Cleanup on unmount
     return () => {
+      disposed = true
       if (animationIdRef.current !== null) {
         cancelAnimationFrame(animationIdRef.current)
         animationIdRef.current = null
       }
       geometry.dispose()
       material.dispose()
+      splashMaterial?.dispose()
+      flatHeightMap.dispose()
+      loadedHeightMap?.dispose()
       if (meshRef.current) {
         scene.remove(meshRef.current)
         meshRef.current = null
+      }
+      if (splashMesh) {
+        scene.remove(splashMesh)
       }
       geometryRef.current = null
       materialRef.current = null
       timeUniformRef.current = null
     }
-  }, [sceneContext, count, color, speed, range, height, windX, windZ, opacity])
+  }, [
+    sceneContext,
+    count,
+    color,
+    speed,
+    range,
+    height,
+    windX,
+    windZ,
+    opacity,
+    heightMap,
+    heightMapSize,
+    heightMapAmplitude,
+    groundHeight,
+    splash,
+    splashColor,
+    splashSize,
+    splashDuration
+  ])
 
   return null
 }
