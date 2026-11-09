@@ -5,8 +5,8 @@
   "license": "Apache-2.0",
   "scripts": {
     "docusaurus": "docusaurus",
-    "docs:start": "docusaurus start",
-    "docs:build": "docusaurus build",
+    "docs:start": "node scripts/pack-skill.js && docusaurus start",
+    "docs:build": "node scripts/pack-skill.js && docusaurus build",
     "docs:swizzle": "docusaurus swizzle",
     "docs:deploy": "docusaurus deploy",
     "docs:clear": "docusaurus clear",

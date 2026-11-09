@@ -3,6 +3,10 @@
     "message": "React Three Lite",
     "description": "Navbar title"
   },
+  "item.label.AI Agents": {
+    "message": "AI 智能体",
+    "description": "Navbar item label 'AI Agents'"
+  },
   "item.label.Guide": {
     "message": "指南",
     "description": "Navbar item label 'Guide'"

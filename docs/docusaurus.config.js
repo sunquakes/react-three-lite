@@ -183,6 +183,12 @@ const config = {
         items: [
           {
             type: 'docSidebar',
+            sidebarId: 'aiSidebar',
+            position: 'left',
+            label: 'AI Agents',
+          },
+          {
+            type: 'docSidebar',
             sidebarId: 'mainSidebar',
             position: 'left',
             label: 'Guide',

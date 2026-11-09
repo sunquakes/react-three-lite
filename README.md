@@ -20,21 +20,36 @@ Visit [r3l.sunquakes.com](https://r3l.sunquakes.com).
 ## Features
 
 - **Scene** — Core 3D scene container with camera, renderer, lights, and controls
-- **Model Loaders** — GLTF / FBX / OBJ loaders with Draco compression support
+- **Model Loaders** — `GLTFLoader` / `FBXLoader` / `OBJLoader` components and async function loaders with Draco compression support
 - **Bloom** — Post-processing glow effect
 - **HeightFog** — Screen-space exponential height fog
 - **Fireworks** — Shader-driven firework launch with gravity-bent burst trails
+- **TextFireworks** — Fireworks that assemble a text glyph from particles
 - **Rain / Snow** — Particle effects with custom GLSL shaders
 - **Water** — Cinematic shallow ocean with planar reflection and refraction
+- **WaterPool** — Interactive ray-traced water pool you can ripple by dragging
+- **SandyBeach** — Walkable dawn beach island with footprints in the sand
+- **SkyBox** — Skybox background support
+- **SkyDome** — Gradient sky dome with a low sun
 - **SweepLight** — Model sweep light animation
 - **LightGradient** — Dynamic lighting gradient effect
+- **LightPillar** — Vertical light pillar effect
+- **RadarSweep** — Ground radar pulse ring
+- **SignalWave** — Billboarded broadcast ping wave
+- **GlowSprite** — Camera-facing halo sprite with optional pulse
+- **NebulaGalaxy** — Particle nebula galaxy
 - **Callout** — Leader line annotation with auto-anchor camera tracking
-- **ModelRotator** — Automatic model rotation utility
-- **SkyBox** — Skybox background support
 - **Popup** — Interactive 3D popup dialogs
 - **Movable** — Draggable scene elements
 - **Animation** — Model animation playback
+- **ModelRotator** — Automatic model rotation utility
+- **Picker** — Hover and click picking for scene objects
+- **FitCamera** — Coordinate-system agnostic camera framing
 - **WaveCircleMesh / FlowLineMesh** — Custom visualization meshes
+- **GeoObject** — Anchors an `Object3D` at a geographic coordinate
+- **GeoJsonLayer** — Renders GeoJSON features as 3D geometry
+- **TileLayer** — XYZ / slippy-map raster tile layer
+- **GIS helpers** — GeoReference, datum conversion (WGS84 / GCJ-02 / BD-09) and tile selection utilities
 
 ## Renderer Support
 

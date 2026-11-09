@@ -9,6 +9,9 @@ interface HomeContentProps {
   title: string;
   description: string;
   getStarted: string;
+  aiTitle: string;
+  aiDescription: string;
+  aiCta: string;
   demoTitle: string;
   demoDescription: string;
   demo: string;
@@ -33,6 +36,9 @@ export default function HomeContent({
   title,
   description,
   getStarted,
+  aiTitle,
+  aiDescription,
+  aiCta,
   demoTitle,
   demoDescription,
   demo,
@@ -318,6 +324,60 @@ function App() {
             }}
           >
             {demo}
+          </Link>
+        </section>
+
+        {/* AI Agents Banner */}
+        <section style={{
+          background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+          padding: '4rem 2rem',
+          marginBottom: '4rem',
+          textAlign: 'center',
+          color: '#fff',
+          width: '100vw',
+          marginLeft: 'calc(-50vw + 50%)',
+          marginRight: 'calc(-50vw + 50%)',
+        }}>
+          <h2 style={{
+            fontSize: '2.5rem',
+            fontWeight: 700,
+            marginBottom: '1rem'
+          }}>
+            {aiTitle}
+          </h2>
+          <p style={{
+            fontSize: '1.125rem',
+            marginBottom: '2rem',
+            opacity: 0.9,
+            maxWidth: '720px',
+            margin: '0 auto 2rem'
+          }}>
+            {aiDescription}
+          </p>
+          <Link
+            to="/guide/ai"
+            style={{
+              background: 'rgba(255, 255, 255, 0.12)',
+              color: '#fff',
+              padding: '1rem 2.5rem',
+              borderRadius: '12px',
+              fontWeight: 600,
+              textDecoration: 'none',
+              display: 'inline-block',
+              border: '1px solid rgba(255, 255, 255, 0.3)',
+              transition: 'all 0.3s ease',
+              boxShadow: '0 4px 15px rgba(0,0,0,0.2)'
+            }}
+            onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => {
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
+            }}
+            onMouseLeave={(e: React.MouseEvent<HTMLAnchorElement>) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.12)';
+            }}
+          >
+            {aiCta}
           </Link>
         </section>
 

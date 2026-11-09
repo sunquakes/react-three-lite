@@ -1,6 +1,13 @@
 // @ts-ignore
 /** @type {import('@docusaurus/plugin-content-docs').SidebarsConfig} */
 const sidebars = {
+  aiSidebar: [
+    'ai',
+    'ai/claude-code',
+    'ai/codex-cli',
+    'ai/deepseek-harness',
+    'ai/others',
+  ],
   mainSidebar: [
     'getting-started',
     'scene',

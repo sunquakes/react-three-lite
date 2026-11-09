@@ -32,4 +32,5 @@ coverage
 .cache
 docs/build/*
 docs/.docusaurus/*
+docs/static/skills/*.zip
 .pnpm-store

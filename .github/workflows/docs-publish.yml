@@ -21,11 +21,14 @@ jobs:
       - name: Install Pnpm 
         run: |
           npm install -g pnpm
-      
+
       - name: Build Library 
         run: |
           pnpm i
           pnpm build
+
+      - name: Package Skill Zip
+        run: node docs/scripts/pack-skill.js
 
       - name: Install Docusaurus and Build Docs 
         run: | 
