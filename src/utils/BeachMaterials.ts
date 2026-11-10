@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import {
   Fn,
+  If,
   Loop,
   atan,
   cameraPosition,
@@ -15,7 +16,6 @@ import {
   min,
   mix,
   normalize,
-  positionLocal,
   positionWorld,
   pow,
   reflect,
@@ -25,7 +25,8 @@ import {
   texture,
   uniform,
   vec2,
-  vec3
+  vec3,
+  vec4
 } from 'three/tsl'
 import { MeshBasicNodeMaterial } from 'three/webgpu'
 import type { Node, UniformNode } from 'three/webgpu'
@@ -42,12 +43,10 @@ import type { BeachPresetState } from './BeachPresets'
 
 /** Radius of the sky dome, in world units. The camera stays well inside. */
 export const BEACH_SKY_RADIUS = 4200
-/** Outer radius of the ocean ring. */
-export const BEACH_OCEAN_RADIUS = 4000
 
 export interface BeachUniforms {
   time: UniformNode<'float', number>
-  wetLine: UniformNode<'float', number>
+  exposure: UniformNode<'float', number>
   sunDirection: UniformNode<'vec3', THREE.Vector3>
   sunColor: UniformNode<'vec3', THREE.Vector3>
   zenith: UniformNode<'vec3', THREE.Vector3>
@@ -74,7 +73,7 @@ const vectorUniform = (hex: string): UniformNode<'vec3', THREE.Vector3> => {
 export function createBeachUniforms(): BeachUniforms {
   return {
     time: uniform(0),
-    wetLine: uniform(1.1),
+    exposure: uniform(1.1),
     sunDirection: uniform(new THREE.Vector3(0, 0.2, 1).normalize()),
     sunColor: vectorUniform('#ffca8a'),
     zenith: vectorUniform('#1054a4'),
@@ -119,66 +118,25 @@ export function applyBeachPresetToUniforms(
   uniforms.discSize.value = state.discSize
   uniforms.night.value = state.night
   uniforms.sunLight.value = state.sunLight
+  uniforms.exposure.value = state.exposure
 }
 
-/**
- * Analytic sky: horizon/mid/zenith gradient, sun-side glow, fbm clouds,
- * a crisp sun or moon disc and a star field at night. Water and wet sand use
- * the same function for their reflections.
- */
-function beachSkyColorNode(
-  direction: Node<'vec3'>,
-  uniforms: BeachUniforms,
-  noiseMap: THREE.Texture
-): Node<'vec3'> {
-  const dir = normalize(direction)
-  const up = clamp(dir.y, -0.08, 1)
-  const horizonMix = smoothstep(-0.02, 0.3, up)
-  const zenithMix = smoothstep(0.1, 0.9, up)
-
-  let sky: Node<'vec3'> = mix(uniforms.horizon, uniforms.mid, horizonMix)
-  sky = mix(sky, uniforms.zenith, zenithMix)
-
-  const sunAlignment = max(dot(dir, uniforms.sunDirection), 0)
-  const horizonFade = clamp(float(1).sub(up.mul(1.5)), 0, 1)
-  sky = sky.add(uniforms.horizonSun.mul(pow(sunAlignment, 4).mul(horizonFade).mul(0.55)))
-  sky = sky.add(uniforms.glow.mul(pow(sunAlignment, 24).mul(0.4)))
-
-  // Cloud layer projected on a plane above the viewer.
-  const cloudUv = dir.xz
-    .div(max(dir.y, 0.08))
-    .mul(0.6)
-    .add(vec2(uniforms.time.mul(0.0045), uniforms.time.mul(0.0016)))
-  const density = fbmNode(cloudUv, noiseMap)
-  const cloudShape = smoothstep(0.46, 0.68, density)
-  const cloudFade = smoothstep(-0.02, 0.18, dir.y).mul(float(1).sub(uniforms.night.mul(0.55)))
-  const cloudLight = smoothstep(-0.25, 0.95, dot(dir, uniforms.sunDirection))
-  const cloudColor = mix(uniforms.cloudShade, uniforms.cloudSun, cloudLight)
-  const cloudAlpha = cloudShape.mul(cloudFade).mul(0.85)
-  sky = mix(sky, cloudColor, cloudAlpha)
-
-  // Sun / moon disc with a soft limb and a faint halo.
-  const halfAngle = uniforms.discSize.mul(Math.PI / 360)
-  const disc = smoothstep(cos(halfAngle.mul(1.4)), cos(halfAngle.mul(0.65)), sunAlignment)
-  sky = sky.add(uniforms.sunColor.mul(disc.mul(uniforms.sunDisk)))
-  sky = sky.add(uniforms.sunColor.mul(pow(sunAlignment, 220).mul(0.6)))
-
-  // Sparse twinkling stars, only at night.
-  const starUv = dir.xz.div(max(dir.y, 0.06)).mul(88)
-  const starCell = starUv.floor()
-  const starLocal = fract(starUv).sub(0.5)
-  const starHash = fract(sin(dot(starCell, vec2(12.9898, 78.233))).mul(43758.5453))
-  const starBright = smoothstep(0.62, 0.98, starHash)
-  const starPoint = float(1).sub(smoothstep(0.04, 0.14, length(starLocal)))
-  const twinkle = float(0.65).add(sin(uniforms.time.mul(1.7).add(starHash.mul(63))).mul(0.35))
-  const starMask = smoothstep(0.02, 0.24, dir.y).mul(uniforms.night)
-  sky = sky.add(
-    vec3(0.82, 0.88, 1).mul(starPoint.mul(starBright).mul(twinkle).mul(starMask).mul(1.7))
+/** ACES filmic curve, applied to linear HDR values before output. */
+const acesNode = (value: Node<'float'>): Node<'float'> =>
+  clamp(
+    value.mul(value.mul(2.51).add(0.03)).div(value.mul(value.mul(2.43).add(0.59)).add(0.14)),
+    0,
+    1
   )
 
-  return sky
-}
+const beachToneMapNode = (color: Node<'vec3'>, exposure: Node<'float'>): Node<'vec3'> =>
+  vec3(
+    acesNode(color.x.mul(exposure)),
+    acesNode(color.y.mul(exposure)),
+    acesNode(color.z.mul(exposure))
+  )
 
+/** Sand profile shared with `beachHeight()` in BeachTerrain. */
 const beachHeightNode = (u: Node<'float'>): Node<'float'> => {
   const shore = clamp(u, 0, 2.8).mul(0.22)
   const inland = max(u.sub(2.8), 0).mul(0.08)
@@ -189,10 +147,23 @@ const beachHeightNode = (u: Node<'float'>): Node<'float'> => {
   return shore.add(inland).add(dome).add(bed)
 }
 
+/** Mottled dry-sand albedo, also used for the floor seen through the water. */
+const beachSandAlbedoNode = (
+  positionXZ: Node<'vec2'>,
+  uniforms: BeachUniforms,
+  noiseMap: THREE.Texture
+): Node<'vec3'> => {
+  const grain = fbmNode(positionXZ.mul(2.4), noiseMap)
+  const fineGrain = fbmNode(positionXZ.mul(11).add(vec2(4.2, -7.3)), noiseMap)
+  return uniforms.sand.mul(float(0.78).add(grain.mul(0.34)).add(fineGrain.mul(0.12)))
+}
+
+/** Sand normal from the beach slope plus shore-parallel ripple bands. */
 const beachSandNormalNode = (
   positionXZ: Node<'vec2'>,
   radius: Node<'float'>,
   u: Node<'float'>,
+  distance: Node<'float'>,
   noiseMap: THREE.Texture
 ): Node<'vec3'> => {
   const epsilon = 0.35
@@ -200,65 +171,116 @@ const beachSandNormalNode = (
   const radial = positionXZ.div(radius)
   const base = normalize(vec3(slope.mul(radial.x), 1, slope.mul(radial.y)))
 
-  const rippleX = fbmNode(positionXZ.mul(0.9).add(vec2(13.7, 4.1)), noiseMap).sub(0.5)
-  const rippleZ = fbmNode(positionXZ.mul(0.9).add(vec2(-7.3, 21.9)), noiseMap).sub(0.5)
-  return normalize(base.add(vec3(rippleX.mul(0.24), 0, rippleZ.mul(0.24))))
+  const warp = fbmNode(positionXZ.mul(0.7), noiseMap)
+  const rippleFade = float(1).sub(smoothstep(8, 26, distance))
+  const ripples = sin(u.mul(6.5).add(warp.mul(6))).mul(rippleFade).mul(0.16)
+  const crossRipples = sin(
+    u.mul(2.1).sub(positionXZ.x.mul(1.3).add(positionXZ.y.mul(0.9)))
+  ).mul(0.05)
+  const tangent = vec3(radial.y.negate(), 0, radial.x)
+
+  return normalize(
+    base.add(vec3(radial.x, 0, radial.y).mul(ripples)).add(tangent.mul(crossRipples))
+  )
 }
 
 interface SwellComponent {
   wavelength: number
   amplitude: number
-  angle: number
+  /** Angle between the wave direction and the inward shore normal. */
+  skew: number
 }
 
 const SWELLS: SwellComponent[] = [
-  { wavelength: 42, amplitude: 0.16, angle: 0 },
-  { wavelength: 26, amplitude: 0.1, angle: 0.18 },
-  { wavelength: 15, amplitude: 0.06, angle: -0.24 }
+  { wavelength: 44, amplitude: 0.14, skew: 0.16 },
+  { wavelength: 27, amplitude: 0.09, skew: -0.42 },
+  { wavelength: 16, amplitude: 0.055, skew: 0.78 }
 ]
 
-/** Radial swells rolling towards the shore, plus their height gradient. */
+/** Swells rolling towards the shore, plus their height gradient. */
 const beachSwellNodes = (
   positionXZ: Node<'vec2'>,
   timeNode: Node<'float'>
 ): { height: Node<'float'>; gradient: Node<'vec2'> } => {
   const radius = max(length(positionXZ), 0.001)
   const inward = positionXZ.div(radius).negate()
+  const tangent = vec2(inward.y.negate(), inward.x)
 
   let height: Node<'float'> = float(0)
   let gradient: Node<'vec2'> = vec2(0)
 
-  SWELLS.forEach(({ wavelength, amplitude, angle }) => {
-    const rotated = vec2(
-      inward.x.mul(Math.cos(angle)).sub(inward.y.mul(Math.sin(angle))),
-      inward.x.mul(Math.sin(angle)).add(inward.y.mul(Math.cos(angle)))
-    )
+  SWELLS.forEach(({ wavelength, amplitude, skew }) => {
+    const waveDirection = inward.mul(Math.cos(skew)).add(tangent.mul(Math.sin(skew)))
     const waveNumber = (2 * Math.PI) / wavelength
     const omega = Math.sqrt(9.81 * waveNumber) * 0.8
-    const phase = dot(positionXZ, rotated).mul(waveNumber).add(timeNode.mul(omega))
+    const phase = dot(positionXZ, waveDirection).mul(waveNumber).add(timeNode.mul(omega))
 
     height = height.add(sin(phase).mul(amplitude))
-    gradient = gradient.add(rotated.mul(cos(phase)).mul(amplitude * waveNumber))
+    gradient = gradient.add(waveDirection.mul(cos(phase)).mul(amplitude * waveNumber))
   })
 
   const u = float(BEACH_RADIUS).sub(radius)
-  const shoal = smoothstep(-170, -20, u)
+  const shoal = smoothstep(-300, -25, u)
   const swash = float(1).sub(smoothstep(-1.4, -0.04, u))
-  const fade = shoal.mul(swash)
 
   return {
-    height: height.mul(fade),
-    gradient: gradient.mul(fade)
+    height: height.mul(shoal.mul(swash)),
+    gradient: gradient.mul(shoal.mul(swash))
   }
 }
 
 /**
- * Footprint mask for the sand shader: reads the 24 texel ring buffer and
- * rebuilds a heel + forefoot shape per foot in shore coordinates.
+ * Swash travelling along the beach, so the run-up arrives as separate
+ * tongues of water instead of a single ring-wide pulse.
+ */
+const beachSwashNodes = (
+  positionXZ: Node<'vec2'>,
+  timeNode: Node<'float'>
+): { phase: Node<'float'>; peak: Node<'float'> } => {
+  const radius = max(length(positionXZ), 0.001)
+  const inward = positionXZ.div(radius).negate()
+  const tangent = vec2(inward.y.negate(), inward.x)
+  const direction = normalize(inward.mul(0.55).add(tangent.mul(0.84)))
+  const waveNumber = (2 * Math.PI) / 31
+  const phase = dot(positionXZ, direction).mul(waveNumber).add(timeNode.mul(1.15))
+
+  return {
+    phase,
+    peak: pow(max(sin(phase), 0), 3)
+  }
+}
+
+/** Water surface height and slope, including the run-up on the sand. */
+const beachWaterLevelNode = (
+  positionXZ: Node<'vec2'>,
+  timeNode: Node<'float'>
+): { height: Node<'float'>; gradient: Node<'vec2'> } => {
+  const radius = max(length(positionXZ), 0.001)
+  const u = float(BEACH_RADIUS).sub(radius)
+  const swell = beachSwellNodes(positionXZ, timeNode)
+  const swash = beachSwashNodes(positionXZ, timeNode)
+
+  const runup = swash.peak
+    .mul(0.5)
+    .mul(exp(max(u, 0).negate().div(2.6)))
+    .mul(smoothstep(-2.6, -0.4, u))
+    .mul(float(1).sub(smoothstep(3.5, 7, u)))
+
+  return {
+    height: swell.height.add(runup).add(0.012),
+    gradient: swell.gradient
+  }
+}
+
+/**
+ * Footprint mask for the sand shader: reads the ring buffer and rebuilds a
+ * heel + forefoot shape per foot in shore coordinates. Footprints fade out
+ * once the swash has washed over them.
  */
 const beachFootprintMaskNode = (
   positionXZ: Node<'vec2'>,
   uInland: Node<'float'>,
+  wetExtent: Node<'float'>,
   uniforms: BeachUniforms,
   footprintTexture: THREE.DataTexture
 ): Node<'float'> => {
@@ -291,11 +313,235 @@ const beachFootprintMaskNode = (
     const heel = length(vec2(forward.add(0.086).div(0.046), lateral.div(0.038)))
     const shape = float(1).sub(smoothstep(0.84, 1.08, min(forefoot, heel)))
 
-    const wash = smoothstep(uniforms.wetLine.sub(0.4), uniforms.wetLine.add(1.1), uInland)
+    const wash = smoothstep(wetExtent.sub(0.35), wetExtent.add(1.1), uInland)
     mask.addAssign(shape.mul(life).mul(alive).mul(wash))
   })
 
   return clamp(mask, 0, 1)
+}
+
+/** Wet sand: damp band, tinted footprints, foam residue and a wet sheen. */
+const beachSandShadeNode = (
+  worldPosition: Node<'vec3'>,
+  uniforms: BeachUniforms,
+  noiseMap: THREE.Texture,
+  footprintTexture: THREE.DataTexture
+): Node<'vec3'> => {
+  const radius = max(length(worldPosition.xz), 0.001)
+  const u = float(BEACH_RADIUS).sub(radius)
+  const distance = length(cameraPosition.sub(worldPosition))
+
+  // The wetted edge lags the current run-up, like sand drying behind a wave.
+  const swash = beachSwashNodes(worldPosition.xz, uniforms.time)
+  const laggedPeak = pow(max(sin(swash.phase.sub(0.75)), 0), 3)
+  const wetExtent = float(0.35).add(laggedPeak.mul(2.7))
+
+  let color = beachSandAlbedoNode(worldPosition.xz, uniforms, noiseMap)
+
+  const wetMask = float(1).sub(smoothstep(wetExtent, wetExtent.add(2.6), u))
+  const dampMask = float(1).sub(smoothstep(wetExtent.add(2.2), wetExtent.add(7), u))
+  color = color.mul(float(1).sub(dampMask.mul(0.16)).sub(wetMask.mul(0.34)))
+
+  const footprint = beachFootprintMaskNode(
+    worldPosition.xz,
+    u,
+    wetExtent,
+    uniforms,
+    footprintTexture
+  )
+  color = color.mul(float(1).sub(footprint.mul(0.3)))
+
+  // Lace of foam left behind by the retreating swash.
+  const residueNoise = fbmNode(
+    worldPosition.xz.mul(2.3).add(vec2(11.3, -4.7)),
+    noiseMap
+  )
+  const residueBand = float(1).sub(smoothstep(0.05, 1.1, u.sub(wetExtent).abs()))
+  const residue = smoothstep(0.44, 0.62, residueNoise).mul(residueBand).mul(0.45)
+  color = mix(color, vec3(0.86, 0.88, 0.89), residue)
+
+  const normal = beachSandNormalNode(worldPosition.xz, radius, u, distance, noiseMap)
+  const view = normalize(cameraPosition.sub(worldPosition))
+  const wet = clamp(wetMask.add(footprint.mul(0.65)), 0, 1)
+  const fresnel = pow(float(1).sub(clamp(dot(view, normal), 0, 1)), 5).mul(0.9)
+  color = mix(color, vec3(0.6, 0.7, 0.82), wet.mul(fresnel.add(0.035)))
+
+  const sunDiffuse = max(dot(normal, uniforms.sunDirection), 0)
+  const ambient = mix(vec3(0.52, 0.56, 0.64), vec3(0.045, 0.06, 0.1), uniforms.night)
+  const direct = uniforms.sunColor.mul(sunDiffuse.mul(uniforms.sunLight).mul(0.85))
+  color = color.mul(ambient.add(direct))
+
+  const sparkle = pow(
+    max(dot(reflect(view.negate(), normal), uniforms.sunDirection), 0),
+    12
+  )
+  color = color.add(
+    uniforms.sunColor.mul(
+      sparkle.mul(residueNoise).mul(uniforms.sunLight).mul(float(1).sub(wet)).mul(0.5)
+    )
+  )
+
+  return color
+}
+
+/** Ocean surface: depth-absorbed sand, glitter and foam. */
+const beachWaterShadeNode = (
+  worldPosition: Node<'vec3'>,
+  uniforms: BeachUniforms,
+  noiseMap: THREE.Texture
+): Node<'vec3'> => {
+  const radius = max(length(worldPosition.xz), 0.001)
+  const distance = length(cameraPosition.sub(worldPosition))
+
+  const level = beachWaterLevelNode(worldPosition.xz, uniforms.time)
+  const bed = beachHeightNode(float(BEACH_RADIUS).sub(radius))
+  const depth = max(level.height.sub(bed), 0)
+
+  const micro = microGradientNode(
+    worldPosition.xz,
+    distance,
+    uniforms.time,
+    noiseMap
+  )
+  const normal = normalize(
+    vec3(
+      level.gradient.x.add(micro.x).negate(),
+      1,
+      level.gradient.y.add(micro.y).negate()
+    )
+  )
+  const view = normalize(cameraPosition.sub(worldPosition))
+
+  const sunDiffuse = max(dot(normal, uniforms.sunDirection), 0)
+  const ambient = mix(vec3(0.26, 0.32, 0.42), vec3(0.02, 0.03, 0.06), uniforms.night)
+  const bedLight = ambient.mul(1.4).add(
+    uniforms.sunColor.mul(sunDiffuse.mul(uniforms.sunLight).mul(0.55))
+  )
+  const absorption = vec3(
+    exp(depth.mul(-0.6)),
+    exp(depth.mul(-0.18)),
+    exp(depth.mul(-0.13))
+  )
+  const bedColor = beachSandAlbedoNode(worldPosition.xz, uniforms, noiseMap)
+    .mul(bedLight)
+    .mul(absorption)
+
+  const bodyMix = smoothstep(1, 42, depth)
+  const body = mix(uniforms.waterShallow.mul(0.95), uniforms.waterDeep, bodyMix)
+  const seeFloor = exp(depth.mul(-0.7))
+
+  let color: Node<'vec3'> = mix(body, bedColor, seeFloor)
+
+  // Sun glitter: a tight sparkling core inside a broad, soft path.
+  const sunReflect = reflect(view.negate(), normal)
+  const alignment = max(dot(sunReflect, uniforms.sunDirection), 0)
+  const sparkle = pow(alignment, 380).mul(7.5)
+  const path = pow(alignment, 60).mul(0.45)
+  color = color.add(
+    uniforms.sunColor
+      .mul(sparkle.add(path))
+      .mul(uniforms.sunLight)
+      .mul(float(1).sub(uniforms.night.mul(0.7)))
+  )
+
+  // Foam: bubble lace in the shallows, cresting lines and specks offshore.
+  const foamNoise = fbmNode(
+    worldPosition.xz
+      .mul(2.6)
+      .add(vec2(uniforms.time.mul(0.02), uniforms.time.mul(-0.013))),
+    noiseMap
+  )
+  const bubbleNoise = fbmNode(
+    worldPosition.xz
+      .mul(9)
+      .sub(vec2(uniforms.time.mul(0.03), uniforms.time.mul(0.02))),
+    noiseMap
+  )
+  const lace = smoothstep(0.46, 0.56, foamNoise)
+  const bubbles = smoothstep(0.56, 0.66, bubbleNoise)
+  const shoreBand = smoothstep(1.6, 0.02, depth)
+  const crest = smoothstep(0.1, 0.2, level.height).mul(smoothstep(14, 2, depth))
+  const foam = clamp(
+    shoreBand
+      .mul(float(0.12).add(lace.mul(0.8)))
+      .add(bubbles.mul(shoreBand).mul(0.35))
+      .add(crest.mul(0.1)),
+    0,
+    0.94
+  )
+  const foamColor = mix(vec3(0.9, 0.93, 0.95), vec3(0.1, 0.13, 0.18), uniforms.night)
+  const foamLight = ambient.mul(1.5).add(
+    uniforms.sunColor.mul(sunDiffuse.mul(uniforms.sunLight).mul(0.45))
+  )
+  color = mix(color, foamColor.mul(foamLight.add(0.16)), foam)
+
+  return color
+}
+
+/**
+ * Single-pass scene: sphere-trace the sand heightfield, intersect the wave
+ * surface, and shade the nearest hit. Only sand and water are shaded; rays
+ * that miss both stay transparent so the Scene background shows through.
+ */
+const beachSceneColorNode = (
+  direction: Node<'vec3'>,
+  uniforms: BeachUniforms,
+  noiseMap: THREE.Texture,
+  footprintTexture: THREE.DataTexture
+): Node<'vec4'> => {
+  const dir = normalize(direction)
+  const rayOrigin = cameraPosition
+
+  const terrainHit = float(0).toVar()
+  // Starts far away so a ray that hits only the ocean still picks water.
+  const terrainT = float(1e6).toVar()
+  const waterT = float(1e6).toVar()
+
+  If(dir.y.lessThan(0.22), () => {
+    const marchT = float(0.06).toVar()
+    Loop(140, () => {
+      If(terrainHit.lessThan(0.5).and(marchT.lessThan(170)), () => {
+        const p = rayOrigin.add(dir.mul(marchT))
+        const height = beachHeightNode(float(BEACH_RADIUS).sub(length(p.xz)))
+        const above = p.y.sub(height)
+        If(above.lessThan(0.002), () => {
+          terrainHit.assign(1)
+          terrainT.assign(marchT)
+        })
+        marchT.addAssign(max(above.mul(0.6), 0.05))
+      })
+    })
+  })
+
+  If(dir.y.lessThan(-0.0003), () => {
+    const hitT = float(0).toVar()
+    hitT.assign(float(0).sub(rayOrigin.y).div(dir.y))
+    Loop(3, () => {
+      const surfacePoint = rayOrigin.add(dir.mul(hitT))
+      const level = beachWaterLevelNode(surfacePoint.xz, uniforms.time).height
+      hitT.assign(level.sub(rayOrigin.y).div(dir.y))
+    })
+    waterT.assign(max(hitT, 0))
+  })
+
+  const color = vec3(0).toVar()
+  const alpha = float(0).toVar()
+
+  If(waterT.lessThan(terrainT), () => {
+    const waterPoint = rayOrigin.add(dir.mul(waterT))
+    color.assign(beachWaterShadeNode(waterPoint, uniforms, noiseMap))
+    alpha.assign(1)
+  }).Else(() => {
+    If(terrainHit.greaterThan(0.5), () => {
+      const sandPoint = rayOrigin.add(dir.mul(terrainT))
+      color.assign(
+        beachSandShadeNode(sandPoint, uniforms, noiseMap, footprintTexture)
+      )
+      alpha.assign(1)
+    })
+  })
+
+  return vec4(beachToneMapNode(color, uniforms.exposure), alpha)
 }
 
 export interface CreateBeachMaterialsOptions {
@@ -306,188 +552,29 @@ export interface CreateBeachMaterialsOptions {
 
 export interface BeachMaterials {
   sky: MeshBasicNodeMaterial
-  sand: MeshBasicNodeMaterial
-  water: MeshBasicNodeMaterial
 }
 
-/** Creates the three node materials that make up the scene. */
+/** Creates the single node material that raymarches the whole beach. */
 export function createBeachMaterials({
   uniforms,
   noiseMap,
   footprintTexture
 }: CreateBeachMaterialsOptions): BeachMaterials {
-  const skyColor = (direction: Node<'vec3'>) => beachSkyColorNode(direction, uniforms, noiseMap)
-
   const sky = new MeshBasicNodeMaterial({ name: 'SandyBeachSky' })
   sky.side = THREE.BackSide
+  // Rays that miss sand and water stay transparent, so the Scene background
+  // shows through where the sky used to be.
+  sky.transparent = true
   sky.depthWrite = false
-  sky.colorNode = Fn(() => skyColor(normalize(positionWorld.sub(cameraPosition))))()
-
-  const sand = new MeshBasicNodeMaterial({ name: 'SandyBeachSand' })
-  sand.side = THREE.DoubleSide
-
-  sand.positionNode = Fn(() => {
-    const radius = max(length(positionLocal.xz), 0.001)
-    const u = float(BEACH_RADIUS).sub(radius)
-    return vec3(positionLocal.x, beachHeightNode(u), positionLocal.z)
-  })()
-
-  sand.colorNode = Fn(() => {
-    const worldPosition = positionWorld
-    const radius = max(length(worldPosition.xz), 0.001)
-    const u = float(BEACH_RADIUS).sub(radius)
-    const normal = beachSandNormalNode(worldPosition.xz, radius, u, noiseMap)
-
-    const grain = fbmNode(worldPosition.xz.mul(2.4), noiseMap)
-    const fineGrain = fbmNode(worldPosition.xz.mul(11).add(vec2(4.2, -7.3)), noiseMap)
-    let color: Node<'vec3'> = uniforms.sand.mul(
-      float(0.8).add(grain.mul(0.32)).add(fineGrain.mul(0.12))
-    )
-
-    const wetMask = float(1).sub(
-      smoothstep(uniforms.wetLine.sub(0.6), uniforms.wetLine.add(3.2), u)
-    )
-    const dampMask = float(1).sub(
-      smoothstep(uniforms.wetLine.add(2.5), uniforms.wetLine.add(7.5), u)
-    )
-    color = color.mul(float(1).sub(dampMask.mul(0.1)))
-
-    const footprint = beachFootprintMaskNode(
-      worldPosition.xz,
-      u,
+  sky.depthTest = false
+  sky.colorNode = Fn(() =>
+    beachSceneColorNode(
+      normalize(positionWorld.sub(cameraPosition)),
       uniforms,
+      noiseMap,
       footprintTexture
     )
-    color = color.mul(float(1).sub(wetMask.mul(0.22)).sub(footprint.mul(0.26)))
+  )()
 
-    const viewDirection = normalize(cameraPosition.sub(worldPosition))
-    const wet = clamp(wetMask.add(footprint.mul(0.7)), 0, 1)
-    const fresnel = pow(float(1).sub(clamp(viewDirection.y, 0, 1)), 5).mul(0.85)
-    const reflected = skyColor(reflect(viewDirection.negate(), normalize(normal)))
-    color = mix(color, reflected, wet.mul(fresnel.add(0.03)))
-
-    const sunDiffuse = max(dot(normal, uniforms.sunDirection), 0)
-    const ambient = mix(vec3(0.3, 0.34, 0.42), vec3(0.045, 0.06, 0.095), uniforms.night)
-    const direct = uniforms.sunColor.mul(sunDiffuse.mul(uniforms.sunLight).mul(0.6))
-    color = color.mul(ambient.add(direct))
-
-    const sparkle = pow(
-      max(dot(reflect(viewDirection.negate(), normal), uniforms.sunDirection), 0),
-      10
-    )
-    color = color.add(
-      uniforms.sunColor.mul(
-        sparkle.mul(fineGrain).mul(uniforms.sunLight).mul(float(1).sub(wet)).mul(0.7)
-      )
-    )
-
-    return color
-  })()
-
-  const water = new MeshBasicNodeMaterial({ name: 'SandyBeachWater' })
-  water.side = THREE.DoubleSide
-
-  water.positionNode = Fn(() => {
-    const swell = beachSwellNodes(positionLocal.xz, uniforms.time)
-    return vec3(positionLocal.x, swell.height, positionLocal.z)
-  })()
-
-  water.colorNode = Fn(() => {
-    const worldPosition = positionWorld
-    const radius = max(length(worldPosition.xz), 0.001)
-    const u = float(BEACH_RADIUS).sub(radius)
-    const distanceToCamera = length(cameraPosition.xz.sub(worldPosition.xz))
-
-    const swell = beachSwellNodes(worldPosition.xz, uniforms.time)
-    const micro = microGradientNode(worldPosition.xz, distanceToCamera, uniforms.time, noiseMap)
-    const normal = normalize(
-      vec3(swell.gradient.x.add(micro.x).negate(), 1, swell.gradient.y.add(micro.y).negate())
-    )
-
-    const deepMix = float(1).sub(smoothstep(-38, -3, u))
-    let color: Node<'vec3'> = mix(uniforms.waterShallow, uniforms.waterDeep, deepMix)
-
-    const viewDirection = normalize(cameraPosition.sub(worldPosition))
-    const cosView = clamp(dot(viewDirection, normal), 0, 1)
-    const fresnel = clamp(
-      float(0.02).add(pow(float(1).sub(cosView), 5).mul(0.98)),
-      0,
-      1
-    )
-    const reflected = skyColor(reflect(viewDirection.negate(), normal))
-    color = mix(color, reflected, fresnel)
-
-    const specular = pow(
-      max(dot(reflect(viewDirection.negate(), normal), uniforms.sunDirection), 0),
-      720
-    )
-    color = color.add(uniforms.sunColor.mul(specular.mul(uniforms.sunLight).mul(2.4)))
-
-    const lace = fbmNode(
-      worldPosition.xz.mul(1.1).add(vec2(uniforms.time.mul(0.05), uniforms.time.mul(-0.03))),
-      noiseMap
-    )
-    const shoreFoam = smoothstep(-3.2, -0.15, u).mul(smoothstep(0.5, 0.72, lace)).mul(0.9)
-    const whitecaps = smoothstep(0.62, 0.8, lace).mul(smoothstep(-90, -25, u)).mul(0.32)
-    const foam = clamp(shoreFoam.add(whitecaps), 0, 0.9)
-    const foamColor = mix(
-      vec3(0.9, 0.93, 0.95),
-      vec3(0.12, 0.15, 0.2),
-      uniforms.night
-    )
-    color = mix(color, foamColor, foam)
-
-    const haze = float(1).sub(exp(distanceToCamera.mul(-0.0011)))
-    return mix(color, uniforms.horizon, haze.mul(0.9))
-  })()
-
-  return { sky, sand, water }
-}
-
-/** Ring of sand from the island center out to the waterline. */
-export function createBeachSandGeometry(): THREE.BufferGeometry {
-  const geometry = new THREE.RingGeometry(0.002, BEACH_RADIUS, 256, 48)
-  geometry.rotateX(-Math.PI / 2)
-  geometry.name = 'SandyBeachSand'
-  return geometry
-}
-
-/** Ocean ring with rings packed towards the shore so swells stay smooth. */
-export function createBeachWaterGeometry(): THREE.BufferGeometry {
-  const innerRadius = BEACH_RADIUS - 0.8
-  const outerRadius = BEACH_OCEAN_RADIUS
-  const angularSegments = 256
-  const radialSegments = 72
-
-  const positions = new Float32Array(angularSegments * (radialSegments + 1) * 3)
-  const indices: number[] = []
-
-  for (let ring = 0; ring <= radialSegments; ring += 1) {
-    const radius =
-      innerRadius * Math.pow(outerRadius / innerRadius, ring / radialSegments)
-    for (let segment = 0; segment < angularSegments; segment += 1) {
-      const theta = (segment / angularSegments) * Math.PI * 2
-      const offset = (ring * angularSegments + segment) * 3
-      positions[offset] = Math.cos(theta) * radius
-      positions[offset + 1] = 0
-      positions[offset + 2] = Math.sin(theta) * radius
-    }
-  }
-
-  for (let ring = 0; ring < radialSegments; ring += 1) {
-    for (let segment = 0; segment < angularSegments; segment += 1) {
-      const next = (segment + 1) % angularSegments
-      const a = ring * angularSegments + segment
-      const b = ring * angularSegments + next
-      const c = (ring + 1) * angularSegments + segment
-      const d = (ring + 1) * angularSegments + next
-      indices.push(a, c, b, b, c, d)
-    }
-  }
-
-  const geometry = new THREE.BufferGeometry()
-  geometry.name = 'SandyBeachWater'
-  geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
-  geometry.setIndex(indices)
-  return geometry
+  return { sky }
 }

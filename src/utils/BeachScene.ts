@@ -5,9 +5,7 @@ import { BeachFootprintTrail } from './BeachFootprints'
 import {
   applyBeachPresetToUniforms,
   createBeachMaterials,
-  createBeachSandGeometry,
   createBeachUniforms,
-  createBeachWaterGeometry,
   BEACH_SKY_RADIUS
 } from './BeachMaterials'
 import type { BeachPresetName } from './BeachPresets'
@@ -53,9 +51,7 @@ export function mountBeachScene(
     footprintTexture: footprints.texture
   })
 
-  const sandGeometry = createBeachSandGeometry()
-  const waterGeometry = createBeachWaterGeometry()
-  const skyGeometry = new THREE.SphereGeometry(BEACH_SKY_RADIUS, 32, 16)
+  const skyGeometry = new THREE.SphereGeometry(BEACH_SKY_RADIUS, 64, 32)
 
   const group = new THREE.Group()
   group.name = 'SandyBeach'
@@ -65,16 +61,6 @@ export function mountBeachScene(
   skyMesh.renderOrder = -1
   skyMesh.frustumCulled = false
   group.add(skyMesh)
-
-  const sandMesh = new THREE.Mesh(sandGeometry, materials.sand)
-  sandMesh.name = 'SandyBeachSand'
-  sandMesh.frustumCulled = false
-  group.add(sandMesh)
-
-  const waterMesh = new THREE.Mesh(waterGeometry, materials.water)
-  waterMesh.name = 'SandyBeachWater'
-  waterMesh.frustumCulled = false
-  group.add(waterMesh)
 
   scene.add(group)
 
@@ -112,13 +98,13 @@ export function mountBeachScene(
   const startTheta = Math.atan2(sunDirection.z, sunDirection.x)
   const outwardX = Math.cos(startTheta)
   const outwardZ = Math.sin(startTheta)
-  const startYaw = Math.atan2(-outwardX, -outwardZ) + 0.3
+  const startYaw = Math.atan2(-outwardX, -outwardZ) + 0.22
 
   const walker = new BeachWalker({
     theta: startTheta,
-    u: 5.5,
+    u: 6,
     yaw: startYaw,
-    pitch: -0.06
+    pitch: -0.13
   })
 
   const presetState = createBeachPresetState(initialPreset)
@@ -228,8 +214,6 @@ export function mountBeachScene(
     applyBeachPresetToUniforms(uniforms, presetState)
 
     uniforms.time.value = elapsed
-    uniforms.wetLine.value =
-      1 + 0.65 * Math.sin(elapsed * 0.55) + 0.22 * Math.sin(elapsed * 0.21 + 1.3)
 
     const forwardInput = axis(['w', 'arrowup'], ['s', 'arrowdown'])
     const strafeInput = axis(['d', 'arrowright'], ['a', 'arrowleft'])
@@ -262,11 +246,7 @@ export function mountBeachScene(
     window.removeEventListener('keyup', handleKeyUp)
 
     scene.remove(group)
-    sandGeometry.dispose()
-    waterGeometry.dispose()
     skyGeometry.dispose()
-    materials.sand.dispose()
-    materials.water.dispose()
     materials.sky.dispose()
     noiseTexture.dispose()
     footprints.dispose()

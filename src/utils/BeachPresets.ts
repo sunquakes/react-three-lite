@@ -29,6 +29,8 @@ export interface BeachPresetDefinition {
   night: number
   /** Directional light intensity. */
   sunLight: number
+  /** Exposure applied before the ACES tone-mapping curve. */
+  exposure: number
 }
 
 const color = (hex: string) => new THREE.Color(hex)
@@ -48,20 +50,21 @@ export const BEACH_PRESETS: Record<BeachPresetName, BeachPresetDefinition> = {
     elevation: 6,
     azimuth: -20,
     sunColor: color('#ffca8a'),
-    zenith: color('#1054a4'),
-    horizon: color('#b296ac'),
-    horizonSun: color('#fcb06e'),
-    mid: color('#eeca9f'),
-    glow: color('#ffc77a'),
-    cloudSun: color('#ffd7b0'),
-    cloudShade: color('#8f8fae'),
-    sand: color('#cdb698'),
-    waterDeep: color('#0b2f4a'),
-    waterShallow: color('#3d7f84'),
-    sunDisk: 2.4,
-    discSize: 1.2,
+    zenith: color('#2a72c4'),
+    horizon: color('#b8d5e8'),
+    horizonSun: color('#ffb877'),
+    mid: color('#6aa6d8'),
+    glow: color('#ffcf94'),
+    cloudSun: color('#ffe3bd'),
+    cloudShade: color('#9aa8c0'),
+    sand: color('#e6d4b6'),
+    waterDeep: color('#17578c'),
+    waterShallow: color('#4fd2c8'),
+    sunDisk: 3,
+    discSize: 1.6,
     night: 0,
-    sunLight: 1.35
+    sunLight: 1.35,
+    exposure: 1.02
   },
   morning: {
     name: 'morning',
@@ -69,20 +72,21 @@ export const BEACH_PRESETS: Record<BeachPresetName, BeachPresetDefinition> = {
     elevation: 28,
     azimuth: -40,
     sunColor: color('#fff1d6'),
-    zenith: color('#0a6ac8'),
-    horizon: color('#bacdf0'),
-    horizonSun: color('#4a92de'),
-    mid: color('#cddaf0'),
+    zenith: color('#2b7fd2'),
+    horizon: color('#c6e0f2'),
+    horizonSun: color('#7fb6e8'),
+    mid: color('#6fb2e4'),
     glow: color('#ffe8c8'),
     cloudSun: color('#ffffff'),
     cloudShade: color('#a8b8d0'),
-    sand: color('#e0cbaa'),
-    waterDeep: color('#0a3550'),
-    waterShallow: color('#4496a4'),
+    sand: color('#e8d9bd'),
+    waterDeep: color('#12588a'),
+    waterShallow: color('#52d4c9'),
     sunDisk: 2,
     discSize: 1,
     night: 0,
-    sunLight: 1.7
+    sunLight: 1.7,
+    exposure: 0.98
   },
   sunset: {
     name: 'sunset',
@@ -103,7 +107,8 @@ export const BEACH_PRESETS: Record<BeachPresetName, BeachPresetDefinition> = {
     sunDisk: 2.6,
     discSize: 1.5,
     night: 0,
-    sunLight: 1.25
+    sunLight: 1.25,
+    exposure: 1.08
   },
   night: {
     name: 'night',
@@ -124,7 +129,8 @@ export const BEACH_PRESETS: Record<BeachPresetName, BeachPresetDefinition> = {
     sunDisk: 1.4,
     discSize: 2.2,
     night: 1,
-    sunLight: 0.16
+    sunLight: 0.16,
+    exposure: 1.6
   },
   blueHour: {
     name: 'blueHour',
@@ -145,7 +151,8 @@ export const BEACH_PRESETS: Record<BeachPresetName, BeachPresetDefinition> = {
     sunDisk: 0.5,
     discSize: 0.9,
     night: 0.45,
-    sunLight: 0.38
+    sunLight: 0.38,
+    exposure: 1.28
   }
 }
 
@@ -167,6 +174,7 @@ export interface BeachPresetState {
   discSize: number
   night: number
   sunLight: number
+  exposure: number
 }
 
 /** Direction pointing towards the sun for a preset. */
@@ -198,7 +206,8 @@ export function createBeachPresetState(name: BeachPresetName): BeachPresetState 
     sunDisk: preset.sunDisk,
     discSize: preset.discSize,
     night: preset.night,
-    sunLight: preset.sunLight
+    sunLight: preset.sunLight,
+    exposure: preset.exposure
   }
 }
 
@@ -227,4 +236,5 @@ export function lerpBeachPresetState(
   current.discSize = lerp(current.discSize, target.discSize, t)
   current.night = lerp(current.night, target.night, t)
   current.sunLight = lerp(current.sunLight, target.sunLight, t)
+  current.exposure = lerp(current.exposure, target.exposure, t)
 }

@@ -7,7 +7,7 @@ import Tabs from '@theme/Tabs'
 import TabItem from '@theme/TabItem'
 import SandyBeach from '@site/src/components/effects/SandyBeach'
 
-第一人称的黎明海滩漫步。小岛是一个周长 260 米的环形海岸，沙面高度、湿沙带、海浪起伏与脚印共用同一套海岸坐标，因此无论走到哪个角度，水线、行走者与着色器都始终对齐。天空由解析式求值，并复用于水面与湿沙的反射，让 WebGPU 与 WebGL 渲染器得到同一份单遍结果。
+第一人称的黎明海滩漫步。小岛是一个周长 260 米的环形海岸，沙面高度、湿沙带、海浪起伏与脚印共用同一套海岸坐标，因此无论走到哪个角度，水线、行走者与着色器都始终对齐。整片海滩由一次全屏光线步进（ray-march）完成：在同一份 TSL 着色器里求值沙面高度场与水面，最后套用 ACES 色调映射 —— WebGPU 与 WebGL 渲染器编译的是同一份着色器，画面完全一致。场景只绘制沙与水：地平线以上的光线保持透明，露出 Scene 的背景色。
 
 拖动可以环顾四周，用 `WASD` 或方向键行走，滚轮向前迈出一步。脚印写入一个很小的环形缓冲，再被潮水慢慢抹去。
 
@@ -71,7 +71,7 @@ import SandyBeach from '@site/src/components/effects/SandyBeach'
 
 | 属性 | 类型 | 默认值 | 描述 |
 |------|------|--------|------|
-| preset | 'sunrise' \| 'morning' \| 'sunset' \| 'night' \| 'blueHour' | 'sunrise' | 一天中的时段预设。切换时天空、水面与沙地颜色会交叉淡入 |
+| preset | 'sunrise' \| 'morning' \| 'sunset' \| 'night' \| 'blueHour' | 'sunrise' | 一天中的时段预设。切换时阳光、水面与沙地颜色会交叉淡入 |
 | autoWalk | boolean | false | 自动向前行走，适合做背景动画 |
 | crouching | boolean | false | 把摄像机降低到蹲下的视高 |
 | interactive | boolean | true | 为画布绑定拖动视角、`WASD` / 方向键与滚轮迈步 |
@@ -80,14 +80,14 @@ import SandyBeach from '@site/src/components/effects/SandyBeach'
 
 | 预设 | 描述 |
 |------|------|
-| sunrise | 温暖的低角度阳光，桃色地平线与冷色高空 |
-| morning | 高角度阳光，浅色地平线与明亮的青绿浅滩 |
-| sunset | 阳光几乎贴在水面上，橙色余晖与紫罗兰色天顶 |
-| night | 月亮、星空与幽暗的蓝色环境光 |
-| blueHour | 太阳刚落到地平线下，粉色余晖与深蓝紫色天空 |
+| sunrise | 温暖的低角度阳光，桃色浅滩与沙面上细长的柔和阴影 |
+| morning | 高角度阳光，明亮的青绿浅滩与浅色干沙 |
+| sunset | 阳光几乎贴在水面上，橙色波光带与紫调的沙面 |
+| night | 冷色月光洒在深色水面与暗哑的沙面上 |
+| blueHour | 太阳刚落到地平线下，粉色光线映在幽蓝的水面上 |
 
 ## 说明
 
 - 组件挂载期间接管摄像机。它会保存之前的摄像机姿态、视场角与近远裁剪面，禁用场景的 `OrbitControls`，并在卸载时全部还原。
-- 场景由天空球、沙地环与海洋环组成，全部使用 TSL 节点材质，因此两个渲染器编译的是同一份着色器。
+- 场景由一颗内翻的球体承载一份全屏 TSL 着色器：它对沙面做球体步进、求交动态水面，再着色更近的那个交点，包含深度吸收的浅滩、泡沫、湿沙与脚印。两者都没命中的光线保持透明，天空的位置便露出 Scene 的背景色。
 - 所有几何体、材质、纹理与事件监听都会在卸载时释放。
