@@ -87,7 +87,7 @@ Drag inside the pool to add ripples, drag a box to push it around, and drag outs
 | Name | Type | Default | Description |
 |------|------|---------|-------------|
 | resolution | number | 128 | Height-field cells per axis, clamped to 8–512 |
-| segments | number | 160 | Subdivisions per axis of the rendered water surface |
+| segments | number | 160 | Subdivisions along the irregular pool outline |
 | boxes | `{ position: [number, number, number]; size: [number, number, number]; color?: string }[]` | Three cubes | Cubes of different shapes floating in the pool |
 | sunDirection | Vector3 \| [number, number, number] | [0.55, 0.9, 0.35] | Direction from the pool towards the sun |
 | autoRipples | boolean | true | Adds a small random ripple every 1.8 seconds |
@@ -102,7 +102,7 @@ This component is a port of [Evan Wallace's webgl-water](https://madebyevan.com/
 
 - A CPU height field stores `(height, velocity, normal.x, normal.z)` per cell and runs the same two-pass wave equation as the original. The state is uploaded as an RGBA half float `DataTexture` and displaces the water plane in the vertex node.
 - The caustic map is built by projecting every surface cell onto the pool floor along its refracted sun ray. Local compression of the projection concentrates light, so the caustic texture is indexed by surface coordinate and looked up where each floor pixel's sun ray entered the water.
-- Water, tiled basin and boxes are shaded with analytic ray tracing in TSL: the surface reflects and refracts the boxes, basin and procedural sky, while the basin receives the animated caustics and every box casts a soft shadow.
+- Water, the irregular tiled basin and the boxes are shaded with analytic ray tracing in TSL: the surface reflects and refracts the boxes, basin and procedural sky, while the basin receives the animated caustics and every box casts a soft shadow.
 - Moving a box through the water displaces the height field around its footprint, so dragging a shape leaves a propagating wake.
 - The simulation runs on a fixed 1/60 s accumulator with at most three catch-up steps per frame, so the ripples behave consistently regardless of the display refresh rate.
 

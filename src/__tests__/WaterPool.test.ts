@@ -7,6 +7,12 @@ import {
   WaterPoolSimulation
 } from '../utils/WaterPoolSimulation'
 import { createWaterPoolMaterials } from '../utils/WaterPoolMaterials'
+import {
+  WATER_POOL_OUTLINE,
+  clampToWaterPool,
+  isInsideWaterPool,
+  sampleWaterPoolOutline
+} from '../utils/WaterPoolShape'
 
 const createSimulation = () =>
   new WaterPoolSimulation({
@@ -154,6 +160,41 @@ describe('WaterPoolSimulation', () => {
     for (let index = 0; index < data.length; index += 1) {
       expect(Number.isFinite(THREE.DataUtils.fromHalfFloat(data[index]))).toBe(true)
     }
+  })
+})
+
+describe('WaterPoolShape', () => {
+  it('keeps the irregular outline convex', () => {
+    WATER_POOL_OUTLINE.forEach((start, index) => {
+      const middle = WATER_POOL_OUTLINE[(index + 1) % WATER_POOL_OUTLINE.length]
+      const end = WATER_POOL_OUTLINE[(index + 2) % WATER_POOL_OUTLINE.length]
+      const cross =
+        (middle[0] - start[0]) * (end[1] - middle[1]) -
+        (middle[1] - start[1]) * (end[0] - middle[0])
+
+      expect(cross).toBeGreaterThan(0)
+    })
+  })
+
+  it('tells inside points from points outside the basin', () => {
+    expect(isInsideWaterPool(0, 0)).toBe(true)
+    expect(isInsideWaterPool(0.95, 0.95)).toBe(false)
+    expect(isInsideWaterPool(-0.9, 0.1)).toBe(false)
+  })
+
+  it('pushes dragged boxes back inside the outline', () => {
+    const [x, z] = clampToWaterPool(0.95, 0.95, 0.1)
+
+    expect(isInsideWaterPool(x, z, 0.099)).toBe(true)
+  })
+
+  it('samples the outline as a closed ring on the boundary', () => {
+    const points = sampleWaterPoolOutline(3)
+
+    expect(points).toHaveLength(WATER_POOL_OUTLINE.length * 3)
+    points.forEach(([x, z]) => {
+      expect(isInsideWaterPool(x, z, -1e-4)).toBe(true)
+    })
   })
 })
 

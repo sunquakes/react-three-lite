@@ -4,6 +4,7 @@ import {
   Fn,
   If,
   abs,
+  atan,
   cameraPosition,
   clamp,
   dot,
@@ -27,6 +28,7 @@ import {
   vec2,
   vec3
 } from 'three/tsl'
+import { WATER_POOL_EDGES } from './WaterPoolShape'
 
 /**
  * Ray traced materials for the interactive water pool.
@@ -71,6 +73,7 @@ const IOR_AIR = 1
 const IOR_WATER = 1.333
 const SURFACE_TO_AIR = IOR_AIR / IOR_WATER
 const AIR_TO_SURFACE = IOR_WATER / IOR_AIR
+const POOL_FLOOR_Y = -1
 const POOL_RIM_Y = 1 / 6
 const RAY_MISS = 1e6
 
@@ -132,19 +135,35 @@ export function waterPoolSkyColorNode(
     .add(vec3(1.0, 0.82, 0.58).mul(sunHalo))
 }
 
-function intersectPoolCubeNode(
+/**
+ * Distance along `ray` to the wall of the irregular basin, or `RAY_MISS` when
+ * the ray travels straight up or down and never reaches a wall.
+ *
+ * The outline is convex, so clamping the positive hit of every inward
+ * half-plane yields the exact exit point. Rays start on the water surface,
+ * which always lies inside the outline.
+ */
+function intersectPoolWallNode(
   origin: Node<'vec3'>,
   ray: Node<'vec3'>
-): Node<'vec2'> {
-  const tMin = vec3(-1, -1, -1).sub(origin).div(ray)
-  const tMax = vec3(1, 2, 1).sub(origin).div(ray)
-  const near = min(tMin, tMax)
-  const far = max(tMin, tMax)
+): Node<'float'> {
+  const wallHit = float(RAY_MISS).toVar()
+  const originXZ = vec2(origin.x, origin.z)
+  const directionXZ = vec2(ray.x, ray.z)
 
-  return vec2(
-    max(max(near.x, near.y), near.z),
-    min(min(far.x, far.y), far.z)
-  )
+  WATER_POOL_EDGES.forEach((edge) => {
+    const normal = vec2(edge.nx, edge.nz)
+    const denominator = dot(normal, directionXZ)
+    const distance = float(edge.offset).sub(dot(normal, originXZ)).div(denominator)
+    const valid = denominator
+      .lessThan(-1e-5)
+      .and(distance.greaterThan(0))
+      .and(distance.lessThan(wallHit))
+
+    wallHit.assign(select(valid, distance, wallHit))
+  })
+
+  return wallHit
 }
 
 /**
@@ -250,18 +269,21 @@ function basinColorNode(point: Node<'vec3'>, context: ShadingContext): Node<'vec
   const color = vec3(0).toVar()
   const normal = vec3(0).toVar()
 
-  If(abs(point.x).greaterThan(0.999), () => {
-    color.assign(texture(context.tileTexture, point.yz.mul(0.5).add(vec2(1, 0.5))).rgb)
-    normal.assign(vec3(point.x.negate(), 0, 0))
+  // The floor is a flat disc at the bottom and the walls rise from it, so the
+  // height alone separates the two surfaces of the irregular basin.
+  If(point.y.lessThan(POOL_FLOOR_Y + 0.005), () => {
+    color.assign(texture(context.tileTexture, point.xz.mul(0.5).add(0.5)).rgb)
+    normal.assign(vec3(0, 1, 0))
+  }).Else(() => {
+    // Arc length around the outline drives the horizontal tile coordinate so
+    // the mosaic keeps roughly the same size as on the floor.
+    const wallUv = vec2(
+      atan(point.z, point.x).mul(0.44).add(1),
+      point.y.mul(0.5).add(0.5)
+    )
+    color.assign(texture(context.tileTexture, wallUv).rgb)
+    normal.assign(normalize(vec3(point.x.negate(), 0, point.z.negate())))
   })
-    .ElseIf(abs(point.z).greaterThan(0.999), () => {
-      color.assign(texture(context.tileTexture, point.yx.mul(0.5).add(vec2(1, 0.5))).rgb)
-      normal.assign(vec3(0, 0, point.z.negate()))
-    })
-    .Else(() => {
-      color.assign(texture(context.tileTexture, point.xz.mul(0.5).add(0.5)).rgb)
-      normal.assign(vec3(0, 1, 0))
-    })
 
   const scale = float(0.5).div(length(point)).toVar()
 
@@ -330,20 +352,28 @@ function surfaceRayColorNode(
 
   If(nearest.lessThan(RAY_MISS * 0.5), () => {
     color.assign(hitColor)
-  })
-    .ElseIf(ray.y.lessThan(0), () => {
-      const hit = intersectPoolCubeNode(origin, ray)
-      color.assign(basinColorNode(origin.add(ray.mul(hit.y)), context))
-    })
-    .Else(() => {
-      const hit = intersectPoolCubeNode(origin, ray)
-      const point = origin.add(ray.mul(hit.y))
-      If(point.y.lessThan(POOL_RIM_Y), () => {
-        color.assign(basinColorNode(point, context))
+  }).Else(() => {
+    const wallHit = intersectPoolWallNode(origin, ray)
+
+    If(ray.y.lessThan(0), () => {
+      // Downward rays hit the flat floor unless the irregular wall is closer.
+      const floorHit = float(POOL_FLOOR_Y).sub(origin.y).div(ray.y)
+      If(wallHit.lessThan(floorHit), () => {
+        color.assign(basinColorNode(origin.add(ray.mul(wallHit)), context))
+      }).Else(() => {
+        color.assign(basinColorNode(origin.add(ray.mul(floorHit)), context))
+      })
+    }).Else(() => {
+      // Upward rays either graze a wall below the rim or escape to the sky
+      // through the open top of the pool.
+      const rimHit = float(POOL_RIM_Y).sub(origin.y).div(ray.y)
+      If(wallHit.lessThan(rimHit), () => {
+        color.assign(basinColorNode(origin.add(ray.mul(wallHit)), context))
       }).Else(() => {
         color.assign(waterPoolSkyColorNode(ray, context.lightDirection))
       })
     })
+  })
 
   // Absorb the light exactly once for rays travelling through the water, so a
   // refracted box is not tinted once here and again by the caller.

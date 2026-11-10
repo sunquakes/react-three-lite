@@ -4,6 +4,12 @@ import { uniform } from 'three/tsl'
 import { useScene } from '../context/SceneContext'
 import { WaterPoolSimulation } from '../utils/WaterPoolSimulation'
 import {
+  WATER_POOL_OUTLINE,
+  clampToWaterPool,
+  isInsideWaterPool,
+  sampleWaterPoolOutline
+} from '../utils/WaterPoolShape'
+import {
   createWaterPoolMaterials,
   createWaterPoolTileTexture
 } from '../utils/WaterPoolMaterials'
@@ -20,7 +26,7 @@ export interface WaterPoolBoxConfig {
 export interface WaterPoolProps {
   /** Height-field cells per axis, from 8 to 512. Defaults to 128. */
   resolution?: number
-  /** Subdivisions per axis of the rendered water surface. Defaults to 160. */
+  /** Subdivisions around the irregular pool outline. Defaults to 160. */
   segments?: number
   /** Boxes floating in the pool. Defaults to three cubes of different shapes. */
   boxes?: WaterPoolBoxConfig[]
@@ -41,9 +47,11 @@ const DEFAULT_BOXES: WaterPoolBoxConfig[] = [
 ]
 
 const DEFAULT_SUN_DIRECTION: [number, number, number] = [0.55, 0.9, 0.35]
-const POOL_HALF_SIZE = 1
 const POOL_FLOOR_Y = -1
 const POOL_RIM_Y = 1 / 6
+
+const getOutlineSubdivisions = (segments: number) =>
+  Math.max(1, Math.round(segments / WATER_POOL_OUTLINE.length))
 
 const DROP_RADIUS = 0.06
 const DROP_STRENGTH = 0.01
@@ -54,6 +62,97 @@ const MAX_STEPS_PER_FRAME = 3
 const DRAG_STRENGTH = 0.01
 const MIN_BOX_HALF_SIZE = 0.02
 const MAX_BOX_HALF_SIZE = 0.9
+
+/**
+ * Water surface shaped like the irregular outline: concentric rings that scale
+ * the outline towards the center, so the rim follows the basin walls exactly.
+ */
+const createWaterSurfaceGeometry = (segments: number) => {
+  const outline = sampleWaterPoolOutline(getOutlineSubdivisions(segments))
+  const angular = outline.length
+  const rings = Math.max(8, Math.round(segments / 4))
+  const positions: number[] = [0, 0, 0]
+
+  for (let ring = 1; ring <= rings; ring += 1) {
+    const scale = ring / rings
+    outline.forEach(([x, z]) => {
+      positions.push(x * scale, 0, z * scale)
+    })
+  }
+
+  const indices: number[] = []
+  for (let index = 0; index < angular; index += 1) {
+    indices.push(0, 1 + index, 1 + ((index + 1) % angular))
+  }
+  for (let ring = 1; ring < rings; ring += 1) {
+    const inner = 1 + (ring - 1) * angular
+    const outer = 1 + ring * angular
+    for (let index = 0; index < angular; index += 1) {
+      const next = (index + 1) % angular
+      indices.push(inner + index, outer + index, outer + next)
+      indices.push(inner + index, outer + next, inner + next)
+    }
+  }
+
+  const geometry = new THREE.BufferGeometry()
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3))
+  geometry.setIndex(indices)
+
+  return geometry
+}
+
+/**
+ * Basin with an irregular floor and the walls that rise to the rim. Everything
+ * below the water line is drawn by the ray traced water shader, so only the
+ * part above it is ever visible.
+ */
+const createBasinGeometry = (segments: number) => {
+  const outline = sampleWaterPoolOutline(getOutlineSubdivisions(segments))
+  const angular = outline.length
+  const positions: number[] = [0, POOL_FLOOR_Y, 0]
+
+  outline.forEach(([x, z]) => {
+    positions.push(x, POOL_FLOOR_Y, z)
+  })
+
+  const indices: number[] = []
+  for (let index = 0; index < angular; index += 1) {
+    indices.push(0, 1 + index, 1 + ((index + 1) % angular))
+  }
+
+  const wallBottom = 1 + angular
+  const wallTop = wallBottom + angular
+  outline.forEach(([x, z]) => {
+    positions.push(x, POOL_FLOOR_Y, z)
+  })
+  outline.forEach(([x, z]) => {
+    positions.push(x, POOL_RIM_Y, z)
+  })
+  for (let index = 0; index < angular; index += 1) {
+    const next = (index + 1) % angular
+    indices.push(wallBottom + index, wallTop + index, wallTop + next)
+    indices.push(wallBottom + index, wallTop + next, wallBottom + next)
+  }
+
+  const geometry = new THREE.BufferGeometry()
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3))
+  geometry.setIndex(indices)
+
+  return geometry
+}
+
+/** Random point inside the outline, used for the initial and ambient ripples. */
+const randomPoolPoint = (): [number, number] => {
+  for (let attempt = 0; attempt < 24; attempt += 1) {
+    const x = Math.random() * 1.8 - 0.9
+    const z = Math.random() * 1.8 - 0.9
+    if (isInsideWaterPool(x, z, 0.03)) {
+      return [x, z]
+    }
+  }
+
+  return [0, 0]
+}
 
 interface BoxState {
   center: THREE.Vector3
@@ -114,9 +213,10 @@ const WaterPool = ({
       lightDirection: [sunX, sunY, sunZ]
     })
     for (let index = 0; index < INITIAL_DROPS; index += 1) {
+      const [dropX, dropZ] = randomPoolPoint()
       simulation.addDrop(
-        Math.random() * 2 - 1,
-        Math.random() * 2 - 1,
+        dropX,
+        dropZ,
         DROP_RADIUS,
         index % 2 === 0 ? DROP_STRENGTH : -DROP_STRENGTH
       )
@@ -166,16 +266,13 @@ const WaterPool = ({
       )
 
       const center = new THREE.Vector3(...config.position)
-      center.x = THREE.MathUtils.clamp(
+      const [clampedX, clampedZ] = clampToWaterPool(
         center.x,
-        -POOL_HALF_SIZE + halfSize.x,
-        POOL_HALF_SIZE - halfSize.x
-      )
-      center.z = THREE.MathUtils.clamp(
         center.z,
-        -POOL_HALF_SIZE + halfSize.z,
-        POOL_HALF_SIZE - halfSize.z
+        Math.max(halfSize.x, halfSize.z)
       )
+      center.x = clampedX
+      center.z = clampedZ
       center.y = THREE.MathUtils.clamp(center.y, POOL_FLOOR_Y + halfSize.y, 10)
 
       const color = new THREE.Color(config.color ?? '#d9dde3').convertSRGBToLinear()
@@ -203,35 +300,15 @@ const WaterPool = ({
       lightDirection: lightDirectionUniform
     })
 
-    const waterGeometry = new THREE.PlaneGeometry(
-      POOL_HALF_SIZE * 2,
-      POOL_HALF_SIZE * 2,
-      segments,
-      segments
-    )
-    waterGeometry.rotateX(-Math.PI / 2)
+    const waterGeometry = createWaterSurfaceGeometry(segments)
     const waterMesh = new THREE.Mesh(waterGeometry, materials.water)
     waterMesh.name = 'WaterPoolSurface'
     waterMesh.frustumCulled = false
     scene.add(waterMesh)
 
-    // The basin is only visible above the water line: everything below it is
-    // drawn by the ray traced water shader. The top face is removed so the
-    // camera can look straight into the pool.
-    const basinGeometry = new THREE.BoxGeometry(
-      POOL_HALF_SIZE * 2,
-      POOL_RIM_Y - POOL_FLOOR_Y,
-      POOL_HALF_SIZE * 2
-    )
-    basinGeometry.translate(0, (POOL_RIM_Y + POOL_FLOOR_Y) * 0.5, 0)
-    const basinIndex = basinGeometry.getIndex()
-    if (basinIndex) {
-      const indices = Array.from(basinIndex.array)
-      // Face order of BoxGeometry: +x, -x, +y, -y, +z, -z.
-      indices.splice(12, 6)
-      basinGeometry.setIndex(indices)
-      basinGeometry.clearGroups()
-    }
+    // The basin has no top face, so the camera looks straight into the pool.
+    // Its walls follow the same irregular outline as the water surface.
+    const basinGeometry = createBasinGeometry(segments)
     const basinMesh = new THREE.Mesh(basinGeometry, materials.pool)
     basinMesh.name = 'WaterPoolBasin'
     scene.add(basinMesh)
@@ -297,22 +374,17 @@ const WaterPool = ({
       }
       target.copy(ray.origin).addScaledVector(ray.direction, distance)
 
-      return (
-        Math.abs(target.x) <= POOL_HALF_SIZE && Math.abs(target.z) <= POOL_HALF_SIZE
-      )
+      return isInsideWaterPool(target.x, target.z)
     }
 
     const clampToPool = (state: BoxState) => {
-      state.center.x = THREE.MathUtils.clamp(
+      const [clampedX, clampedZ] = clampToWaterPool(
         state.center.x,
-        -POOL_HALF_SIZE + state.halfSize.x,
-        POOL_HALF_SIZE - state.halfSize.x
-      )
-      state.center.z = THREE.MathUtils.clamp(
         state.center.z,
-        -POOL_HALF_SIZE + state.halfSize.z,
-        POOL_HALF_SIZE - state.halfSize.z
+        Math.max(state.halfSize.x, state.halfSize.z)
       )
+      state.center.x = clampedX
+      state.center.z = clampedZ
       state.center.y = THREE.MathUtils.clamp(
         state.center.y,
         POOL_FLOOR_Y + state.halfSize.y,
@@ -410,9 +482,10 @@ const WaterPool = ({
         rippleTimer += delta
         if (rippleTimer >= AUTO_RIPPLE_INTERVAL) {
           rippleTimer = 0
+          const [dropX, dropZ] = randomPoolPoint()
           simulation.addDrop(
-            Math.random() * 1.8 - 0.9,
-            Math.random() * 1.8 - 0.9,
+            dropX,
+            dropZ,
             DROP_RADIUS,
             Math.random() < 0.5 ? DROP_STRENGTH * 0.8 : -DROP_STRENGTH * 0.8
           )

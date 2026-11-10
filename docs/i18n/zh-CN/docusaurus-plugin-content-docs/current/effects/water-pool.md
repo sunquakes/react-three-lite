@@ -85,7 +85,7 @@ import WaterPool from '@site/src/components/effects/WaterPool'
 | 属性 | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
 | resolution | number | 128 | 每轴高度场网格数量，限制在 8–512 |
-| segments | number | 160 | 渲染水面每轴的细分数 |
+| segments | number | 160 | 沿不规则池壁轮廓的细分数 |
 | boxes | `{ position: [number, number, number]; size: [number, number, number]; color?: string }[]` | 三个方块 | 漂浮在水池中的不同形状方块 |
 | sunDirection | Vector3 \| [number, number, number] | [0.55, 0.9, 0.35] | 从水池指向太阳的方向 |
 | autoRipples | boolean | true | 每 1.8 秒自动产生一个随机涟漪 |
@@ -100,7 +100,7 @@ import WaterPool from '@site/src/components/effects/WaterPool'
 
 - CPU 高度场按网格保存 `(高度, 速度, 法线.x, 法线.z)`，并运行与原版一致的两次波动方程迭代。数据以 RGBA 半浮点 `DataTexture` 上传，在顶点节点中位移水面。
 - 焦散贴图通过把每个水面网格沿折射后的太阳光线投影到池底生成。投影的局部压缩会把光线聚集，因此焦散贴图按水面坐标索引，池底像素再按自己的太阳光线入射点进行采样。
-- 水面、瓷砖池壁与方块均在 TSL 中用解析射线着色：水面反射并折射方块、池壁与程序化天空，池底接收动态焦散，每个方块还会投下柔和阴影。
+- 水面、不规则的瓷砖池壁与方块均在 TSL 中用解析射线着色：水面反射并折射方块、池壁与程序化天空，池底接收动态焦散，每个方块还会投下柔和阴影。
 - 方块在水中移动时，会按其底面轮廓位移高度场，因此拖动方块会留下扩散的尾迹。
 - 模拟使用固定 1/60 秒的时间累加器，每帧最多补算三步，因此涟漪在任何刷新率下表现一致。
 
