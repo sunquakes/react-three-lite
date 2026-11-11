@@ -90,7 +90,8 @@ Components: `Scene`, `Bloom`, `Rain`, `Snow`, `HeightFog`, `Water`,
 Classes: `SkyBox`, `Popup`, `Callout`, `Movable`, `Animation`,
 `ModelRotator`, `Picker`, `SweepLight`, `LightGradient`, `LightPillar`,
 `Fireworks`, `SkyDome`, `RadarSweep`, `SignalWave`, `GlowSprite`,
-`TextFireworks`, `NebulaGalaxy`, `WaveCircleMesh`, `FlowLineMesh`, `FitCamera`.
+`TextFireworks`, `NebulaGalaxy`, `ForceShield`, `WaveCircleMesh`,
+`FlowLineMesh`, `FitCamera`.
 
 Functions: `GLTFLoaderAsync` / `FBXLoaderAsync` / `OBJLoaderAsync`,
 `disposeModel`, `disposeDRACOLoader`, `fitCameraToBox`, `fitCameraToObject`,
@@ -139,6 +140,7 @@ Functions: `GLTFLoaderAsync` / `FBXLoaderAsync` / `OBJLoaderAsync`,
 | Draggable object | `Movable` class |
 | Rain, snow, water, fog | `Rain`, `Snow`, `Water`, `WaterPool`, `HeightFog` components |
 | Glow / post-processing | `Bloom` component, `GlowSprite` class |
+| Sci-fi energy shield with impacts | `ForceShield` class (`hit()`, `setActive()`, `life`) |
 | Maps and tiles | `GeoReference` + `TileLayer`, `GeoObject`, `GeoJsonLayer` |
 
 ## Look before you write

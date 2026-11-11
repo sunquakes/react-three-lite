@@ -38,6 +38,7 @@ Visit [r3l.sunquakes.com](https://r3l.sunquakes.com).
 - **SignalWave** — Billboarded broadcast ping wave
 - **GlowSprite** — Camera-facing halo sprite with optional pulse
 - **NebulaGalaxy** — Particle nebula galaxy
+- **ForceShield** — Hexagonal energy shield with impact rings and a dissolve animation
 - **Callout** — Leader line annotation with auto-anchor camera tracking
 - **Popup** — Interactive 3D popup dialogs
 - **Movable** — Draggable scene elements

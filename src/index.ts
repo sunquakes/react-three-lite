@@ -39,6 +39,7 @@ import SignalWave from './utils/SignalWave'
 import GlowSprite from './utils/GlowSprite'
 import TextFireworks from './utils/TextFireworks'
 import NebulaGalaxy from './utils/NebulaGalaxy'
+import ForceShield from './utils/ForceShield'
 import {
   fitCameraToBox,
   fitCameraToObject,
@@ -59,6 +60,7 @@ import type { SignalWaveOptions } from './utils/SignalWave'
 import type { GlowSpriteOptions } from './utils/GlowSprite'
 import type { TextFireworksOptions } from './utils/TextFireworks'
 import type { NebulaGalaxyOptions, GalaxyPalette } from './utils/NebulaGalaxy'
+import type { ForceShieldOptions } from './utils/ForceShield'
 import type { CameraFitOptions } from './utils/CameraFit'
 
 // components
@@ -157,6 +159,7 @@ export type { SignalWaveOptions }
 export type { GlowSpriteOptions }
 export type { TextFireworksOptions }
 export type { NebulaGalaxyOptions, GalaxyPalette }
+export type { ForceShieldOptions }
 export type { CameraFitOptions }
 export type { FitCameraOptions } from './utils/FitCamera'
 
@@ -181,6 +184,7 @@ export {
   GlowSprite,
   TextFireworks,
   NebulaGalaxy,
+  ForceShield,
   FitCamera
 }
 

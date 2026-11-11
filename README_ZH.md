@@ -38,6 +38,7 @@
 - **SignalWave** — 面向相机的广播信号波
 - **GlowSprite** — 面向相机的光晕精灵，可自动脉动
 - **NebulaGalaxy** — 粒子星云星系
+- **ForceShield** — 六边形能量护盾，带命中扩散环与溶解动画
 - **Callout** — 引线注释，支持自动锚点跟随相机
 - **Popup** — 3D 交互弹窗
 - **Movable** — 可拖拽场景元素

@@ -170,5 +170,9 @@
   "sidebar.guideSidebar.doc.effects/sandy-beach": {
     "message": "沙滩漫步",
     "description": "The label for doc 'effects/sandy-beach' in sidebar 'guideSidebar'"
+  },
+  "sidebar.guideSidebar.doc.effects/force-shield": {
+    "message": "能量护盾",
+    "description": "The label for doc 'effects/force-shield' in sidebar 'guideSidebar'"
   }
 }

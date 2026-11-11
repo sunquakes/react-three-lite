@@ -64,6 +64,7 @@ const sidebars = {
             'effects/light-pillar',
             'effects/radar-sweep',
             'effects/signal-wave',
+            'effects/force-shield',
           ],
         },
         {
