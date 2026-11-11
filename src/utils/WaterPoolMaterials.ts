@@ -4,7 +4,6 @@ import {
   Fn,
   If,
   abs,
-  atan,
   cameraPosition,
   clamp,
   dot,
@@ -28,13 +27,12 @@ import {
   vec2,
   vec3
 } from 'three/tsl'
-import { WATER_POOL_EDGES } from './WaterPoolShape'
 
 /**
  * Ray traced materials for the interactive water pool.
  *
  * The shading follows Evan Wallace's original webgl-water demo: the water
- * surface, the tiled basin and the floating boxes are all shaded in the
+ * surface, the basin floor and the floating boxes are all shaded in the
  * fragment shader with analytic rays, so the effect renders identically with
  * the WebGPU and the WebGL backend and does not need any render targets.
  *
@@ -54,12 +52,14 @@ export interface WaterPoolMaterialOptions {
   waterTexture: THREE.Texture
   /** RGBA texture storing the caustic light map in the red channel. */
   causticTexture: THREE.Texture
-  /** Tile texture used by the basin floor and walls. */
-  tileTexture: THREE.Texture
   /** Boxes floating in the pool, sharing the same ray traced shading. */
   boxes: WaterPoolBoxNodes[]
   /** Uniform holding the normalized direction towards the sun. */
   lightDirection: Node<'vec3'>
+  /** Uniform holding the world position of the pool surface centre. */
+  poolCenter: Node<'vec3'>
+  /** Uniform holding the uniform scale applied to the pool. */
+  poolScale: Node<'float'>
 }
 
 export interface WaterPoolMaterials {
@@ -74,7 +74,6 @@ const IOR_WATER = 1.333
 const SURFACE_TO_AIR = IOR_AIR / IOR_WATER
 const AIR_TO_SURFACE = IOR_WATER / IOR_AIR
 const POOL_FLOOR_Y = -1
-const POOL_RIM_Y = 1 / 6
 const RAY_MISS = 1e6
 
 /**
@@ -89,9 +88,23 @@ const underwaterTintColor = vec3(0.62, 0.86, 1.0)
 interface ShadingContext {
   waterTexture: THREE.Texture
   causticTexture: THREE.Texture
-  tileTexture: THREE.Texture
   boxes: WaterPoolBoxNodes[]
   lightDirection: Node<'vec3'>
+  poolCenter: Node<'vec3'>
+  poolScale: Node<'float'>
+}
+
+/**
+ * World point expressed in the pool's own space, where the surface centre is
+ * the origin, the floor sits at y = -1 and the outline fits into -1…1. The pool
+ * mesh is a scaled and translated group, so every ray is traced in this space
+ * and the shading does not depend on where the pool is placed.
+ */
+function poolSpacePointNode(
+  point: Node<'vec3'>,
+  context: ShadingContext
+): Node<'vec3'> {
+  return point.sub(context.poolCenter).div(context.poolScale)
 }
 
 /** Direction the sunlight travels after entering the flat water surface. */
@@ -133,37 +146,6 @@ export function waterPoolSkyColorNode(
     .add(horizonGlow)
     .add(vec3(1.0, 0.9, 0.72).mul(sunDisc))
     .add(vec3(1.0, 0.82, 0.58).mul(sunHalo))
-}
-
-/**
- * Distance along `ray` to the wall of the irregular basin, or `RAY_MISS` when
- * the ray travels straight up or down and never reaches a wall.
- *
- * The outline is convex, so clamping the positive hit of every inward
- * half-plane yields the exact exit point. Rays start on the water surface,
- * which always lies inside the outline.
- */
-function intersectPoolWallNode(
-  origin: Node<'vec3'>,
-  ray: Node<'vec3'>
-): Node<'float'> {
-  const wallHit = float(RAY_MISS).toVar()
-  const originXZ = vec2(origin.x, origin.z)
-  const directionXZ = vec2(ray.x, ray.z)
-
-  WATER_POOL_EDGES.forEach((edge) => {
-    const normal = vec2(edge.nx, edge.nz)
-    const denominator = dot(normal, directionXZ)
-    const distance = float(edge.offset).sub(dot(normal, originXZ)).div(denominator)
-    const valid = denominator
-      .lessThan(-1e-5)
-      .and(distance.greaterThan(0))
-      .and(distance.lessThan(wallHit))
-
-    wallHit.assign(select(valid, distance, wallHit))
-  })
-
-  return wallHit
 }
 
 /**
@@ -251,7 +233,7 @@ function boxColorNode(
   // caustics desaturate every box into the same pale cyan.
   color.mulAssign(light)
 
-  const viewDirection = normalize(cameraPosition.sub(point))
+  const viewDirection = normalize(poolSpacePointNode(cameraPosition, context).sub(point))
   const halfVector = normalize(viewDirection.add(context.lightDirection))
   const specular = pow(max(dot(normal, halfVector), 0), 96).mul(0.35)
   const reflection = waterPoolSkyColorNode(
@@ -264,26 +246,11 @@ function boxColorNode(
   return color
 }
 
-/** Shading of the basin floor and walls, with caustics and box occlusion. */
+/** Shading of the basin floor, with caustics and box occlusion. */
 function basinColorNode(point: Node<'vec3'>, context: ShadingContext): Node<'vec3'> {
-  const color = vec3(0).toVar()
-  const normal = vec3(0).toVar()
-
-  // The floor is a flat disc at the bottom and the walls rise from it, so the
-  // height alone separates the two surfaces of the irregular basin.
-  If(point.y.lessThan(POOL_FLOOR_Y + 0.005), () => {
-    color.assign(texture(context.tileTexture, point.xz.mul(0.5).add(0.5)).rgb)
-    normal.assign(vec3(0, 1, 0))
-  }).Else(() => {
-    // Arc length around the outline drives the horizontal tile coordinate so
-    // the mosaic keeps roughly the same size as on the floor.
-    const wallUv = vec2(
-      atan(point.z, point.x).mul(0.44).add(1),
-      point.y.mul(0.5).add(0.5)
-    )
-    color.assign(texture(context.tileTexture, wallUv).rgb)
-    normal.assign(normalize(vec3(point.x.negate(), 0, point.z.negate())))
-  })
+  // Plain floor color: no tile grid, only the caustics and shadows vary it.
+  const color = vec3(0.59, 0.77, 0.78)
+  const normal = vec3(0, 1, 0)
 
   const scale = float(0.5).div(length(point)).toVar()
 
@@ -331,7 +298,7 @@ function basinColorNode(point: Node<'vec3'>, context: ShadingContext): Node<'vec
 
 /**
  * Color seen when a water ray leaves the surface, tracing the boxes, the basin
- * walls or the sky depending on where the ray goes.
+ * floor or the sky depending on where the ray goes.
  */
 function surfaceRayColorNode(
   origin: Node<'vec3'>,
@@ -353,25 +320,13 @@ function surfaceRayColorNode(
   If(nearest.lessThan(RAY_MISS * 0.5), () => {
     color.assign(hitColor)
   }).Else(() => {
-    const wallHit = intersectPoolWallNode(origin, ray)
-
     If(ray.y.lessThan(0), () => {
-      // Downward rays hit the flat floor unless the irregular wall is closer.
+      // Downward rays reach the flat basin floor. The pool has no basin wall,
+      // so upward rays escape through the open top towards the sky.
       const floorHit = float(POOL_FLOOR_Y).sub(origin.y).div(ray.y)
-      If(wallHit.lessThan(floorHit), () => {
-        color.assign(basinColorNode(origin.add(ray.mul(wallHit)), context))
-      }).Else(() => {
-        color.assign(basinColorNode(origin.add(ray.mul(floorHit)), context))
-      })
+      color.assign(basinColorNode(origin.add(ray.mul(floorHit)), context))
     }).Else(() => {
-      // Upward rays either graze a wall below the rim or escape to the sky
-      // through the open top of the pool.
-      const rimHit = float(POOL_RIM_Y).sub(origin.y).div(ray.y)
-      If(wallHit.lessThan(rimHit), () => {
-        color.assign(basinColorNode(origin.add(ray.mul(wallHit)), context))
-      }).Else(() => {
-        color.assign(waterPoolSkyColorNode(ray, context.lightDirection))
-      })
+      color.assign(waterPoolSkyColorNode(ray, context.lightDirection))
     })
   })
 
@@ -385,8 +340,11 @@ function surfaceRayColorNode(
 }
 
 /** Samples the height field and reconstructs the rippled surface normal. */
-function waterNormalNode(waterTexture: THREE.Texture): Node<'vec3'> {
-  let coord: Node<'vec2'> = positionWorld.xz.mul(0.5).add(0.5)
+function waterNormalNode(
+  waterTexture: THREE.Texture,
+  point: Node<'vec3'>
+): Node<'vec3'> {
+  let coord: Node<'vec2'> = point.xz.mul(0.5).add(0.5)
   let info = texture(waterTexture, coord)
 
   // The original demo walks a few steps along the normal so that ripples read
@@ -410,9 +368,10 @@ export function createWaterPoolMaterials(
   const context: ShadingContext = {
     waterTexture: options.waterTexture,
     causticTexture: options.causticTexture,
-    tileTexture: options.tileTexture,
     boxes: options.boxes,
-    lightDirection: options.lightDirection
+    lightDirection: options.lightDirection,
+    poolCenter: options.poolCenter,
+    poolScale: options.poolScale
   }
 
   const water = new MeshBasicNodeMaterial()
@@ -425,8 +384,12 @@ export function createWaterPoolMaterials(
     return vec3(positionLocal.x, height, positionLocal.z)
   })()
   water.colorNode = Fn(() => {
-    const incomingRay = normalize(positionWorld.sub(cameraPosition))
-    const normal = waterNormalNode(context.waterTexture)
+    // Trace the rays in pool space, where the floor and the height field have
+    // their fixed positions regardless of where the pool is placed or scaled.
+    const surfacePoint = poolSpacePointNode(positionWorld, context)
+    const cameraPoint = poolSpacePointNode(cameraPosition, context)
+    const incomingRay = normalize(surfacePoint.sub(cameraPoint))
+    const normal = waterNormalNode(context.waterTexture, surfacePoint)
     const color = vec3(0).toVar()
 
     If(frontFacing, () => {
@@ -434,8 +397,8 @@ export function createWaterPoolMaterials(
       const refractedRay = refract(incomingRay, normal, SURFACE_TO_AIR)
       const cosTheta = clamp(dot(normal, incomingRay.negate()), 0, 1)
       const fresnel = mix(0.08, 1, pow(float(1).sub(cosTheta), 3))
-      const reflected = surfaceRayColorNode(positionWorld, reflectedRay, context)
-      const refracted = surfaceRayColorNode(positionWorld, refractedRay, context)
+      const reflected = surfaceRayColorNode(surfacePoint, reflectedRay, context)
+      const refracted = surfaceRayColorNode(surfacePoint, refractedRay, context)
 
       color.assign(mix(refracted, reflected, fresnel))
     }).Else(() => {
@@ -444,9 +407,9 @@ export function createWaterPoolMaterials(
       const refractedRay = refract(incomingRay, flippedNormal, AIR_TO_SURFACE)
       const cosTheta = clamp(dot(flippedNormal, incomingRay.negate()), 0, 1)
       const fresnel = mix(0.5, 1, pow(float(1).sub(cosTheta), 3))
-      const reflected = surfaceRayColorNode(positionWorld, reflectedRay, context)
+      const reflected = surfaceRayColorNode(surfacePoint, reflectedRay, context)
       const refracted = surfaceRayColorNode(
-        positionWorld,
+        surfacePoint,
         refractedRay,
         context
       ).mul(underwaterTintColor)
@@ -463,13 +426,14 @@ export function createWaterPoolMaterials(
   pool.name = 'WaterPoolBasin'
   pool.side = THREE.DoubleSide
   pool.colorNode = Fn(() => {
-    const color = basinColorNode(positionWorld, context).toVar()
+    const basinPoint = poolSpacePointNode(positionWorld, context).toVar()
+    const color = basinColorNode(basinPoint, context).toVar()
     const waterHeight = texture(
       context.waterTexture,
-      positionWorld.xz.mul(0.5).add(0.5)
+      basinPoint.xz.mul(0.5).add(0.5)
     ).r
 
-    If(positionWorld.y.lessThan(waterHeight), () => {
+    If(basinPoint.y.lessThan(waterHeight), () => {
       color.mulAssign(underwaterTintColor.mul(1.1))
     })
 
@@ -480,13 +444,14 @@ export function createWaterPoolMaterials(
     const material = new MeshBasicNodeMaterial()
     material.name = 'WaterPoolBox'
     material.colorNode = Fn(() => {
-      const color = boxColorNode(positionWorld, box, context).toVar()
+      const boxPoint = poolSpacePointNode(positionWorld, context).toVar()
+      const color = boxColorNode(boxPoint, box, context).toVar()
       const waterHeight = texture(
         context.waterTexture,
-        positionWorld.xz.mul(0.5).add(0.5)
+        boxPoint.xz.mul(0.5).add(0.5)
       ).r
 
-      If(positionWorld.y.lessThan(waterHeight), () => {
+      If(boxPoint.y.lessThan(waterHeight), () => {
         color.mulAssign(underwaterTintColor.mul(1.1))
       })
 
@@ -508,70 +473,4 @@ export function createWaterPoolMaterials(
   )()
 
   return { water, pool, boxes, sky }
-}
-
-/**
- * Builds a small mosaic tile texture for the basin. Generated in a canvas so
- * the component stays self contained and does not download any assets.
- */
-export function createWaterPoolTileTexture(): THREE.CanvasTexture {
-  const size = 512
-  const tiles = 8
-  const gap = 7
-  const canvas = document.createElement('canvas')
-  canvas.width = size
-  canvas.height = size
-  const context = canvas.getContext('2d')
-
-  if (!context) {
-    throw new Error('WaterPool requires a 2D canvas context to build its tile texture')
-  }
-
-  context.fillStyle = '#8fa1a1'
-  context.fillRect(0, 0, size, size)
-
-  const cell = size / tiles
-  for (let row = 0; row < tiles; row += 1) {
-    for (let column = 0; column < tiles; column += 1) {
-      const variation = (Math.sin(row * 12.9898 + column * 78.233) * 43758.5453) % 1
-      const light = 0.94 + Math.abs(variation) * 0.08
-      const red = Math.round(150 * light)
-      const green = Math.round(196 * light)
-      const blue = Math.round(198 * light)
-
-      context.fillStyle = `rgb(${red}, ${green}, ${blue})`
-      context.fillRect(
-        column * cell + gap * 0.5,
-        row * cell + gap * 0.5,
-        cell - gap,
-        cell - gap
-      )
-
-      const sheen = context.createLinearGradient(
-        column * cell,
-        row * cell,
-        column * cell + cell,
-        row * cell + cell
-      )
-      sheen.addColorStop(0, 'rgba(255, 255, 255, 0.22)')
-      sheen.addColorStop(0.55, 'rgba(255, 255, 255, 0.04)')
-      sheen.addColorStop(1, 'rgba(20, 40, 50, 0.1)')
-      context.fillStyle = sheen
-      context.fillRect(
-        column * cell + gap * 0.5,
-        row * cell + gap * 0.5,
-        cell - gap,
-        cell - gap
-      )
-    }
-  }
-
-  const tileTexture = new THREE.CanvasTexture(canvas)
-  tileTexture.colorSpace = THREE.SRGBColorSpace
-  tileTexture.wrapS = THREE.RepeatWrapping
-  tileTexture.wrapT = THREE.RepeatWrapping
-  tileTexture.anisotropy = 4
-  tileTexture.needsUpdate = true
-
-  return tileTexture
 }

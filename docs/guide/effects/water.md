@@ -75,10 +75,16 @@ Every example below can be viewed with either the **WebGPU** (default) or the **
 
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
-| sunDirection | Vector3 \| [number, number, number] | [-0.58, 0.1, -0.81] | Direction from the water surface towards the sun |
 | captureResolution | number | 512 | Longest edge of the planar reflection and refraction captures, in device pixels |
 | segments | number | 240 | Plane subdivisions per axis |
 | size | number | 420 | Size of the water patch, in world units |
+| position | Vector3 \| [number, number, number] | [0, 0, 0] | World position of the water surface centre |
+
+The sun direction is shared, not a prop: `Water` reads it from the [global parameter bus](/guide/effects/global-parameters), so the same sun lights the sky, the water and the pool. Set it once per scene:
+
+```ts
+globalParameterBus.set('sunDirection', new THREE.Vector3(-0.58, 0.1, -0.81))
+```
 
 ## Renderer Support
 

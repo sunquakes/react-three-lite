@@ -31,6 +31,7 @@ Visit [r3l.sunquakes.com](https://r3l.sunquakes.com).
 - **SandyBeach** — Walkable dawn beach island with footprints in the sand
 - **SkyBox** — Skybox background support
 - **SkyDome** — Gradient sky dome with a low sun
+- **Global Parameters** — Shared sun direction that keeps `SkyDome`, `Water`, `WaterPool` and `HeightFog` in sync
 - **SweepLight** — Model sweep light animation
 - **LightGradient** — Dynamic lighting gradient effect
 - **LightPillar** — Vertical light pillar effect

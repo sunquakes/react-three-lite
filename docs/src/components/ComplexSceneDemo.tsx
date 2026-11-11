@@ -28,7 +28,8 @@ import {
   SkyDome,
   Snow,
   SweepLight,
-  disposeModel
+  disposeModel,
+  globalParameterBus
 } from 'react-three-lite'
 import type { SceneComponents } from 'react-three-lite'
 
@@ -1361,6 +1362,9 @@ export default function ComplexSceneDemo({
     const { camera, light, controls } = components
     sceneRef.current = scene
 
+    // Sky dome, fog and every other effect share this sun direction.
+    globalParameterBus.set('sunDirection', SUN_DIRECTION)
+
     // Pulled back so both the drive start on the open plain and the crater rim
     // stay inside the frame while the rover makes its descent.
     camera.position.set(14, 6.5, 9)
@@ -1400,8 +1404,7 @@ export default function ComplexSceneDemo({
     // Sky dome, replaces the default scene background. Its radius has to stay
     // outside the widened terrain but inside the camera far plane.
     const sky = new SkyDome({
-      radius: 900,
-      sunDirection: [SUN_DIRECTION.x, SUN_DIRECTION.y, SUN_DIRECTION.z]
+      radius: 900
     })
     scene.add(sky)
     extraRef.current.push(sky)

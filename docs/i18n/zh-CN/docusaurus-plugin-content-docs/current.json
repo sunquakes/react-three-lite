@@ -103,6 +103,10 @@
     "message": "流动线网格",
     "description": "The label for doc 'meshes/flow-line-mesh' in sidebar 'guideSidebar'"
   },
+  "sidebar.guideSidebar.doc.effects/global-parameters": {
+    "message": "全局参数总线",
+    "description": "The label for doc 'effects/global-parameters' in sidebar 'guideSidebar'"
+  },
   "sidebar.guideSidebar.doc.effects/bloom": {
     "message": "光晕效果",
     "description": "The label for doc 'effects/bloom' in sidebar 'guideSidebar'"

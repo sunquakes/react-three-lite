@@ -1,6 +1,6 @@
 import { useRef, useEffect } from 'react'
 import * as THREE from 'three'
-import { Scene, SkyDome } from 'react-three-lite'
+import { Scene, SkyDome, globalParameterBus } from 'react-three-lite'
 import type { SceneComponents } from 'react-three-lite'
 
 interface SkyDomeProps {
@@ -15,6 +15,9 @@ export default function SkyDomeComponent({ rendererType }: SkyDomeProps) {
 
     camera.position.set(0, 0.8, 7)
     camera.lookAt(0, 0.8, 0)
+
+    // One shared sun direction drives every effect in the scene.
+    globalParameterBus.set('sunDirection', new THREE.Vector3(-0.78, 0.2, -0.6))
 
     skyRef.current = new SkyDome()
     scene.add(skyRef.current)

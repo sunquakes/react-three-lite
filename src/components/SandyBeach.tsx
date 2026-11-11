@@ -20,7 +20,8 @@ export interface SandyBeachProps {
  * The island is a 260 m ring: the sand height, the wet band, the footprints and
  * the ocean swells all share one set of shore coordinates, so the waterline,
  * the walker and the shader stay aligned at every angle. Only sand and water are
- * shaded, so the sky above the horizon is left to the Scene background colour.
+ * shaded, so the sky above the horizon is painted with the Scene background
+ * colour.
  *
  * Drag to look around, walk with `WASD` / the arrow keys, and scroll to take a
  * step forward. Pass a `preset` to cross-fade between times of day.

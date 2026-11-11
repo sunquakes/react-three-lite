@@ -31,6 +31,7 @@
 - **SandyBeach** — 可行走的黎明沙滩岛屿，沙面留下脚印
 - **SkyBox** — 天空盒背景
 - **SkyDome** — 带低角度太阳的渐变天穹
+- **全局参数** — 共享太阳方向，让 `SkyDome`、`Water`、`WaterPool` 与 `HeightFog` 保持一致
 - **SweepLight** — 模型扫描光线动画
 - **LightGradient** — 动态光照渐变效果
 - **LightPillar** — 垂直光柱效果

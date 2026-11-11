@@ -1,6 +1,6 @@
 import { useRef, useEffect } from 'react'
 import * as THREE from 'three'
-import { Scene, HeightFog } from 'react-three-lite'
+import { Scene, HeightFog, globalParameterBus } from 'react-three-lite'
 import type { SceneComponents } from 'react-three-lite'
 
 interface HeightFogProps {
@@ -25,6 +25,9 @@ export default function HeightFogComponent({ rendererType }: HeightFogProps) {
     const { camera } = components
     camera.position.set(0, 5, 14)
     camera.lookAt(0, 7, -12)
+
+    // Same direction the old lightAzimuth 30° / lightElevation 25° produced.
+    globalParameterBus.set('sunDirection', new THREE.Vector3(0.453, 0.423, 0.785))
 
     const ground = new THREE.Mesh(
       new THREE.PlaneGeometry(400, 400),

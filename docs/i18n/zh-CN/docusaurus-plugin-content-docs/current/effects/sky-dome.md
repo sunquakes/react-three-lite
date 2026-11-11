@@ -110,12 +110,17 @@ import SkyDome from '@site/src/components/effects/SkyDome'
 | lowerSkyColor | number | 0x803624 | 地平线上方的颜色 |
 | upperSkyColor | number | 0x260f13 | 中间过渡色带的颜色 |
 | zenithColor | number | 0x060409 | 穹顶顶部的颜色 |
-| sunDirection | [number, number, number] | [-0.78, 0.2, -0.6] | 太阳方向，内部会自动归一化 |
 | glowColor | number | 0xff9947 | 太阳周围宽光晕的颜色 |
 | sunColor | number | 0xffe0b8 | 日轮的颜色 |
 | sunIntensity | number | 2.4 | 日轮的亮度系数 |
 | sunSize | number | 10 | 日轮的角直径（单位：度）。日轮在屏幕空间绘制，因此无论太阳位于视野何处都保持正圆 |
 | segments | number | 48 | 穹顶球体的水平分段数 |
+
+太阳方向来自[全局参数总线](/zh-CN/guide/effects/global-parameters)，日轮会自动跟随水面、水池与雾效使用的同一个太阳：
+
+```ts
+globalParameterBus.set('sunDirection', new THREE.Vector3(-0.78, 0.2, -0.6))
+```
 
 ## 方法
 

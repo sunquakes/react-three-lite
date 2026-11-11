@@ -74,10 +74,16 @@ import Water from '@site/src/components/effects/Water'
 
 | 属性 | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
-| sunDirection | Vector3 \| [number, number, number] | [-0.58, 0.1, -0.81] | 从水面指向太阳的方向 |
 | captureResolution | number | 512 | 平面反射与折射捕获的最长边像素数 |
 | segments | number | 240 | 平面每轴细分数 |
 | size | number | 420 | 水面平面尺寸（世界单位） |
+| position | Vector3 \| [number, number, number] | [0, 0, 0] | 水面的世界坐标中心位置 |
+
+太阳方向不再是属性，而是从[全局参数总线](/zh-CN/guide/effects/global-parameters)读取，因此天空、水面与水池共用同一个太阳。每个场景只需设置一次：
+
+```ts
+globalParameterBus.set('sunDirection', new THREE.Vector3(-0.58, 0.1, -0.81))
+```
 
 ## 渲染器支持
 

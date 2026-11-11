@@ -91,12 +91,19 @@ Classes: `SkyBox`, `Popup`, `Callout`, `Movable`, `Animation`,
 `ModelRotator`, `Picker`, `SweepLight`, `LightGradient`, `LightPillar`,
 `Fireworks`, `SkyDome`, `RadarSweep`, `SignalWave`, `GlowSprite`,
 `TextFireworks`, `NebulaGalaxy`, `ForceShield`, `WaveCircleMesh`,
-`FlowLineMesh`, `FitCamera`.
+`FlowLineMesh`, `FitCamera`, `ParameterBus`.
 
 Functions: `GLTFLoaderAsync` / `FBXLoaderAsync` / `OBJLoaderAsync`,
 `disposeModel`, `disposeDRACOLoader`, `fitCameraToBox`, `fitCameraToObject`,
 `fitCameraToPoints`, `fitCameraToGeoPoints`, plus the GIS helpers exported from
 `GeoReference` / `crs`.
+
+Shared state: `globalParameterBus` (a `ParameterBus` instance) holds the
+parameters consumed by several effects. It currently exposes `sunDirection`,
+which `SkyDome`, `Water`, `WaterPool` and `HeightFog` read, so the sun is set
+once with
+`globalParameterBus.set('sunDirection', new THREE.Vector3(x, y, z))` instead of
+passing a prop to every effect.
 
 ## Rules
 
@@ -126,6 +133,10 @@ Functions: `GLTFLoaderAsync` / `FBXLoaderAsync` / `OBJLoaderAsync`,
    camera far plane. Raise `camera.far` in `onCreated` for big models.
 10. **Labels:** `Popup` and `Callout` render HTML through `CSS2DRenderer`; R3L
     already corrects the WebGPU Y axis, so do not counter-rotate them.
+11. **One sun for the whole scene.** `SkyDome`, `Water`, `WaterPool` and
+    `HeightFog` have no sun direction props. Set
+    `globalParameterBus.set('sunDirection', new THREE.Vector3(x, y, z))` once;
+    every effect reads and subscribes to it.
 
 ## Common tasks
 
@@ -139,6 +150,7 @@ Functions: `GLTFLoaderAsync` / `FBXLoaderAsync` / `OBJLoaderAsync`,
 | HTML label anchored in 3D | `Popup` or `Callout` class |
 | Draggable object | `Movable` class |
 | Rain, snow, water, fog | `Rain`, `Snow`, `Water`, `WaterPool`, `HeightFog` components |
+| Shared sun direction | `globalParameterBus.set('sunDirection', ...)` |
 | Glow / post-processing | `Bloom` component, `GlowSprite` class |
 | Sci-fi energy shield with impacts | `ForceShield` class (`hit()`, `setActive()`, `life`) |
 | Maps and tiles | `GeoReference` + `TileLayer`, `GeoObject`, `GeoJsonLayer` |
@@ -151,7 +163,9 @@ from the name.
 
 - Scene: https://r3l.sunquakes.com/guide/scene
 - Effects: `https://r3l.sunquakes.com/guide/effects/<name>` (e.g. `rain`,
-  `snow`, `bloom`, `sky-dome`, `water`, `fireworks`)
+  `snow`, `bloom`, `sky-dome`, `water`, `fireworks`, `global-parameters`)
+- Global parameters:
+  https://r3l.sunquakes.com/guide/effects/global-parameters
 - Loaders: https://r3l.sunquakes.com/guide/model-loader-component
 - Picking: https://r3l.sunquakes.com/guide/picking
 - GIS: https://r3l.sunquakes.com/guide/gis/tile-layer

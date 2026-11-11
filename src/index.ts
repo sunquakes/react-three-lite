@@ -48,6 +48,7 @@ import {
   isGeoPoint
 } from './utils/CameraFit'
 import { FitCamera } from './utils/FitCamera'
+import { ParameterBus, globalParameterBus } from './utils/ParameterBus'
 
 import { LightGradient, LightGradientOptions } from './utils/Light'
 import type { CalloutOptions, LineShape, BendAxis, LabelAnchor } from './utils/Callout'
@@ -139,6 +140,7 @@ export type {
 export type { GeoObjectProps } from './components/GeoObject'
 export type { WaterProps } from './components/Water'
 export type { WaterPoolProps } from './components/WaterPool'
+export type { WaterPoolOutline, WaterPoolShape } from './utils/WaterPoolShape'
 export type { SandyBeachProps } from './components/SandyBeach'
 export type { BeachPresetName } from './utils/BeachPresets'
 export type { GeoJsonLayerProps, GeoJsonStyle } from './components/GeoJsonLayer'
@@ -162,6 +164,7 @@ export type { NebulaGalaxyOptions, GalaxyPalette }
 export type { ForceShieldOptions }
 export type { CameraFitOptions }
 export type { FitCameraOptions } from './utils/FitCamera'
+export type { GlobalParameters } from './utils/ParameterBus'
 
 // class
 export {
@@ -187,6 +190,9 @@ export {
   ForceShield,
   FitCamera
 }
+
+// class - global environment parameters shared by scene effects
+export { ParameterBus, globalParameterBus }
 
 // function - async loaders (no hooks)
 export {

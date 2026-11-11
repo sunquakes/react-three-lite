@@ -26,7 +26,6 @@ export interface WaterPoolSimulationOptions {
 
 export const WATER_POOL_HALF_SIZE = 1
 export const WATER_POOL_FLOOR_Y = -1
-export const WATER_POOL_RIM_Y = 1 / 6
 export const WATER_POOL_SURFACE_Y = 0
 
 const DEFAULT_LIGHT_DIRECTION: [number, number, number] = [0.55, 0.9, 0.35]
@@ -115,6 +114,19 @@ export class WaterPoolSimulation {
     this.updateNormals()
     this.updateCaustics()
     this.syncWaterTexture()
+  }
+
+  /**
+   * Updates the sun direction used by the caustic map. Directions at or below
+   * the horizon are ignored, matching the constructor fallback.
+   */
+  setLightDirection(direction: THREE.Vector3 | [number, number, number]): void {
+    const next = Array.isArray(direction) ? new THREE.Vector3(...direction) : direction
+    if (next.y <= 0) {
+      return
+    }
+    this.lightDirection.copy(next).normalize()
+    this.updateCaustics()
   }
 
   /**

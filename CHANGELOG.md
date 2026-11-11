@@ -12,9 +12,12 @@
 - Add height-map collision to the `Rain` component: drops sample a grayscale `heightMap` in the vertex shader and stop at the displaced surface instead of falling through it. `heightMapSize`, `heightMapAmplitude` and `groundHeight` map the texture onto world space, the sampling matches a plane's UVs so terrain displaced by the same image lines up with the impacts, and wind drift is corrected by re-sampling the landing point.
 - Add landing splashes to `Rain`: every impact draws an expanding ripple flush with the surface, sharing the drop geometry. `splash`, `splashColor`, `splashSize` and `splashDuration` tune or disable it.
 - Add a collision demo plus bilingual documentation for the new rain options, and unit tests for the ground resolution and splash window.
+- Add the `ParameterBus` class and the `globalParameterBus` instance: a process-wide store for scene-wide environment parameters that effects read when they are created and subscribe to for live updates.
 
 ### Changed
 
+- Move the sun direction out of the individual effects. `SkyDome`, `Water`, `WaterPool` and `HeightFog` no longer accept `sunDirection`, and `HeightFog` no longer accepts `lightAzimuth` / `lightElevation`. Set `globalParameterBus.set('sunDirection', ...)` once instead and every effect follows it, including the pool caustics through the new `WaterPoolSimulation.setLightDirection`.
+- Add a bilingual `Global Parameters` documentation page, link the affected effect pages to it, and cover the bus and the live caustic updates with unit tests.
 - Enable three's GPU-driven `MeshletDrawingPipeline` by default on the WebGPU renderer when the installed three ships it (r187+). Geometries are split into meshlets with a chain of simplified levels of detail, and hidden clusters are culled on the GPU. Objects and materials the pipeline does not support keep using the standard pipeline, and the WebGL backend is unaffected. The module is loaded lazily, so the minimum supported three version is unchanged (`>= 0.180`) and older releases simply keep the standard pipeline.
 
 ## [0.8.0] - 2026-10-29

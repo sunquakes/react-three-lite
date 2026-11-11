@@ -8,9 +8,13 @@ import {
 } from '../utils/WaterPoolSimulation'
 import { createWaterPoolMaterials } from '../utils/WaterPoolMaterials'
 import {
-  WATER_POOL_OUTLINE,
+  WATER_POOL_BOX_OUTLINE,
   clampToWaterPool,
+  convexHull2D,
+  createWaterPoolEdges,
+  getWaterPoolBounds,
   isInsideWaterPool,
+  resolveWaterPoolShape,
   sampleWaterPoolOutline
 } from '../utils/WaterPoolShape'
 
@@ -161,40 +165,161 @@ describe('WaterPoolSimulation', () => {
       expect(Number.isFinite(THREE.DataUtils.fromHalfFloat(data[index]))).toBe(true)
     }
   })
+
+  it('recomputes the caustics when the sun direction changes', () => {
+    const simulation = createSimulation()
+    simulation.addDrop(0.1, -0.2, 0.2, 0.05)
+    for (let frame = 0; frame < 20; frame += 1) {
+      simulation.step(2)
+    }
+    simulation.updateNormals()
+    simulation.updateCaustics()
+
+    const before = causticBytes(simulation)
+    simulation.setLightDirection(new THREE.Vector3(-0.78, 0.2, -0.6))
+    const after = causticBytes(simulation)
+
+    expect(after).not.toEqual(before)
+  })
+
+  it('ignores sun directions below the horizon', () => {
+    const simulation = createSimulation()
+    const before = causticBytes(simulation)
+
+    simulation.setLightDirection([0, -1, 0])
+
+    expect(causticBytes(simulation)).toEqual(before)
+  })
 })
 
 describe('WaterPoolShape', () => {
-  it('keeps the irregular outline convex', () => {
-    WATER_POOL_OUTLINE.forEach((start, index) => {
-      const middle = WATER_POOL_OUTLINE[(index + 1) % WATER_POOL_OUTLINE.length]
-      const end = WATER_POOL_OUTLINE[(index + 2) % WATER_POOL_OUTLINE.length]
-      const cross =
-        (middle[0] - start[0]) * (end[1] - middle[1]) -
-        (middle[1] - start[1]) * (end[0] - middle[0])
+  const boxOutline = resolveWaterPoolShape()
+  const boxEdges = createWaterPoolEdges(boxOutline)
 
-      expect(cross).toBeGreaterThan(0)
+  it('resolves the default shape to the unit box outline', () => {
+    expect(boxOutline).toEqual(WATER_POOL_BOX_OUTLINE)
+    expect(getWaterPoolBounds(boxOutline)).toEqual({
+      minX: -1,
+      maxX: 1,
+      minZ: -1,
+      maxZ: 1
     })
+  })
+
+  it('rejects custom outlines with fewer than three points', () => {
+    expect(() => resolveWaterPoolShape([[0, 0], [1, 1]])).toThrow()
+  })
+
+  it('rejects custom outlines that miss the origin', () => {
+    expect(() =>
+      resolveWaterPoolShape([[0.2, 0.2], [1, 0.2], [1, 1], [0.2, 1]])
+    ).toThrow()
   })
 
   it('tells inside points from points outside the basin', () => {
-    expect(isInsideWaterPool(0, 0)).toBe(true)
-    expect(isInsideWaterPool(0.95, 0.95)).toBe(false)
-    expect(isInsideWaterPool(-0.9, 0.1)).toBe(false)
+    expect(isInsideWaterPool(boxEdges, 0, 0)).toBe(true)
+    expect(isInsideWaterPool(boxEdges, 0.99, -0.5)).toBe(true)
+    expect(isInsideWaterPool(boxEdges, 1.05, 0)).toBe(false)
+    expect(isInsideWaterPool(boxEdges, 0, -1.05)).toBe(false)
   })
 
   it('pushes dragged boxes back inside the outline', () => {
-    const [x, z] = clampToWaterPool(0.95, 0.95, 0.1)
+    const [x, z] = clampToWaterPool(boxEdges, 1.4, -1.2, 0.1)
 
-    expect(isInsideWaterPool(x, z, 0.099)).toBe(true)
+    expect(isInsideWaterPool(boxEdges, x, z, 0.099)).toBe(true)
   })
 
   it('samples the outline as a closed ring on the boundary', () => {
-    const points = sampleWaterPoolOutline(3)
+    const points = sampleWaterPoolOutline(boxOutline, 3)
 
-    expect(points).toHaveLength(WATER_POOL_OUTLINE.length * 3)
+    expect(points).toHaveLength(boxOutline.length * 3)
     points.forEach(([x, z]) => {
-      expect(isInsideWaterPool(x, z, -1e-4)).toBe(true)
+      expect(isInsideWaterPool(boxEdges, x, z, -1e-4)).toBe(true)
     })
+  })
+
+  it('accepts a custom convex outline', () => {
+    const outline = resolveWaterPoolShape([
+      [-1, -0.5],
+      [1, -0.5],
+      [1, 0.5],
+      [-1, 0.5]
+    ])
+    const edges = createWaterPoolEdges(outline)
+
+    expect(isInsideWaterPool(edges, 0, 0)).toBe(true)
+    expect(isInsideWaterPool(edges, 0, 0.9)).toBe(false)
+    expect(getWaterPoolBounds(outline).maxZ).toBe(0.5)
+  })
+
+  it('reduces points and collinear vertices to the convex outline', () => {
+    const outline = convexHull2D([
+      [1, 1],
+      [-1, 1],
+      [-1, -1],
+      [1, -1],
+      [0, 0],
+      [0, 1]
+    ])
+
+    expect(outline).toEqual([...WATER_POOL_BOX_OUTLINE])
+    expect(resolveWaterPoolShape([[0.5, -0.5], [-0.5, -0.5], [-0.5, 0.5], [0.5, 0.5]])).toHaveLength(4)
+  })
+
+  it('reduces a non-convex point ring to a convex hull of the origin', () => {
+    // A four pointed star: the hull keeps only its tips.
+    const outline = resolveWaterPoolShape([
+      [1, 0],
+      [0.2, 0.2],
+      [0, 1],
+      [-0.2, 0.2],
+      [-1, 0],
+      [-0.2, -0.2],
+      [0, -1],
+      [0.2, -0.2]
+    ])
+
+    expect(outline).toHaveLength(4)
+    expect(isInsideWaterPool(createWaterPoolEdges(outline), 0, 0)).toBe(true)
+  })
+
+  it('derives the outline from a geometry projected onto XZ', () => {
+    const geometry = new THREE.BufferGeometry()
+    geometry.setAttribute(
+      'position',
+      new THREE.Float32BufferAttribute(
+        [
+          -1, 0, -0.5,
+          1, 0.2, -0.5,
+          1, -0.2, 0.5,
+          -1, 0, 0.5,
+          0, 0.1, 0,
+          0, -0.1, 0.2
+        ],
+        3
+      )
+    )
+
+    const outline = resolveWaterPoolShape(geometry)
+    const edges = createWaterPoolEdges(outline)
+
+    expect(outline).toHaveLength(4)
+    expect(getWaterPoolBounds(outline)).toEqual({
+      minX: -1,
+      maxX: 1,
+      minZ: -0.5,
+      maxZ: 0.5
+    })
+    expect(isInsideWaterPool(edges, 0, 0)).toBe(true)
+
+    geometry.dispose()
+  })
+
+  it('rejects a geometry without a position attribute', () => {
+    const geometry = new THREE.BufferGeometry()
+
+    expect(() => resolveWaterPoolShape(geometry)).toThrow()
+    geometry.dispose()
   })
 })
 
@@ -214,18 +339,9 @@ describe('WaterPoolMaterials', () => {
       THREE.RGBAFormat,
       THREE.UnsignedByteType
     )
-    const tileTexture = new THREE.DataTexture(
-      new Uint8Array(4 * 4 * 4),
-      4,
-      4,
-      THREE.RGBAFormat,
-      THREE.UnsignedByteType
-    )
-
     const materials = createWaterPoolMaterials({
       waterTexture,
       causticTexture,
-      tileTexture,
       boxes: [
         {
           center: uniform(new THREE.Vector3(-0.4, -0.68, 0.2)),
@@ -233,7 +349,9 @@ describe('WaterPoolMaterials', () => {
           color: uniform(new THREE.Vector3(0.8, 0.6, 0.2))
         }
       ],
-      lightDirection: uniform(new THREE.Vector3(0.55, 0.9, 0.35).normalize())
+      lightDirection: uniform(new THREE.Vector3(0.55, 0.9, 0.35).normalize()),
+      poolCenter: uniform(new THREE.Vector3(1, 0.5, -2)),
+      poolScale: uniform(2)
     })
 
     const dispose = () => {
@@ -243,7 +361,6 @@ describe('WaterPoolMaterials', () => {
       materials.sky.dispose()
       waterTexture.dispose()
       causticTexture.dispose()
-      tileTexture.dispose()
     }
 
     return { materials, dispose }

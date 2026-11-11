@@ -11,6 +11,7 @@ const sidebars = {
   mainSidebar: [
     'getting-started',
     'scene',
+    'effects/global-parameters',
     'sky-box',
     {
       type: 'category',

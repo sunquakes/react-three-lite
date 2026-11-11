@@ -1,27 +1,28 @@
+import * as THREE from 'three'
+
 /**
- * Irregular outline shared by the water pool geometry and its shaders.
+ * Convex outline shared by the water pool geometry and its shaders.
  *
- * Instead of a square tub the basin follows a convex polygon with uneven
- * edge lengths and radii, so the waterline, the tiled walls and the ray traced
- * reflections all share the same organic silhouette. Every edge of the outline
- * is stored as an inward half-plane, which keeps both the CPU clamping and the
- * fragment shader ray intersection exact and cheap.
+ * The container is described by a convex polygon in the XZ plane, given
+ * counter-clockwise. Every edge is stored as an inward half-plane, which keeps
+ * both the CPU clamping and the fragment shader ray intersection exact and
+ * cheap.
  */
-export const WATER_POOL_OUTLINE: ReadonlyArray<readonly [number, number]> = [
-  [0.7534, 0.0404],
-  [0.7071, 0.2695],
-  [0.4604, 0.6016],
-  [0.1323, 0.8947],
-  [-0.1217, 0.8681],
-  [-0.4869, 0.589],
-  [-0.728, 0.3237],
-  [-0.8493, 0.0475],
-  [-0.8216, -0.4021],
-  [-0.5334, -0.6252],
-  [-0.128, -0.8241],
-  [0.1716, -0.8038],
-  [0.4642, -0.5891],
-  [0.6643, -0.3302]
+export type WaterPoolOutline = ReadonlyArray<readonly [number, number]>
+
+/**
+ * Built-in container shapes. Pass an outline or a `THREE.BufferGeometry` (for
+ * example a `ConvexGeometry`) for a custom pool; geometry vertices are
+ * projected onto the XZ plane and reduced to their convex hull.
+ */
+export type WaterPoolShape = 'box' | WaterPoolOutline | THREE.BufferGeometry
+
+/** Default square outline: `x` and `z` from -1 to 1, counter-clockwise. */
+export const WATER_POOL_BOX_OUTLINE: WaterPoolOutline = [
+  [-1, -1],
+  [1, -1],
+  [1, 1],
+  [-1, 1]
 ]
 
 export interface WaterPoolEdge {
@@ -33,10 +34,109 @@ export interface WaterPoolEdge {
   offset: number
 }
 
-/** Inward half-planes of {@link WATER_POOL_OUTLINE}. */
-export const WATER_POOL_EDGES: readonly WaterPoolEdge[] = WATER_POOL_OUTLINE.map(
-  (start, index) => {
-    const end = WATER_POOL_OUTLINE[(index + 1) % WATER_POOL_OUTLINE.length]
+/**
+ * Reduces a point set to its convex outline in the XZ plane, ordered
+ * counter-clockwise, using the monotone chain algorithm. Collinear points are
+ * dropped so every edge of the result bounds the polygon.
+ */
+export function convexHull2D(
+  points: ReadonlyArray<readonly [number, number]>
+): WaterPoolOutline {
+  const sorted = points
+    .map(([x, z]) => [x, z] as [number, number])
+    .sort((a, b) => a[0] - b[0] || a[1] - b[1])
+
+  if (sorted.length < 3) {
+    return sorted
+  }
+
+  const cross = (
+    origin: readonly [number, number],
+    a: readonly [number, number],
+    b: readonly [number, number]
+  ) => (a[0] - origin[0]) * (b[1] - origin[1]) - (a[1] - origin[1]) * (b[0] - origin[0])
+
+  const lower: Array<[number, number]> = []
+  for (const point of sorted) {
+    while (
+      lower.length >= 2 &&
+      cross(lower[lower.length - 2], lower[lower.length - 1], point) <= 0
+    ) {
+      lower.pop()
+    }
+    lower.push(point)
+  }
+
+  const upper: Array<[number, number]> = []
+  for (let index = sorted.length - 1; index >= 0; index -= 1) {
+    const point = sorted[index]
+    while (
+      upper.length >= 2 &&
+      cross(upper[upper.length - 2], upper[upper.length - 1], point) <= 0
+    ) {
+      upper.pop()
+    }
+    upper.push(point)
+  }
+
+  lower.pop()
+  upper.pop()
+
+  return [...lower, ...upper]
+}
+
+/** Vertices of a geometry projected onto the XZ plane. */
+function geometryOutlinePoints(
+  geometry: THREE.BufferGeometry
+): Array<[number, number]> {
+  const position = geometry.getAttribute('position')
+  if (!position) {
+    throw new Error('WaterPool shape geometry needs a position attribute')
+  }
+
+  const points: Array<[number, number]> = []
+  for (let index = 0; index < position.count; index += 1) {
+    points.push([position.getX(index), position.getZ(index)])
+  }
+
+  return points
+}
+
+/**
+ * Resolves the `shape` prop to the convex outline used by the pool. Outlines
+ * and geometry vertices are reduced to their convex hull, so a `ConvexGeometry`
+ * built from scattered points works as well as an explicit polygon.
+ */
+export function resolveWaterPoolShape(
+  shape: WaterPoolShape = 'box'
+): WaterPoolOutline {
+  if (shape === 'box') {
+    return WATER_POOL_BOX_OUTLINE
+  }
+
+  const outline = convexHull2D(
+    shape instanceof THREE.BufferGeometry ? geometryOutlinePoints(shape) : shape
+  )
+
+  if (outline.length < 3) {
+    throw new Error('WaterPool shape needs at least three non-collinear [x, z] points')
+  }
+
+  // The surface is built from rings scaled towards the origin and every ray
+  // starts inside the pool, so the outline has to contain [0, 0].
+  if (!isInsideWaterPool(createWaterPoolEdges(outline), 0, 0)) {
+    throw new Error('WaterPool shape must contain the origin [0, 0]')
+  }
+
+  return outline
+}
+
+/** Inward half-planes of a counter-clockwise convex outline. */
+export function createWaterPoolEdges(
+  outline: WaterPoolOutline
+): WaterPoolEdge[] {
+  return outline.map((start, index) => {
+    const end = outline[(index + 1) % outline.length]
     const edgeX = end[0] - start[0]
     const edgeZ = end[1] - start[1]
     const length = Math.hypot(edgeX, edgeZ)
@@ -44,12 +144,39 @@ export const WATER_POOL_EDGES: readonly WaterPoolEdge[] = WATER_POOL_OUTLINE.map
     const nz = edgeX / length
 
     return { nx, nz, offset: nx * start[0] + nz * start[1] }
-  }
-)
+  })
+}
 
-/** True when the point lies inside the pool outline, inset by `margin`. */
-export function isInsideWaterPool(x: number, z: number, margin = 0): boolean {
-  return WATER_POOL_EDGES.every(
+/** Axis aligned bounds of the outline, used to sample random ripple points. */
+export function getWaterPoolBounds(outline: WaterPoolOutline): {
+  minX: number
+  maxX: number
+  minZ: number
+  maxZ: number
+} {
+  let minX = Infinity
+  let maxX = -Infinity
+  let minZ = Infinity
+  let maxZ = -Infinity
+
+  outline.forEach(([x, z]) => {
+    minX = Math.min(minX, x)
+    maxX = Math.max(maxX, x)
+    minZ = Math.min(minZ, z)
+    maxZ = Math.max(maxZ, z)
+  })
+
+  return { minX, maxX, minZ, maxZ }
+}
+
+/** True when the point lies inside the pool, inset by `margin`. */
+export function isInsideWaterPool(
+  edges: readonly WaterPoolEdge[],
+  x: number,
+  z: number,
+  margin = 0
+): boolean {
+  return edges.every(
     (edge) => edge.nx * x + edge.nz * z >= edge.offset + margin
   )
 }
@@ -60,6 +187,7 @@ export function isInsideWaterPool(x: number, z: number, margin = 0): boolean {
  * opposite edges, which converges quickly for a convex outline.
  */
 export function clampToWaterPool(
+  edges: readonly WaterPoolEdge[],
   x: number,
   z: number,
   margin = 0
@@ -68,7 +196,7 @@ export function clampToWaterPool(
   let clampedZ = z
 
   for (let pass = 0; pass < 3; pass += 1) {
-    WATER_POOL_EDGES.forEach((edge) => {
+    edges.forEach((edge) => {
       const distance = edge.nx * clampedX + edge.nz * clampedZ - edge.offset
       if (distance < margin) {
         const push = margin - distance
@@ -87,13 +215,14 @@ export function clampToWaterPool(
  * used by the shader exactly.
  */
 export function sampleWaterPoolOutline(
+  outline: WaterPoolOutline,
   segmentsPerEdge: number
 ): Array<[number, number]> {
   const steps = Math.max(1, Math.round(segmentsPerEdge))
   const points: Array<[number, number]> = []
 
-  WATER_POOL_OUTLINE.forEach((start, index) => {
-    const end = WATER_POOL_OUTLINE[(index + 1) % WATER_POOL_OUTLINE.length]
+  outline.forEach((start, index) => {
+    const end = outline[(index + 1) % outline.length]
     for (let step = 0; step < steps; step += 1) {
       const t = step / steps
       points.push([
