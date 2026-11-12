@@ -1,5 +1,7 @@
 ## [Unreleased]
 
+## [0.9.0] - 2026-11-12
+
 ### Added
 
 - Add a `shape` prop to `Water`: pass a convex `[x, z]` outline in world units or a `THREE.BufferGeometry` such as `ConvexGeometry`, and the surface follows it instead of the square patch, giving lakes and shorelines a real edge. Boundary vertices are sampled from the outline and interior vertices scale it towards the centre, so the wave shader and both planar captures are unchanged; `size` is ignored and `segments` becomes the boundary budget.
