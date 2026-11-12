@@ -34,7 +34,7 @@
     {
       "label": "4. Clean Docs node_modules",
       "type": "shell",
-      "command": "$target = Join-Path '${workspaceFolder}' 'docs\\node_modules'; if (Test-Path $target) { $scratch = Join-Path (Split-Path '${workspaceFolder}' -Parent) '.r3l-trash'; New-Item -ItemType Directory -Force -Path $scratch | Out-Null; $dest = Join-Path $scratch ('node_modules-' + [guid]::NewGuid().ToString('N')); Move-Item -LiteralPath $target -Destination $dest; Remove-Item -LiteralPath $dest -Recurse -Force; Remove-Item -LiteralPath $scratch -Recurse -Force -ErrorAction SilentlyContinue; Write-Output 'node_modules permanently deleted' } else { Write-Output 'node_modules does not exist' }",
+      "command": "$target = Join-Path '${workspaceFolder}' 'docs\\node_modules'; if (Test-Path $target) { $scratch = Join-Path (Split-Path '${workspaceFolder}' -Parent) '.r3l-trash'; New-Item -ItemType Directory -Force -Path $scratch | Out-Null; $dest = Join-Path $scratch ('node_modules-' + [guid]::NewGuid().ToString('N')); Move-Item -LiteralPath $target -Destination $dest; & cmd.exe /c rd /s /q $dest; if (Test-Path $scratch) { & cmd.exe /c rd /s /q $scratch }; Write-Output 'node_modules permanently deleted' } else { Write-Output 'node_modules does not exist' }",
       "options": {
         "cwd": "${workspaceFolder}"
       },
@@ -44,7 +44,7 @@
     {
       "label": "5. Clean Docs Cache",
       "type": "shell",
-      "command": "$scratch = Join-Path (Split-Path '${workspaceFolder}' -Parent) '.r3l-trash'; foreach ($name in @('.docusaurus', 'build')) { $target = Join-Path '${workspaceFolder}' ('docs\\' + $name); if (Test-Path $target) { New-Item -ItemType Directory -Force -Path $scratch | Out-Null; $dest = Join-Path $scratch ($name + '-' + [guid]::NewGuid().ToString('N')); Move-Item -LiteralPath $target -Destination $dest; Remove-Item -LiteralPath $dest -Recurse -Force; Write-Output ($name + ' permanently deleted') } }; Remove-Item -LiteralPath $scratch -Recurse -Force -ErrorAction SilentlyContinue",
+      "command": "$scratch = Join-Path (Split-Path '${workspaceFolder}' -Parent) '.r3l-trash'; foreach ($name in @('.docusaurus', 'build')) { $target = Join-Path '${workspaceFolder}' ('docs\\' + $name); if (Test-Path $target) { New-Item -ItemType Directory -Force -Path $scratch | Out-Null; $dest = Join-Path $scratch ($name + '-' + [guid]::NewGuid().ToString('N')); Move-Item -LiteralPath $target -Destination $dest; & cmd.exe /c rd /s /q $dest; Write-Output ($name + ' permanently deleted') } }; if (Test-Path $scratch) { & cmd.exe /c rd /s /q $scratch }",
       "options": {
         "cwd": "${workspaceFolder}"
       },
