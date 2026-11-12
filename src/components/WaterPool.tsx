@@ -4,12 +4,12 @@ import { uniform } from 'three/tsl'
 import { useScene } from '../context/SceneContext'
 import { WaterPoolSimulation } from '../utils/WaterPoolSimulation'
 import {
-  clampToWaterPool,
   createWaterPoolEdges,
   getWaterPoolBounds,
   isInsideWaterPool,
   resolveWaterPoolShape,
   sampleWaterPoolOutline,
+  WATER_POOL_IRREGULAR_CUBE_OUTLINE,
   type WaterPoolEdge,
   type WaterPoolOutline,
   type WaterPoolShape
@@ -17,49 +17,30 @@ import {
 import { createWaterPoolMaterials } from '../utils/WaterPoolMaterials'
 import { globalParameterBus } from '../utils/ParameterBus'
 
-export interface WaterPoolBoxConfig {
-  /** Center of the box in world space. */
-  position: [number, number, number]
-  /** Full size of the box along each axis. */
-  size: [number, number, number]
-  /** CSS color of the box faces. Defaults to a neutral tone. */
-  color?: string
-}
-
 export interface WaterPoolProps {
   /** Height-field cells per axis, from 8 to 512. Defaults to 128. */
   resolution?: number
   /**
-   * Container outline. `'box'` is the square tub, or pass convex `[x, z]`
-   * points counter-clockwise that contain the origin and stay within -1…1.
+   * Container outline. The default is the irregular cube outline, a skewed
+   * quadrilateral. `'box'` gives the square tub, or pass convex `[x, z]` points
+   * counter-clockwise that contain the origin and stay within -1…1.
    * A `THREE.BufferGeometry` such as `ConvexGeometry` works too: its vertices
    * are projected onto the XZ plane and reduced to their convex hull.
-   * Defaults to `'box'`.
    */
   shape?: WaterPoolShape
   /** Subdivisions around the container outline. Defaults to 160. */
   segments?: number
-  /** Boxes floating in the pool. Defaults to three cubes of different shapes. */
-  boxes?: WaterPoolBoxConfig[]
   /** Adds a small random ripple every so often. Defaults to true. */
   autoRipples?: boolean
-  /** Enables dragging the water surface and the boxes. Defaults to true. */
+  /** Enables dragging the water surface. Defaults to true. */
   interactive?: boolean
   /** Draws the procedural sky dome behind the pool. Defaults to true. */
   sky?: boolean
   /** World position of the water surface centre. Defaults to [0, 0, 0]. */
   position?: THREE.Vector3 | [number, number, number]
-  /** Uniform scale of the pool, its depth and the floating boxes. Defaults to 1. */
+  /** Uniform scale of the pool and its depth. Defaults to 1. */
   scale?: number
 }
-
-const DEFAULT_BOXES: WaterPoolBoxConfig[] = [
-  { position: [-0.42, -0.68, 0.24], size: [0.36, 0.36, 0.36], color: '#f4c95d' },
-  { position: [0.38, -0.74, -0.26], size: [0.5, 0.2, 0.32], color: '#e26d5c' },
-  { position: [0.08, -0.48, 0.46], size: [0.22, 0.44, 0.22], color: '#5aa9e6' }
-]
-
-const POOL_FLOOR_Y = -1
 
 const getOutlineSubdivisions = (
   segments: number,
@@ -73,8 +54,6 @@ const AUTO_RIPPLE_INTERVAL = 1.8
 const FIXED_STEP = 1 / 60
 const MAX_STEPS_PER_FRAME = 3
 const DRAG_STRENGTH = 0.01
-const MIN_BOX_HALF_SIZE = 0.02
-const MAX_BOX_HALF_SIZE = 0.9
 
 /**
  * Water surface shaped like the container outline: concentric rings that scale
@@ -124,37 +103,6 @@ const createWaterSurfaceGeometry = (
   return geometry
 }
 
-/**
- * Basin floor only: the pool has no wall, so the water shader traces the basin
- * as a flat disc and rays that travel up escape to the sky.
- */
-const createBasinGeometry = (
-  segments: number,
-  outline: WaterPoolOutline
-) => {
-  const outlinePoints = sampleWaterPoolOutline(
-    outline,
-    getOutlineSubdivisions(segments, outline)
-  )
-  const angular = outlinePoints.length
-  const positions: number[] = [0, POOL_FLOOR_Y, 0]
-
-  outlinePoints.forEach(([x, z]) => {
-    positions.push(x, POOL_FLOOR_Y, z)
-  })
-
-  const indices: number[] = []
-  for (let index = 0; index < angular; index += 1) {
-    indices.push(0, 1 + index, 1 + ((index + 1) % angular))
-  }
-
-  const geometry = new THREE.BufferGeometry()
-  geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3))
-  geometry.setIndex(indices)
-
-  return geometry
-}
-
 /** Random point inside the outline, used for the initial and ambient ripples. */
 const randomPoolPoint = (
   outline: WaterPoolOutline,
@@ -172,34 +120,26 @@ const randomPoolPoint = (
   return [0, 0]
 }
 
-interface BoxState {
-  center: THREE.Vector3
-  previousCenter: THREE.Vector3
-  halfSize: THREE.Vector3
-  color: THREE.Vector3
-  mesh: THREE.Mesh | null
-}
-
 /**
  * Interactive ray traced water pool, a React Three Lite port of Evan Wallace's
  * classic webgl-water demo.
  *
- * A CPU height field drives the ripples and the caustic light map, which are
- * uploaded as data textures. Water, basin and the floating boxes are shaded by
- * analytic rays in the fragment shader, so both the WebGPU and the WebGL
- * renderer show the same reflection, refraction and caustic result without
- * extra passes.
+ * A CPU height field drives the ripples, which are uploaded as a data texture.
+ * The water and the basin under it are shaded by analytic rays in the fragment
+ * shader, so both the WebGPU and the WebGL renderer show the same reflection
+ * and refraction result without extra passes. Only the water surface is drawn:
+ * the basin is traced by the shader, so the pool has no visible bottom of its
+ * own.
  *
- * Drag anywhere on the water to create ripples, or grab a box to push it
- * around. Orbit the camera by dragging outside the pool.
+ * Drag anywhere on the water to create ripples. Orbit the camera by dragging
+ * outside the pool.
  *
  * @see https://madebyevan.com/webgl-water/
  */
 const WaterPool = ({
   resolution = 128,
-  shape = 'box',
+  shape = WATER_POOL_IRREGULAR_CUBE_OUTLINE,
   segments = 160,
-  boxes = DEFAULT_BOXES,
   autoRipples = true,
   interactive = true,
   sky = true,
@@ -213,13 +153,9 @@ const WaterPool = ({
     ? position
     : [position.x, position.y, position.z]
 
-  // Boxes are compared by value so an inline array does not rebuild the whole
-  // scene on every parent render.
-  const boxKey = JSON.stringify(boxes)
-  const boxConfigs = useMemo(() => JSON.parse(boxKey) as WaterPoolBoxConfig[], [boxKey])
-
-  // Same for the shape: an inline outline array keeps a stable identity. A
-  // geometry cannot round trip through JSON, so it is tracked by identity.
+  // The shape is compared by value so an inline outline array keeps a stable
+  // identity. A geometry cannot round trip through JSON, so it is tracked by
+  // identity.
   const shapeGeometry = shape instanceof THREE.BufferGeometry ? shape : null
   const shapeKey = shapeGeometry ? '' : JSON.stringify(shape)
   const shapeConfig = useMemo(
@@ -254,10 +190,7 @@ const WaterPool = ({
     poolGroup.scale.setScalar(scale)
     scene.add(poolGroup)
 
-    const simulation = new WaterPoolSimulation({
-      resolution,
-      lightDirection: [sunDirection.x, sunDirection.y, sunDirection.z]
-    })
+    const simulation = new WaterPoolSimulation({ resolution })
     for (let index = 0; index < INITIAL_DROPS; index += 1) {
       const [dropX, dropZ] = randomPoolPoint(outline, edges)
       simulation.addDrop(
@@ -268,7 +201,6 @@ const WaterPool = ({
       )
     }
     simulation.updateNormals()
-    simulation.updateCaustics()
     simulation.syncWaterTexture()
 
     const waterTexture = new THREE.DataTexture(
@@ -286,63 +218,12 @@ const WaterPool = ({
     waterTexture.generateMipmaps = false
     waterTexture.needsUpdate = true
 
-    const causticTexture = new THREE.DataTexture(
-      simulation.causticTextureData,
-      simulation.causticResolution,
-      simulation.causticResolution,
-      THREE.RGBAFormat,
-      THREE.UnsignedByteType
-    )
-    causticTexture.name = 'WaterPoolCaustics'
-    causticTexture.minFilter = THREE.LinearFilter
-    causticTexture.magFilter = THREE.LinearFilter
-    causticTexture.wrapS = THREE.ClampToEdgeWrapping
-    causticTexture.wrapT = THREE.ClampToEdgeWrapping
-    causticTexture.generateMipmaps = false
-    causticTexture.needsUpdate = true
-
-    const boxStates: BoxState[] = boxConfigs.map((config) => {
-      const halfSize = new THREE.Vector3(...config.size).multiplyScalar(0.5)
-      halfSize.set(
-        THREE.MathUtils.clamp(halfSize.x, MIN_BOX_HALF_SIZE, MAX_BOX_HALF_SIZE),
-        THREE.MathUtils.clamp(halfSize.y, MIN_BOX_HALF_SIZE, MAX_BOX_HALF_SIZE),
-        THREE.MathUtils.clamp(halfSize.z, MIN_BOX_HALF_SIZE, MAX_BOX_HALF_SIZE)
-      )
-
-      const center = new THREE.Vector3(...config.position)
-      const [clampedX, clampedZ] = clampToWaterPool(
-        edges,
-        center.x,
-        center.z,
-        Math.max(halfSize.x, halfSize.z)
-      )
-      center.x = clampedX
-      center.z = clampedZ
-      center.y = THREE.MathUtils.clamp(center.y, POOL_FLOOR_Y + halfSize.y, 10)
-
-      const color = new THREE.Color(config.color ?? '#d9dde3').convertSRGBToLinear()
-
-      return {
-        center,
-        previousCenter: center.clone(),
-        halfSize,
-        color: new THREE.Vector3(color.r, color.g, color.b),
-        mesh: null
-      }
-    })
-
     const lightDirectionUniform = uniform(sunDirection.clone())
     const poolCenterUniform = uniform(poolCenter)
     const poolScaleUniform = uniform(scale)
 
     const materials = createWaterPoolMaterials({
       waterTexture,
-      causticTexture,
-      boxes: boxStates.map((state) => ({
-        center: uniform(state.center),
-        halfSize: uniform(state.halfSize),
-        color: uniform(state.color)
-      })),
       lightDirection: lightDirectionUniform,
       poolCenter: poolCenterUniform,
       poolScale: poolScaleUniform
@@ -350,8 +231,6 @@ const WaterPool = ({
 
     const unsubscribeSunDirection = globalParameterBus.subscribe('sunDirection', (direction) => {
       lightDirectionUniform.value.copy(direction).normalize()
-      simulation.setLightDirection(lightDirectionUniform.value)
-      causticTexture.needsUpdate = true
     })
 
     const waterGeometry = createWaterSurfaceGeometry(segments, outline)
@@ -359,31 +238,6 @@ const WaterPool = ({
     waterMesh.name = 'WaterPoolSurface'
     waterMesh.frustumCulled = false
     poolGroup.add(waterMesh)
-
-    // The basin is just the floor disc under the water, following the water
-    // surface outline. There is no wall, so nothing of the container shows.
-    const basinGeometry = createBasinGeometry(segments, outline)
-    const basinMesh = new THREE.Mesh(basinGeometry, materials.pool)
-    basinMesh.name = 'WaterPoolBasin'
-    poolGroup.add(basinMesh)
-
-    const boxGeometries: THREE.BoxGeometry[] = []
-    boxStates.forEach((state, index) => {
-      const geometry = new THREE.BoxGeometry(
-        state.halfSize.x * 2,
-        state.halfSize.y * 2,
-        state.halfSize.z * 2
-      )
-      const mesh = new THREE.Mesh(geometry, materials.boxes[index])
-      mesh.name = `WaterPoolBox${index}`
-      mesh.position.copy(state.center)
-      boxGeometries.push(geometry)
-      state.mesh = mesh
-      poolGroup.add(mesh)
-    })
-    const boxMeshes = boxStates
-      .map((state) => state.mesh)
-      .filter((mesh): mesh is THREE.Mesh => mesh !== null)
 
     let skyGeometry: THREE.SphereGeometry | null = null
     let skyMesh: THREE.Mesh | null = null
@@ -401,13 +255,8 @@ const WaterPool = ({
     const raycaster = new THREE.Raycaster()
     const pointer = new THREE.Vector2()
     const hitPoint = new THREE.Vector3()
-    const dragPlane = new THREE.Plane()
-    const previousHit = new THREE.Vector3()
-    const nextHit = new THREE.Vector3()
-    const moveDelta = new THREE.Vector3()
 
-    let mode: 'none' | 'water' | 'box' = 'none'
-    let draggedBox: BoxState | null = null
+    let dragging = false
     let controlsDisabled = false
 
     const getRay = (event: PointerEvent) => {
@@ -444,44 +293,21 @@ const WaterPool = ({
       return isInsideWaterPool(edges, target.x, target.z)
     }
 
-    const clampToPool = (state: BoxState) => {
-      const [clampedX, clampedZ] = clampToWaterPool(
-        edges,
-        state.center.x,
-        state.center.z,
-        Math.max(state.halfSize.x, state.halfSize.z)
-      )
-      state.center.x = clampedX
-      state.center.z = clampedZ
-      state.center.y = THREE.MathUtils.clamp(
-        state.center.y,
-        POOL_FLOOR_Y + state.halfSize.y,
-        10
-      )
-    }
-
     const handlePointerMove = (event: PointerEvent) => {
-      const ray = toPoolRay(getRay(event))
+      if (!dragging) {
+        return
+      }
 
-      if (mode === 'water') {
-        if (intersectWater(ray, hitPoint)) {
-          simulation.addDrop(hitPoint.x, hitPoint.z, DROP_RADIUS, DRAG_STRENGTH)
-        }
-      } else if (mode === 'box' && draggedBox) {
-        if (ray.intersectPlane(dragPlane, nextHit)) {
-          moveDelta.subVectors(nextHit, previousHit)
-          draggedBox.center.add(moveDelta)
-          clampToPool(draggedBox)
-          previousHit.copy(nextHit)
-        }
+      const ray = toPoolRay(getRay(event))
+      if (intersectWater(ray, hitPoint)) {
+        simulation.addDrop(hitPoint.x, hitPoint.z, DROP_RADIUS, DRAG_STRENGTH)
       }
 
       event.preventDefault()
     }
 
     const handlePointerUp = () => {
-      mode = 'none'
-      draggedBox = null
+      dragging = false
       window.removeEventListener('pointermove', handlePointerMove)
       window.removeEventListener('pointerup', handlePointerUp)
       window.removeEventListener('pointercancel', handlePointerUp)
@@ -492,37 +318,19 @@ const WaterPool = ({
     }
 
     const handlePointerDown = (event: PointerEvent) => {
-      if (!interactive || event.button !== 0 || mode !== 'none') {
+      if (!interactive || event.button !== 0 || dragging) {
         return
       }
       if (!domElement.contains(event.target as Node)) {
         return
       }
 
-      const ray = getRay(event)
-      const boxHit = raycaster.intersectObjects(boxMeshes, false)[0]
-      const localRay = toPoolRay(ray)
-
-      if (boxHit) {
-        const state = boxStates.find((candidate) => candidate.mesh === boxHit.object)
-        if (!state) {
-          return
-        }
-        mode = 'box'
-        draggedBox = state
-        // Drag on a plane through the box center that faces the camera.
-        dragPlane.setFromNormalAndCoplanarPoint(ray.direction.clone().negate(), state.center)
-        // Start from the plane so the first move does not jump by the offset
-        // between the picked surface point and the drag plane.
-        if (!localRay.intersectPlane(dragPlane, previousHit)) {
-          previousHit.copy(boxHit.point).sub(poolCenter).divideScalar(scale)
-        }
-      } else if (intersectWater(localRay, hitPoint)) {
-        mode = 'water'
-        simulation.addDrop(hitPoint.x, hitPoint.z, DROP_RADIUS, DRAG_STRENGTH)
-      } else {
+      const localRay = toPoolRay(getRay(event))
+      if (!intersectWater(localRay, hitPoint)) {
         return
       }
+      dragging = true
+      simulation.addDrop(hitPoint.x, hitPoint.z, DROP_RADIUS, DRAG_STRENGTH)
 
       controlsDisabled = true
       controls.enabled = false
@@ -561,12 +369,6 @@ const WaterPool = ({
         }
       }
 
-      boxStates.forEach((state) => {
-        simulation.moveBox(state.previousCenter, state.center, state.halfSize)
-        state.previousCenter.copy(state.center)
-        state.mesh?.position.copy(state.center)
-      })
-
       accumulator += delta
       let steps = 0
       while (accumulator >= FIXED_STEP && steps < MAX_STEPS_PER_FRAME) {
@@ -577,10 +379,8 @@ const WaterPool = ({
       }
 
       if (steps > 0) {
-        simulation.updateCaustics()
         simulation.syncWaterTexture()
         waterTexture.needsUpdate = true
-        causticTexture.needsUpdate = true
       }
 
       if (skyMesh) {
@@ -612,16 +412,11 @@ const WaterPool = ({
       }
 
       waterGeometry.dispose()
-      basinGeometry.dispose()
-      boxGeometries.forEach((geometry) => geometry.dispose())
       skyGeometry?.dispose()
 
       materials.water.dispose()
-      materials.pool.dispose()
-      materials.boxes.forEach((material) => material.dispose())
       materials.sky.dispose()
       waterTexture.dispose()
-      causticTexture.dispose()
     }
   }, [
     sceneContext,
@@ -629,7 +424,6 @@ const WaterPool = ({
     outline,
     edges,
     segments,
-    boxConfigs,
     autoRipples,
     interactive,
     sky,

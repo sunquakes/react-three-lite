@@ -213,7 +213,7 @@ const unsubscribeSunDirection = globalParameterBus.subscribe('sunDirection', (di
 
 - Always keep the unsubscribe function and call it in cleanup, before disposing geometry, materials or textures: `useEffect` return for components, `dispose()` for classes. Set the stored function to `null` in classes so a double dispose is harmless.
 - `get` returns the live stored value. Do not mutate it; call `set`, which clones and normalizes vectors and notifies every subscriber.
-- When the value also drives CPU work, forward it there in the subscription instead of caching a second copy, for example `simulation.setLightDirection(direction)` for the `WaterPool` caustics, and flag any derived texture with `needsUpdate = true`.
+- When the value also drives CPU work, forward it there in the subscription instead of caching a second copy, and flag any derived texture with `needsUpdate = true`.
 - The default is `(-0.78, 0.2, -0.6)`. A demo that needs a different look calls `globalParameterBus.set('sunDirection', new THREE.Vector3(...))` once in `handleCreated`, before creating the effect.
 - Adding a new global parameter means extending `GlobalParameters` and `createDefaults()` in `src/utils/ParameterBus.ts` (no new exports are needed), and updating `docs/guide/effects/global-parameters.md`, its Chinese page, `.agents/skills/react-three-lite/SKILL.md`, both READMEs and the unit tests.
 

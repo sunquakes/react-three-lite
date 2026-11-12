@@ -2405,8 +2405,6 @@ export default function ComplexSceneDemo({
           noiseSpeedZ={0.02}
           inscatteringColor="#ffb27a"
           inscatteringIntensity={1}
-          lightAzimuth={232}
-          lightElevation={11}
         />
         <Snow
           count={9000}

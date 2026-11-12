@@ -35,7 +35,7 @@ function App() {
 }
 ```
 
-`set` normalizes the vector and notifies every effect, so the sun disc, the water surface, the pool caustics and the fog inscattering update immediately without re-rendering the React tree.
+`set` normalizes the vector and notifies every effect, so the sun disc, the water surface, the pool reflections and the fog inscattering update immediately without re-rendering the React tree.
 
 Changing the sun at runtime only needs another `set` call:
 
@@ -62,7 +62,7 @@ globalParameterBus.set('sunDirection', new THREE.Vector3(0.55, 0.9, 0.35))
 
 - [SkyDome](/guide/effects/sky-dome) - sun disc position
 - [Water](/guide/effects/water) - specular sun
-- [WaterPool](/guide/effects/water-pool) - caustics and refracted light
+- [WaterPool](/guide/effects/water-pool) - reflections and refracted light
 - [HeightFog](/guide/effects/height-fog) - directional inscattering
 
 ## Notes

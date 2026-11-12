@@ -7,6 +7,18 @@ interface AppProps {
   rendererType?: 'webgpu' | 'webgl'
 }
 
+// The default pool is an irregular cube outline that spans 1.82 units at
+// scale 1, so this scale keeps the water just inside the 1.28 unit tub
+// opening. The depth scales with it.
+const WATER_SCALE = 0.7
+
+// The model is 0.86 x 0.74 x 1.64 units with its floor at y = 0, its rim at
+// y = 0.53 and its inner opening 0.66 x 1.44 (no textures, about 3k triangles).
+// These scales stretch that opening into the square the tub encloses, and the
+// height keeps the rim 9 cm above the surface so the tub stays readable.
+const TUB_SCALE = new THREE.Vector3(1.94, 1.3, 0.89)
+const TUB_Y = -0.598
+
 export default function App({ rendererType }: AppProps) {
   const tubRef = useRef<THREE.Group | null>(null)
   const cancelledRef = useRef(false)
@@ -14,12 +26,13 @@ export default function App({ rendererType }: AppProps) {
   const handleCreated = async (scene: THREE.Scene, components: SceneComponents) => {
     const { camera, controls } = components
 
-    // A high sun keeps the caustics sharp; every effect shares this direction.
+    // A high sun keeps the refracted light crisp; every effect shares this
+    // direction.
     globalParameterBus.set('sunDirection', new THREE.Vector3(0.55, 0.9, 0.35))
 
-    camera.position.set(1.5, 1.1, 2.0)
-    controls.target.set(0, -0.1, 0)
-    camera.lookAt(0, -0.1, 0)
+    camera.position.set(1.75, 2.2, 2.0)
+    controls.target.set(0, 0, 0)
+    camera.lookAt(0, 0, 0)
 
     const tub = await GLTFLoaderAsync('/models/water-tub.glb', false)
     if (cancelledRef.current) {
@@ -27,13 +40,10 @@ export default function App({ rendererType }: AppProps) {
       return
     }
 
-    // The model is 0.86 x 0.53 x 1.64 units with its floor at y = 0 and has no
-    // textures (about 3k triangles), so it stays cheap to keep in memory.
-    // Stretch it over the 2 x 2 water and drop it by one unit: the rim sits just
-    // above the surface and the inner walls cut into the water, so no dry gap
-    // is left between the water edge and the tub.
-    tub.scale.set(2.7, 1.92, 1.28)
-    tub.position.set(0, -1, 0)
+    // The tub is only the visual container: the irregular cube sits inside its
+    // opening, so the rim stays just above the surface all round.
+    tub.scale.copy(TUB_SCALE)
+    tub.position.set(0, TUB_Y, 0)
     scene.add(tub)
     tubRef.current = tub
   }
@@ -59,7 +69,7 @@ export default function App({ rendererType }: AppProps) {
       gridHelper={false}
       style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '300px' }}
     >
-      <WaterPool />
+      <WaterPool scale={WATER_SCALE} />
     </Scene>
   )
 }

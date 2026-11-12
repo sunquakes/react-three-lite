@@ -16,9 +16,14 @@
 
 ### Changed
 
-- Move the sun direction out of the individual effects. `SkyDome`, `Water`, `WaterPool` and `HeightFog` no longer accept `sunDirection`, and `HeightFog` no longer accepts `lightAzimuth` / `lightElevation`. Set `globalParameterBus.set('sunDirection', ...)` once instead and every effect follows it, including the pool caustics through the new `WaterPoolSimulation.setLightDirection`.
-- Add a bilingual `Global Parameters` documentation page, link the affected effect pages to it, and cover the bus and the live caustic updates with unit tests.
+- Move the sun direction out of the individual effects. `SkyDome`, `Water`, `WaterPool` and `HeightFog` no longer accept `sunDirection`, and `HeightFog` no longer accepts `lightAzimuth` / `lightElevation`. Set `globalParameterBus.set('sunDirection', ...)` once instead and every effect follows it.
+- Add a bilingual `Global Parameters` documentation page, link the affected effect pages to it, and cover the bus and the live light updates with unit tests.
 - Enable three's GPU-driven `MeshletDrawingPipeline` by default on the WebGPU renderer when the installed three ships it (r187+). Geometries are split into meshlets with a chain of simplified levels of detail, and hidden clusters are culled on the GPU. Objects and materials the pipeline does not support keep using the standard pipeline, and the WebGL backend is unaffected. The module is loaded lazily, so the minimum supported three version is unchanged (`>= 0.180`) and older releases simply keep the standard pipeline.
+- `WaterPool` no longer draws a bottom. The basin is only traced by the water shader, so the pool is a water surface with no geometry under it, and a container placed around the pool no longer has a dark disc poking through.
+- `WaterPool` no longer paints a caustic net on the basin. The traced floor is a plain lit color, and the simulation no longer builds a caustic map, so the per-frame CPU cost is lower.
+- `WaterPool` now defaults to an irregular cube outline instead of the square tub: the water surface is a skewed quadrilateral with four sides of different lengths. Pass `shape="box"` to get the old square, or a custom outline as before.
+- `WaterPool` no longer accepts floating `boxes`. The `boxes` prop and the `WaterPoolBoxConfig` type are gone, the water shader stops ray tracing boxes on the surface, the basin has no box shadows, and `WaterPoolSimulation` drops `moveBox`. Only the water surface and the dragged ripples remain interactive.
+- Rescale the `WaterPool` demo so the tub no longer dominates the frame and the water sits inside its opening instead of a much larger vessel.
 
 ## [0.8.0] - 2026-10-29
 

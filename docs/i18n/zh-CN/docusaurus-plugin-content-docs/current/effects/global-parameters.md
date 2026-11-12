@@ -34,7 +34,7 @@ function App() {
 }
 ```
 
-`set` 会归一化向量并通知所有效果，因此日轮、水面、水池焦散与雾效散射会立即更新，无需重新渲染 React 树。
+`set` 会归一化向量并通知所有效果，因此日轮、水面、水池反射与雾效散射会立即更新，无需重新渲染 React 树。
 
 运行时改变太阳方向也只需再次调用 `set`：
 
@@ -61,7 +61,7 @@ globalParameterBus.set('sunDirection', new THREE.Vector3(0.55, 0.9, 0.35))
 
 - [渐变天空穹顶](/zh-CN/guide/effects/sky-dome) - 日轮位置
 - [海洋水面](/zh-CN/guide/effects/water) - 太阳高光
-- [互动水池](/zh-CN/guide/effects/water-pool) - 焦散与折射光
+- [互动水池](/zh-CN/guide/effects/water-pool) - 反射与折射光
 - [高度雾](/zh-CN/guide/effects/height-fog) - 方向散射
 
 ## 说明

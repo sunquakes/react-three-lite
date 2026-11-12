@@ -1,11 +1,7 @@
 import * as THREE from 'three'
 import { uniform } from 'three/tsl'
 import { describe, expect, it } from 'vitest'
-import {
-  WATER_POOL_FLOOR_Y,
-  WATER_POOL_HALF_SIZE,
-  WaterPoolSimulation
-} from '../utils/WaterPoolSimulation'
+import { WaterPoolSimulation } from '../utils/WaterPoolSimulation'
 import { createWaterPoolMaterials } from '../utils/WaterPoolMaterials'
 import {
   WATER_POOL_BOX_OUTLINE,
@@ -15,39 +11,20 @@ import {
   getWaterPoolBounds,
   isInsideWaterPool,
   resolveWaterPoolShape,
-  sampleWaterPoolOutline
+  sampleWaterPoolOutline,
+  WATER_POOL_IRREGULAR_CUBE_OUTLINE
 } from '../utils/WaterPoolShape'
 
-const createSimulation = () =>
-  new WaterPoolSimulation({
-    resolution: 32,
-    causticResolution: 32,
-    lightDirection: [0.55, 0.9, 0.35]
-  })
-
-const causticBytes = (simulation: WaterPoolSimulation) => {
-  const values: number[] = []
-  for (let index = 0; index < simulation.causticTextureData.length; index += 4) {
-    values.push(simulation.causticTextureData[index])
-  }
-  return values
-}
+const createSimulation = () => new WaterPoolSimulation({ resolution: 32 })
 
 describe('WaterPoolSimulation', () => {
-  it('starts from a flat surface with even caustic lighting', () => {
+  it('starts from a flat surface', () => {
     const simulation = createSimulation()
 
     expect(simulation.heights.every((value) => value === 0)).toBe(true)
     expect(simulation.velocities.every((value) => value === 0)).toBe(true)
     expect(simulation.normalX.every((value) => value === 0)).toBe(true)
     expect(simulation.normalZ.every((value) => value === 0)).toBe(true)
-
-    // A flat surface refracts the sunlight without compression, which leaves
-    // the baseline brightness in the caustic map (0.2 -> about 51 / 255).
-    const bytes = causticBytes(simulation)
-    const average = bytes.reduce((sum, value) => sum + value, 0) / bytes.length
-    expect(average).toBeGreaterThan(44)
-    expect(average).toBeLessThan(60)
   })
 
   it('raises the surface around a drop and propagates it to neighbours', () => {
@@ -103,50 +80,6 @@ describe('WaterPoolSimulation', () => {
     expect(tilted).toBeGreaterThan(0)
   })
 
-  it('displaces the surface when a box moves', () => {
-    const simulation = createSimulation()
-    const oldCenter = new THREE.Vector3(-0.4, -0.75, 0.2)
-    const newCenter = oldCenter.clone().add(new THREE.Vector3(0.2, 0.1, 0))
-    const halfSize = new THREE.Vector3(0.18, 0.18, 0.18)
-
-    simulation.moveBox(oldCenter, newCenter, halfSize)
-
-    expect(simulation.heights.some((value) => Math.abs(value) > 1e-6)).toBe(true)
-    expect(simulation.heights.every(Number.isFinite)).toBe(true)
-    expect(WATER_POOL_FLOOR_Y).toBe(-1)
-    expect(WATER_POOL_HALF_SIZE).toBe(1)
-  })
-
-  it('ignores boxes that float entirely above the surface', () => {
-    const simulation = createSimulation()
-    const oldCenter = new THREE.Vector3(-0.4, 0.8, 0.2)
-    const newCenter = oldCenter.clone().add(new THREE.Vector3(0.2, 0, 0))
-
-    simulation.moveBox(oldCenter, newCenter, new THREE.Vector3(0.1, 0.1, 0.1))
-
-    expect(simulation.heights.every((value) => value === 0)).toBe(true)
-  })
-
-  it('concentrates caustic light into brighter filaments for ripples', () => {
-    const simulation = createSimulation()
-    const flatBytes = causticBytes(simulation)
-    const flatMax = Math.max(...flatBytes)
-
-    simulation.addDrop(0.1, -0.2, 0.2, 0.05)
-    for (let frame = 0; frame < 20; frame += 1) {
-      simulation.step(2)
-    }
-    simulation.updateNormals()
-    simulation.updateCaustics()
-
-    const rippleBytes = causticBytes(simulation)
-    const rippleMax = Math.max(...rippleBytes)
-    const rippleMin = Math.min(...rippleBytes)
-
-    expect(rippleMax).toBeGreaterThan(flatMax)
-    expect(rippleMax - rippleMin).toBeGreaterThan(4)
-  })
-
   it('packs the water state into half float RGBA texels', () => {
     const simulation = createSimulation()
     simulation.addDrop(0.3, 0.3, 0.1, 0.02)
@@ -165,31 +98,6 @@ describe('WaterPoolSimulation', () => {
       expect(Number.isFinite(THREE.DataUtils.fromHalfFloat(data[index]))).toBe(true)
     }
   })
-
-  it('recomputes the caustics when the sun direction changes', () => {
-    const simulation = createSimulation()
-    simulation.addDrop(0.1, -0.2, 0.2, 0.05)
-    for (let frame = 0; frame < 20; frame += 1) {
-      simulation.step(2)
-    }
-    simulation.updateNormals()
-    simulation.updateCaustics()
-
-    const before = causticBytes(simulation)
-    simulation.setLightDirection(new THREE.Vector3(-0.78, 0.2, -0.6))
-    const after = causticBytes(simulation)
-
-    expect(after).not.toEqual(before)
-  })
-
-  it('ignores sun directions below the horizon', () => {
-    const simulation = createSimulation()
-    const before = causticBytes(simulation)
-
-    simulation.setLightDirection([0, -1, 0])
-
-    expect(causticBytes(simulation)).toEqual(before)
-  })
 })
 
 describe('WaterPoolShape', () => {
@@ -204,6 +112,25 @@ describe('WaterPoolShape', () => {
       minZ: -1,
       maxZ: 1
     })
+  })
+
+  it('keeps the irregular cube outline inside the unit square', () => {
+    const outline = resolveWaterPoolShape(WATER_POOL_IRREGULAR_CUBE_OUTLINE)
+    const edges = createWaterPoolEdges(outline)
+    const bounds = getWaterPoolBounds(outline)
+
+    expect(outline).toHaveLength(4)
+    expect(bounds.minX).toBeGreaterThanOrEqual(-1)
+    expect(bounds.maxX).toBeLessThanOrEqual(1)
+    expect(bounds.minZ).toBeGreaterThanOrEqual(-1)
+    expect(bounds.maxZ).toBeLessThanOrEqual(1)
+    expect(isInsideWaterPool(edges, 0, 0)).toBe(true)
+
+    const sideLengths = outline.map(([x, z], index) => {
+      const [nextX, nextZ] = outline[(index + 1) % outline.length]
+      return Math.hypot(nextX - x, nextZ - z)
+    })
+    expect(new Set(sideLengths.map((side) => side.toFixed(3))).size).toBe(4)
   })
 
   it('rejects custom outlines with fewer than three points', () => {
@@ -332,23 +259,8 @@ describe('WaterPoolMaterials', () => {
       THREE.RGBAFormat,
       THREE.HalfFloatType
     )
-    const causticTexture = new THREE.DataTexture(
-      new Uint8Array(4 * 4 * 4),
-      4,
-      4,
-      THREE.RGBAFormat,
-      THREE.UnsignedByteType
-    )
     const materials = createWaterPoolMaterials({
       waterTexture,
-      causticTexture,
-      boxes: [
-        {
-          center: uniform(new THREE.Vector3(-0.4, -0.68, 0.2)),
-          halfSize: uniform(new THREE.Vector3(0.18, 0.18, 0.18)),
-          color: uniform(new THREE.Vector3(0.8, 0.6, 0.2))
-        }
-      ],
       lightDirection: uniform(new THREE.Vector3(0.55, 0.9, 0.35).normalize()),
       poolCenter: uniform(new THREE.Vector3(1, 0.5, -2)),
       poolScale: uniform(2)
@@ -356,31 +268,20 @@ describe('WaterPoolMaterials', () => {
 
     const dispose = () => {
       materials.water.dispose()
-      materials.pool.dispose()
-      materials.boxes.forEach((material) => material.dispose())
       materials.sky.dispose()
       waterTexture.dispose()
-      causticTexture.dispose()
     }
 
     return { materials, dispose }
   }
 
-  it('builds node materials for the water, basin, boxes and sky', () => {
+  it('builds node materials for the water and sky', () => {
     const { materials, dispose } = createMaterials()
 
     expect(materials.water.name).toBe('WaterPoolSurface')
     expect(materials.water.positionNode).toBeDefined()
     expect(materials.water.colorNode).toBeDefined()
     expect(materials.water.side).toBe(THREE.DoubleSide)
-
-    expect(materials.pool.name).toBe('WaterPoolBasin')
-    expect(materials.pool.colorNode).toBeDefined()
-    expect(materials.pool.side).toBe(THREE.DoubleSide)
-
-    expect(materials.boxes).toHaveLength(1)
-    expect(materials.boxes[0].name).toBe('WaterPoolBox')
-    expect(materials.boxes[0].colorNode).toBeDefined()
 
     expect(materials.sky.name).toBe('WaterPoolSky')
     expect(materials.sky.side).toBe(THREE.BackSide)

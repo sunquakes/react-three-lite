@@ -25,6 +25,19 @@ export const WATER_POOL_BOX_OUTLINE: WaterPoolOutline = [
   [-1, 1]
 ]
 
+/**
+ * Irregular cube outline used by the `WaterPool` component by default: a skewed
+ * quadrilateral with four sides of different lengths and no right angles, so
+ * the water reads as a slightly distorted block instead of a square. It stays
+ * centred on the origin and inside -1…1 like the box outline.
+ */
+export const WATER_POOL_IRREGULAR_CUBE_OUTLINE: WaterPoolOutline = [
+  [-0.95, -0.55],
+  [0.85, -0.92],
+  [0.68, 0.9],
+  [-0.9, 0.62]
+]
+
 export interface WaterPoolEdge {
   /** X component of the inward facing edge normal. */
   nx: number
