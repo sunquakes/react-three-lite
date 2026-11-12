@@ -219,6 +219,97 @@ describe('Movable', () => {
     })
   })
 
+  describe('pause / resume', () => {
+    it('cancels the frame loop and freezes the element while paused', () => {
+      const group = new THREE.Group()
+      const movable = new Movable(group, [0, 0, 0])
+      movable.moveTo([10, 0, 0], 1000)
+
+      raf.flush(0)
+      raf.flush(250)
+      const frozenX = group.position.x
+
+      movable.pause()
+
+      expect(raf.pending.size).toBe(0)
+      expect(internals(movable).state).toBe(false)
+
+      raf.flush(500)
+      expect(group.position.x).toBe(frozenX)
+    })
+
+    it('queues moves while paused without starting the loop', () => {
+      const movable = new Movable(new THREE.Group(), [0, 0, 0])
+      movable.moveTo([10, 0, 0], 1000)
+      movable.pause()
+      const requests = raf.request.mock.calls.length
+
+      movable.moveTo([20, 0, 0], 500)
+
+      expect(raf.request).toHaveBeenCalledTimes(requests)
+      expect(internals(movable).state).toBe(false)
+      expect(internals(movable).deltaX).toBe(20)
+      expect(internals(movable).duration).toBe(1500)
+    })
+
+    it('resumes from the remaining distance without counting the pause', () => {
+      const group = new THREE.Group()
+      const movable = new Movable(group, [0, 0, 0])
+      movable.moveTo([10, 0, 0], 1000)
+
+      raf.flush(0)
+      raf.flush(250)
+      movable.pause()
+
+      // Ten seconds pass while paused; none of it may become motion.
+      movable.resume()
+      raf.flush(10250)
+      expect(group.position.x).toBeCloseTo(2.5)
+
+      // The remaining 750ms still only covers the rest of the move.
+      raf.flush(11000)
+      expect(group.position.x).toBeCloseTo(10)
+    })
+
+    it('is safe to pause and resume repeatedly', () => {
+      const group = new THREE.Group()
+      const movable = new Movable(group, [0, 0, 0])
+      movable.moveTo([10, 0, 0], 1000)
+
+      raf.flush(0)
+      movable.pause()
+      movable.pause()
+      expect(raf.pending.size).toBe(0)
+
+      movable.resume()
+      movable.resume()
+      expect(raf.pending.size).toBe(1)
+
+      // The first frame after resuming only samples the clock again.
+      raf.flush(1000)
+      expect(group.position.x).toBeCloseTo(0)
+
+      raf.flush(2000)
+      expect(group.position.x).toBeCloseTo(10)
+    })
+
+    it('does not restart a finished move when resumed', () => {
+      const group = new THREE.Group()
+      const movable = new Movable(group, [0, 0, 0])
+      movable.moveTo([10, 0, 0], 500)
+
+      raf.flush(0)
+      raf.flush(500)
+      expect(group.position.x).toBeCloseTo(10)
+
+      movable.pause()
+      movable.resume()
+
+      expect(raf.pending.size).toBe(0)
+      expect(group.position.x).toBeCloseTo(10)
+    })
+  })
+
   describe('dispose', () => {
     it('cancels a running frame loop', () => {
       const movable = new Movable(new THREE.Group(), [0, 0, 0])

@@ -14,6 +14,7 @@ import {
   pow,
   smoothstep,
   step,
+  uniform,
   vec2,
   vec3,
   vec4,
@@ -22,6 +23,7 @@ import {
   cameraProjectionMatrix,
   modelViewMatrix
 } from 'three/tsl'
+import { globalParameterBus } from './ParameterBus'
 
 export interface SkyDomeOptions {
   /** Radius of the dome sphere, default: 420 */
@@ -34,8 +36,6 @@ export interface SkyDomeOptions {
   upperSkyColor?: number
   /** Color at the top of the dome, default: 0x060409 */
   zenithColor?: number
-  /** Direction of the sun as [x, y, z], normalized internally, default: [-0.78, 0.2, -0.6] */
-  sunDirection?: [number, number, number]
   /** Color of the wide halo around the sun, default: 0xff9947 */
   glowColor?: number
   /** Color of the sun disc, default: 0xffe0b8 */
@@ -62,6 +62,8 @@ function toRgb(hex: number): [number, number, number] {
 export default class SkyDome extends THREE.Mesh<THREE.SphereGeometry, NodeMaterial> {
   private disposed = false
 
+  private unsubscribeSunDirection: (() => void) | null = null
+
   constructor(options: SkyDomeOptions = {}) {
     const {
       radius = 420,
@@ -69,7 +71,6 @@ export default class SkyDome extends THREE.Mesh<THREE.SphereGeometry, NodeMateri
       lowerSkyColor = 0x803624,
       upperSkyColor = 0x260f13,
       zenithColor = 0x060409,
-      sunDirection = [-0.78, 0.2, -0.6],
       glowColor = 0xff9947,
       sunColor = 0xffe0b8,
       sunIntensity = 2.4,
@@ -99,7 +100,8 @@ export default class SkyDome extends THREE.Mesh<THREE.SphereGeometry, NodeMateri
     // Projected sun: xy in NDC, z the disc radius in NDC units, w 1 when the sun
     // is in front of the camera and 0 when it is behind.
     const vSun = varying(vec4(0))
-    const sun = normalize(vec3(sunDirection[0], sunDirection[1], sunDirection[2]))
+    const uSunDirection = uniform(globalParameterBus.get('sunDirection').clone().normalize())
+    const sun = normalize(uSunDirection)
     const [hr, hg, hb] = toRgb(horizonColor)
     const [lr, lg, lb] = toRgb(lowerSkyColor)
     const [ur, ug, ub] = toRgb(upperSkyColor)
@@ -169,12 +171,18 @@ export default class SkyDome extends THREE.Mesh<THREE.SphereGeometry, NodeMateri
 
     this.renderOrder = -1000
     this.frustumCulled = false
+
+    this.unsubscribeSunDirection = globalParameterBus.subscribe('sunDirection', (direction) => {
+      uSunDirection.value.copy(direction).normalize()
+    })
   }
 
   public dispose(): void {
     if (this.disposed) return
     this.disposed = true
 
+    this.unsubscribeSunDirection?.()
+    this.unsubscribeSunDirection = null
     this.parent?.remove(this)
     this.geometry.dispose()
     this.material.dispose()

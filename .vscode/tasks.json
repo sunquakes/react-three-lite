@@ -34,22 +34,22 @@
     {
       "label": "4. Clean Docs node_modules",
       "type": "shell",
-      "command": "cmd /c \"if exist ${workspaceFolder}\\docs\\node_modules rd /s /q ${workspaceFolder}\\docs\\node_modules\" ; Write-Output 'node_modules cleaned or not exists'",
+      "command": "$target = Join-Path '${workspaceFolder}' 'docs\\node_modules'; if (Test-Path $target) { $scratch = Join-Path (Split-Path '${workspaceFolder}' -Parent) '.r3l-trash'; New-Item -ItemType Directory -Force -Path $scratch | Out-Null; $dest = Join-Path $scratch ('node_modules-' + [guid]::NewGuid().ToString('N')); Move-Item -LiteralPath $target -Destination $dest; & cmd.exe /c rd /s /q $dest; if (Test-Path $scratch) { & cmd.exe /c rd /s /q $scratch }; Write-Output 'node_modules permanently deleted' } else { Write-Output 'node_modules does not exist' }",
       "options": {
         "cwd": "${workspaceFolder}"
       },
       "problemMatcher": [],
-      "detail": "Step 4: Delete docs/node_modules directory (rd handle pnpm junction reparse-point)"
+      "detail": "Step 4: Permanently delete docs/node_modules by moving it out of the workspace first, so nothing is moved to the recycle bin"
     },
     {
       "label": "5. Clean Docs Cache",
       "type": "shell",
-      "command": "cmd /c \"if exist ${workspaceFolder}\\docs\\.docusaurus rd /s /q ${workspaceFolder}\\docs\\.docusaurus\" ; cmd /c \"if exist ${workspaceFolder}\\docs\\build rd /s /q ${workspaceFolder}\\docs\\build\" ; Write-Output 'Cache cleaned'",
+      "command": "$scratch = Join-Path (Split-Path '${workspaceFolder}' -Parent) '.r3l-trash'; foreach ($name in @('.docusaurus', 'build')) { $target = Join-Path '${workspaceFolder}' ('docs\\' + $name); if (Test-Path $target) { New-Item -ItemType Directory -Force -Path $scratch | Out-Null; $dest = Join-Path $scratch ($name + '-' + [guid]::NewGuid().ToString('N')); Move-Item -LiteralPath $target -Destination $dest; & cmd.exe /c rd /s /q $dest; Write-Output ($name + ' permanently deleted') } }; if (Test-Path $scratch) { & cmd.exe /c rd /s /q $scratch }",
       "options": {
         "cwd": "${workspaceFolder}"
       },
       "problemMatcher": [],
-      "detail": "Step 5: Delete docs/.docusaurus and docs/build directories"
+      "detail": "Step 5: Permanently delete docs/.docusaurus and docs/build by moving them out of the workspace first, so nothing is moved to the recycle bin"
     },
     {
       "label": "6. Install Docs Dependencies",

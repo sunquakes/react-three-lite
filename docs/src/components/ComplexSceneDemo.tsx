@@ -28,7 +28,8 @@ import {
   SkyDome,
   Snow,
   SweepLight,
-  disposeModel
+  disposeModel,
+  globalParameterBus
 } from 'react-three-lite'
 import type { SceneComponents } from 'react-three-lite'
 
@@ -150,6 +151,15 @@ const SURVEY_HEADING = -1.62
 // out from under it over the sand, one full sweep every few seconds.
 const SCAN_RADIUS = 7
 const SCAN_PERIOD = 2.6
+
+// Wheel ruts: every wheel lays its own ribbon, and each recorded sample adds
+// one quad to it, so all six tyres leave a trace of the path they actually
+// took. Samples are spaced by distance to keep the ribbons uniform.
+const TRACK_MAX_SAMPLES = 1024
+const TRACK_SAMPLE_STEP = 0.1
+const TRACK_Y_OFFSET = 0.05
+// How many times the rut grain tile repeats along one world unit of trail.
+const TRACK_GRAIN_TILES = 3
 
 // Past the playable plain the ground sags away like the surface of a very large
 // sphere. The curve drops the far edge of the terrain below the horizon, so the
@@ -286,6 +296,45 @@ function createRegolithTexture(): THREE.CanvasTexture | null {
   texture.wrapT = THREE.RepeatWrapping
   texture.colorSpace = THREE.SRGBColorSpace
   texture.anisotropy = 8
+  return texture
+}
+
+// Wheel ruts are pressed regolith, not paint, so their ribbon carries its own
+// grain: a sand tile whose alpha thins into loose dust at the edges instead of
+// closing on a ruled border.
+function createRutTexture(): THREE.CanvasTexture | null {
+  const width = 96
+  const height = 192
+  const canvas = document.createElement('canvas')
+  canvas.width = width
+  canvas.height = height
+  const context = canvas.getContext('2d')
+  if (!context) return null
+
+  const random = createRandom(72931)
+  const image = context.createImageData(width, height)
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      const index = (y * width + x) * 4
+      const across = Math.abs((x + 0.5) / width - 0.5) * 2
+      const grain = random()
+      // Full width through the middle of the tyre, then the grain eats into
+      // the shoulders so the rut fades out into the surrounding sand.
+      const edge = 1 - THREE.MathUtils.smoothstep(across, 0.78, 1)
+      const shade = 0.78 + grain * 0.22
+      image.data[index] = shade * 255
+      image.data[index + 1] = shade * 255
+      image.data[index + 2] = shade * 255
+      image.data[index + 3] = edge * (0.7 + grain * 0.3) * 255
+    }
+  }
+  context.putImageData(image, 0, 0)
+
+  const texture = new THREE.CanvasTexture(canvas)
+  texture.wrapS = THREE.ClampToEdgeWrapping
+  texture.wrapT = THREE.RepeatWrapping
+  texture.colorSpace = THREE.SRGBColorSpace
+  texture.anisotropy = 4
   return texture
 }
 
@@ -541,6 +590,7 @@ interface DriveState {
   ready: boolean
   endTime: number
   arrived: boolean
+  held: boolean
   arriveTime: number
   arrivalHeading: number
   minYOffset: number
@@ -549,6 +599,25 @@ interface DriveState {
   sweep: SweepLight | null
   wheels: THREE.Group[]
   wheelWorldRadius: number
+  wheelHalfWidths: number[]
+}
+
+// One rut ribbon per wheel: a dynamic vertex buffer whose draw range grows
+// with that wheel, revealed one quad per recorded sample.
+interface TrackStrip {
+  geometry: THREE.BufferGeometry
+  positions: Float32Array
+  uvs: Float32Array
+  count: number
+  lastX: number
+  lastZ: number
+  distance: number
+}
+
+interface RoverTrack {
+  strips: TrackStrip[]
+  meshes: THREE.Mesh[]
+  material: THREE.Material
 }
 
 // Spectral bands the picture-in-picture can show the Earth in. Each band is a
@@ -1266,6 +1335,7 @@ export default function ComplexSceneDemo({
   const extraRef = useRef<THREE.Object3D[]>([])
   const roverRef = useRef<THREE.Object3D | null>(null)
   const driveRef = useRef<DriveState | null>(null)
+  const trackRef = useRef<RoverTrack | null>(null)
   const sceneRef = useRef<THREE.Scene | null>(null)
   const scanRef = useRef<RadarSweep | null>(null)
   const signalWavesRef = useRef<SignalWave | null>(null)
@@ -1291,6 +1361,9 @@ export default function ComplexSceneDemo({
   const handleCreated = (scene: THREE.Scene, components: SceneComponents) => {
     const { camera, light, controls } = components
     sceneRef.current = scene
+
+    // Sky dome, fog and every other effect share this sun direction.
+    globalParameterBus.set('sunDirection', SUN_DIRECTION)
 
     // Pulled back so both the drive start on the open plain and the crater rim
     // stay inside the frame while the rover makes its descent.
@@ -1331,8 +1404,7 @@ export default function ComplexSceneDemo({
     // Sky dome, replaces the default scene background. Its radius has to stay
     // outside the widened terrain but inside the camera far plane.
     const sky = new SkyDome({
-      radius: 900,
-      sunDirection: [SUN_DIRECTION.x, SUN_DIRECTION.y, SUN_DIRECTION.z]
+      radius: 900
     })
     scene.add(sky)
     extraRef.current.push(sky)
@@ -1724,6 +1796,7 @@ export default function ComplexSceneDemo({
       ready: false,
       endTime: Infinity,
       arrived: false,
+      held: false,
       arriveTime: 0,
       arrivalHeading: 0,
       minYOffset: 0,
@@ -1731,9 +1804,71 @@ export default function ComplexSceneDemo({
       headBaseY: 0,
       sweep: null,
       wheels: [],
-      wheelWorldRadius: WHEEL_RADIUS
+      wheelWorldRadius: WHEEL_RADIUS,
+      wheelHalfWidths: []
     }
     driveRef.current = drive
+
+    // --- Wheel ruts ---------------------------------------------------------
+    // One ribbon per wheel that grows under it as the rover drives. Each
+    // recorded sample adds a quad sized to that wheel's own tyre, and the
+    // vertex heights come from the same terrain field the rover follows, so
+    // the ruts hug the dunes.
+    const rutTexture = createRutTexture()
+    const trackMaterial = new THREE.MeshBasicMaterial({
+      color: 0x7a5535,
+      map: rutTexture,
+      transparent: true,
+      opacity: 0.4,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+      polygonOffset: true,
+      polygonOffsetFactor: -4,
+      polygonOffsetUnits: -4
+    })
+    const trackStrips: TrackStrip[] = []
+    const trackMeshes: THREE.Mesh[] = []
+    const trackIndices = new Uint16Array((TRACK_MAX_SAMPLES - 1) * 6)
+    for (let i = 0; i < TRACK_MAX_SAMPLES - 1; i += 1) {
+      const base = i * 2
+      const index = i * 6
+      trackIndices[index] = base
+      trackIndices[index + 1] = base + 1
+      trackIndices[index + 2] = base + 2
+      trackIndices[index + 3] = base + 1
+      trackIndices[index + 4] = base + 3
+      trackIndices[index + 5] = base + 2
+    }
+    for (let wheel = 0; wheel < WHEEL_CENTERS.length; wheel += 1) {
+      const positions = new Float32Array(TRACK_MAX_SAMPLES * 2 * 3)
+      const uvs = new Float32Array(TRACK_MAX_SAMPLES * 2 * 2)
+      const geometry = new THREE.BufferGeometry()
+      geometry.setAttribute(
+        'position',
+        new THREE.BufferAttribute(positions, 3).setUsage(THREE.DynamicDrawUsage)
+      )
+      geometry.setAttribute('uv', new THREE.BufferAttribute(uvs, 2).setUsage(THREE.DynamicDrawUsage))
+      geometry.setIndex(new THREE.BufferAttribute(trackIndices.slice(), 1))
+      geometry.setDrawRange(0, 0)
+      const mesh = new THREE.Mesh(geometry, trackMaterial)
+      mesh.frustumCulled = false
+      scene.add(mesh)
+      trackStrips.push({
+        geometry,
+        positions,
+        uvs,
+        count: 0,
+        lastX: NaN,
+        lastZ: NaN,
+        distance: 0
+      })
+      trackMeshes.push(mesh)
+    }
+    trackRef.current = {
+      strips: trackStrips,
+      meshes: trackMeshes,
+      material: trackMaterial
+    }
 
     void GLTFLoaderAsync('/models/perseverance-draco.glb', true)
       .then((model) => {
@@ -1771,6 +1906,21 @@ export default function ComplexSceneDemo({
         if (wheelsGroup) {
           currentDrive.wheels = splitWheels(wheelsGroup)
           currentDrive.wheelWorldRadius = WHEEL_RADIUS * model.scale.x
+          // Each rut is only as wide as the tyre that presses it, so measure
+          // every wheel instead of using one shared guess for all six.
+          const wheelSize = new THREE.Vector3()
+          currentDrive.wheelHalfWidths = currentDrive.wheels.map((wheel) => {
+            const box = new THREE.Box3()
+            wheel.traverse((child) => {
+              const mesh = child as THREE.Mesh
+              if (!mesh.isMesh || !mesh.geometry) return
+              if (!mesh.geometry.boundingBox) mesh.geometry.computeBoundingBox()
+              if (mesh.geometry.boundingBox) box.union(mesh.geometry.boundingBox)
+            })
+            if (box.isEmpty()) return currentDrive.wheelWorldRadius * 0.55
+            box.getSize(wheelSize)
+            return (wheelSize.x * model.scale.x) / 2
+          })
           wheelsGroup.clear()
           currentDrive.wheels.forEach((wheel) => wheelsGroup.add(wheel))
         }
@@ -1847,6 +1997,69 @@ export default function ComplexSceneDemo({
     extraRef.current.push(earthDot)
   }
 
+  // Lays one narrow rut quad under every wheel at the rover's current pose.
+  // Each wheel owns its ribbon and its own distance gate, so the traces follow
+  // the wheels through the curves and the final pivot, and every rut is
+  // exactly as wide as the tyre that presses it into the regolith.
+  const wheelProbe = new THREE.Vector3()
+  const appendTrackSample = (drive: DriveState) => {
+    const track = trackRef.current
+    if (!track || drive.wheels.length === 0) return
+    if (track.strips.every((strip) => strip.count >= TRACK_MAX_SAMPLES)) return
+
+    // The ruts run along the heading; their width is across it, which is also
+    // the direction each wheel sweeps while the rover pivots in place.
+    const heading = drive.roverGroup.rotation.y
+    const rightX = Math.cos(heading)
+    const rightZ = -Math.sin(heading)
+
+    drive.wheels.forEach((wheel, index) => {
+      const strip = track.strips[index]
+      if (!strip || strip.count >= TRACK_MAX_SAMPLES) return
+
+      wheel.getWorldPosition(wheelProbe)
+      const x = wheelProbe.x
+      const z = wheelProbe.z
+      const step = Math.hypot(x - strip.lastX, z - strip.lastZ)
+      if (Number.isFinite(strip.lastX) && step < TRACK_SAMPLE_STEP) return
+      strip.lastX = x
+      strip.lastZ = z
+      // The first sample has no predecessor, so the grain run starts at zero.
+      if (Number.isFinite(step)) strip.distance += step
+
+      const halfWidth = drive.wheelHalfWidths[index] ?? drive.wheelWorldRadius * 0.55
+      const innerX = x - rightX * halfWidth
+      const innerZ = z - rightZ * halfWidth
+      const outerX = x + rightX * halfWidth
+      const outerZ = z + rightZ * halfWidth
+      const writeAt = strip.count * 2 * 3
+      const uvAt = strip.count * 2 * 2
+
+      strip.positions[writeAt] = innerX
+      strip.positions[writeAt + 1] = terrainHeight(innerX, innerZ) + TRACK_Y_OFFSET
+      strip.positions[writeAt + 2] = innerZ
+      strip.positions[writeAt + 3] = outerX
+      strip.positions[writeAt + 4] = terrainHeight(outerX, outerZ) + TRACK_Y_OFFSET
+      strip.positions[writeAt + 5] = outerZ
+
+      // U runs across the tyre, V runs along the trail, so the grain tile is
+      // stretched with the rut instead of swimming over it.
+      const grain = strip.distance * TRACK_GRAIN_TILES
+      strip.uvs[uvAt] = 0
+      strip.uvs[uvAt + 1] = grain
+      strip.uvs[uvAt + 2] = 1
+      strip.uvs[uvAt + 3] = grain
+
+      const position = strip.geometry.getAttribute('position') as THREE.BufferAttribute
+      position.needsUpdate = true
+      const uv = strip.geometry.getAttribute('uv') as THREE.BufferAttribute
+      uv.needsUpdate = true
+
+      strip.count += 1
+      strip.geometry.setDrawRange(0, (strip.count - 1) * 6)
+    })
+  }
+
   // Narrative controller: dispatches drive waypoints, follows the terrain,
   // pivots the rover into its survey pose, then lights the downlink.
   const handleBeforeFrame = () => {
@@ -1870,9 +2083,27 @@ export default function ComplexSceneDemo({
       }
       const dwelling = activeStop !== null
 
+      // A survey halt must freeze the chassis too: pausing the tween keeps the
+      // rover from sliding forward with its wheels locked when the schedule is
+      // slightly ahead of the physical position.
+      if (dwelling !== drive.held) {
+        drive.held = dwelling
+        if (dwelling) {
+          drive.movable.pause()
+        } else {
+          drive.movable.resume()
+        }
+      }
+
       // Issue the next scheduled waypoint, at most one per frame so an
-      // overdue schedule (e.g. after a hidden tab) catches up gradually.
-      if (drive.index < drive.waypoints.length && now >= drive.waypoints[drive.index].at) {
+      // overdue schedule (e.g. after a hidden tab) catches up gradually. No
+      // waypoint is dispatched during a survey halt, so the paused rover does
+      // not queue up motion for the rest of the stop.
+      if (
+        !dwelling &&
+        drive.index < drive.waypoints.length &&
+        now >= drive.waypoints[drive.index].at
+      ) {
         const waypoint = drive.waypoints[drive.index]
         drive.movable.moveTo([waypoint.x, 0, waypoint.z], waypoint.duration)
         drive.index += 1
@@ -1882,6 +2113,17 @@ export default function ComplexSceneDemo({
         drive.arrived = true
         drive.arriveTime = now
         drive.arrivalHeading = drive.roverGroup.rotation.y
+        // Park for real: when the schedule lands the rover may still be
+        // finishing the last tween (worse on slow frames), which would slide
+        // the locked chassis sideways under the survey pose. Drop the tween,
+        // snap onto the final mark and stop issuing waypoints.
+        drive.movable.pause()
+        const park = drive.waypoints[drive.waypoints.length - 1]
+        if (park) {
+          drive.roverGroup.position.x = park.x
+          drive.roverGroup.position.z = park.z
+        }
+        drive.index = drive.waypoints.length
       }
       // Motion-driven details (bob, pitch) ease out after parking and stop
       // outright while the rover is halted at a survey station.
@@ -1917,6 +2159,10 @@ export default function ComplexSceneDemo({
         headingDelta = Math.atan2(Math.sin(headingDelta), Math.cos(headingDelta))
         group.rotation.y = drive.arrivalHeading + headingDelta * pivot
       }
+
+      // Ruts are laid after the pose settles, so the tracks follow the path the
+      // wheels actually took.
+      appendTrackSample(drive)
 
       // The mast works the ground: a slow pan while halted at a survey station
       // or parked on the rim, and a return to its stowed heading on the move.
@@ -2092,6 +2338,17 @@ export default function ComplexSceneDemo({
         driveRef.current = null
       }
 
+      const track = trackRef.current
+      if (track) {
+        for (const mesh of track.meshes) {
+          mesh.parent?.remove(mesh)
+          mesh.geometry.dispose()
+        }
+        if (track.material instanceof THREE.MeshBasicMaterial) track.material.map?.dispose()
+        track.material.dispose()
+        trackRef.current = null
+      }
+
       signalWavesRef.current?.dispose()
       signalWavesRef.current = null
 
@@ -2148,8 +2405,6 @@ export default function ComplexSceneDemo({
           noiseSpeedZ={0.02}
           inscatteringColor="#ffb27a"
           inscatteringIntensity={1}
-          lightAzimuth={232}
-          lightElevation={11}
         />
         <Snow
           count={9000}

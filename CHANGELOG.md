@@ -1,5 +1,35 @@
 ## [Unreleased]
 
+## [0.9.0] - 2026-11-12
+
+### Added
+
+- Add a `shape` prop to `Water`: pass a convex `[x, z]` outline in world units or a `THREE.BufferGeometry` such as `ConvexGeometry`, and the surface follows it instead of the square patch, giving lakes and shorelines a real edge. Boundary vertices are sampled from the outline and interior vertices scale it towards the centre, so the wave shader and both planar captures are unchanged; `size` is ignored and `segments` becomes the boundary budget.
+- Add a bilingual irregular lake demo for the new `Water` option, plus unit tests for the shaped surface geometry.
+- Add the `NebulaGalaxy` class: a four-armed spiral galaxy built from additive billboard particles (arms, core and dust) plus a procedural haze plane and distant background stars. Drag tilts the disc, wheel or pinch zooms it within limits, and a click sends a light wave from the core; the internal loop drives the spin, tilt, zoom and palette transitions so no per-frame code is required. `setPalette()`, `setSpeed()`, `setPaused()` and `pulse()` control it at runtime, and reduced-motion preferences disable the idle rotation and click wave by default.
+- Add WebGPU / WebGL demos and bilingual (English and Chinese) documentation for the new effect, plus unit tests for the star distribution, timeline, pointer interaction, uniform color handling and resource cleanup.
+- Add the `TextFireworks` class: a sentence is sampled from an offscreen canvas into particles, lifted into four staggered colour bursts from left to right, then pulled back onto the original glyphs. A delayed, dimmer copy of the same particles forms the trail, and `setText()` / `launch()` resample and replay the effect.
+- Add the `layoutText` and `sampleTextParticles` utilities that measure, wrap, shrink and sample text for the particle cloud.
+- Add WebGPU / WebGL demos and bilingual (English and Chinese) documentation for the new effect, plus unit tests for the text sampling utilities, the particle timeline and the public API surface.
+- Add snow accumulation to the `Snow` component: enabling `accumulate` gives every eligible scene mesh a normal-displaced snow shell that grows from flat tops down to steeper slopes over `accumulationDuration` seconds and then stays at `accumulationThickness`. `accumulationTargets` restricts it to chosen objects, late-loaded models are picked up automatically, and the cover material is written in TSL so the WebGPU and WebGL renderers share it.
+- Extend the `Snow` demo and bilingual documentation with a scene of snow-covered ground, rocks and blocks, and add unit tests for the accumulation targets, growth timeline and cleanup.
+- Add height-map collision to the `Rain` component: drops sample a grayscale `heightMap` in the vertex shader and stop at the displaced surface instead of falling through it. `heightMapSize`, `heightMapAmplitude` and `groundHeight` map the texture onto world space, the sampling matches a plane's UVs so terrain displaced by the same image lines up with the impacts, and wind drift is corrected by re-sampling the landing point.
+- Add landing splashes to `Rain`: every impact draws an expanding ripple flush with the surface, sharing the drop geometry. `splash`, `splashColor`, `splashSize` and `splashDuration` tune or disable it.
+- Add a collision demo plus bilingual documentation for the new rain options, and unit tests for the ground resolution and splash window.
+- Add the `ParameterBus` class and the `globalParameterBus` instance: a process-wide store for scene-wide environment parameters that effects read when they are created and subscribe to for live updates.
+
+### Changed
+
+- Move the sun direction out of the individual effects. `SkyDome`, `Water`, `WaterPool` and `HeightFog` no longer accept `sunDirection`, and `HeightFog` no longer accepts `lightAzimuth` / `lightElevation`. Set `globalParameterBus.set('sunDirection', ...)` once instead and every effect follows it.
+- Add a bilingual `Global Parameters` documentation page, link the affected effect pages to it, and cover the bus and the live light updates with unit tests.
+- Enable three's GPU-driven `MeshletDrawingPipeline` by default on the WebGPU renderer when the installed three ships it (r187+). Geometries are split into meshlets with a chain of simplified levels of detail, and hidden clusters are culled on the GPU. Objects and materials the pipeline does not support keep using the standard pipeline, and the WebGL backend is unaffected. The module is loaded lazily, so the minimum supported three version is unchanged (`>= 0.180`) and older releases simply keep the standard pipeline.
+- `WaterPool` no longer draws a bottom. The basin is only traced by the water shader, so the pool is a water surface with no geometry under it, and a container placed around the pool no longer has a dark disc poking through.
+- `WaterPool` no longer paints a caustic net on the basin. The traced floor is a plain lit color, and the simulation no longer builds a caustic map, so the per-frame CPU cost is lower.
+- `WaterPool` now defaults to an irregular cube outline instead of the square tub: the water surface is a skewed quadrilateral with four sides of different lengths. Pass `shape="box"` to get the old square, or a custom outline as before.
+- `WaterPool` no longer accepts floating `boxes`. The `boxes` prop and the `WaterPoolBoxConfig` type are gone, the water shader stops ray tracing boxes on the surface, the basin has no box shadows, and `WaterPoolSimulation` drops `moveBox`. Only the water surface and the dragged ripples remain interactive.
+- `WaterPool` now draws the water only. The `sky` prop is gone and the component no longer adds a procedural sky dome or sun behind the pool, so add `SkyDome` to the scene for the sky and the sun; the water still traces its own sky for reflections.
+- Rescale the `WaterPool` demo so the tub no longer dominates the frame and the water sits inside its opening instead of a much larger vessel.
+
 ## [0.8.0] - 2026-10-29
 
 ### Added

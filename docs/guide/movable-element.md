@@ -95,3 +95,5 @@ Every example below can be viewed with either the **WebGPU** (default) or the **
 | ----------- | ---------------------------------------------------------------- | ----------------------------------------------------------------------------- |
 | constructor | (model: THREE.Group, position: [number, number, number]) => void |                                                                               |
 | moveTo      | (position: [number, number, number], duration: number) => void   | `duration` is the duration from one position to another. The unit is millisecond. |
+| pause       | () => void                                                       | Halts the movement at the current position and keeps the remaining distance and duration. |
+| resume      | () => void                                                       | Continues a paused movement from where it stopped, without counting the paused time. |

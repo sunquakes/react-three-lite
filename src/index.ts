@@ -7,6 +7,8 @@ import Rain from './components/Rain'
 import Snow from './components/Snow'
 import HeightFog from './components/HeightFog'
 import Water from './components/Water'
+import WaterPool from './components/WaterPool'
+import SandyBeach from './components/SandyBeach'
 import GeoObject from './components/GeoObject'
 import GeoJsonLayer from './components/GeoJsonLayer'
 import TileLayer from './components/TileLayer'
@@ -35,6 +37,9 @@ import SkyDome from './utils/SkyDome'
 import RadarSweep from './utils/RadarSweep'
 import SignalWave from './utils/SignalWave'
 import GlowSprite from './utils/GlowSprite'
+import TextFireworks from './utils/TextFireworks'
+import NebulaGalaxy from './utils/NebulaGalaxy'
+import ForceShield from './utils/ForceShield'
 import {
   fitCameraToBox,
   fitCameraToObject,
@@ -43,6 +48,7 @@ import {
   isGeoPoint
 } from './utils/CameraFit'
 import { FitCamera } from './utils/FitCamera'
+import { ParameterBus, globalParameterBus } from './utils/ParameterBus'
 
 import { LightGradient, LightGradientOptions } from './utils/Light'
 import type { CalloutOptions, LineShape, BendAxis, LabelAnchor } from './utils/Callout'
@@ -53,6 +59,9 @@ import type { SkyDomeOptions } from './utils/SkyDome'
 import type { RadarSweepOptions } from './utils/RadarSweep'
 import type { SignalWaveOptions } from './utils/SignalWave'
 import type { GlowSpriteOptions } from './utils/GlowSprite'
+import type { TextFireworksOptions } from './utils/TextFireworks'
+import type { NebulaGalaxyOptions, GalaxyPalette } from './utils/NebulaGalaxy'
+import type { ForceShieldOptions } from './utils/ForceShield'
 import type { CameraFitOptions } from './utils/CameraFit'
 
 // components
@@ -66,6 +75,8 @@ export {
   Snow,
   HeightFog,
   Water,
+  WaterPool,
+  SandyBeach,
   GeoObject,
   GeoJsonLayer,
   TileLayer,
@@ -128,6 +139,10 @@ export type {
 } from './crs/GeoJson'
 export type { GeoObjectProps } from './components/GeoObject'
 export type { WaterProps } from './components/Water'
+export type { WaterPoolProps } from './components/WaterPool'
+export type { WaterPoolOutline, WaterPoolShape } from './utils/WaterPoolShape'
+export type { SandyBeachProps } from './components/SandyBeach'
+export type { BeachPresetName } from './utils/BeachPresets'
 export type { GeoJsonLayerProps, GeoJsonStyle } from './components/GeoJsonLayer'
 export type { TileLayerProps } from './components/TileLayer'
 export type { TileIndex, TileBounds, TileCorners } from './crs/Tiles'
@@ -144,8 +159,12 @@ export type { SkyDomeOptions }
 export type { RadarSweepOptions }
 export type { SignalWaveOptions }
 export type { GlowSpriteOptions }
+export type { TextFireworksOptions }
+export type { NebulaGalaxyOptions, GalaxyPalette }
+export type { ForceShieldOptions }
 export type { CameraFitOptions }
 export type { FitCameraOptions } from './utils/FitCamera'
+export type { GlobalParameters } from './utils/ParameterBus'
 
 // class
 export {
@@ -166,8 +185,14 @@ export {
   RadarSweep,
   SignalWave,
   GlowSprite,
+  TextFireworks,
+  NebulaGalaxy,
+  ForceShield,
   FitCamera
 }
+
+// class - global environment parameters shared by scene effects
+export { ParameterBus, globalParameterBus }
 
 // function - async loaders (no hooks)
 export {

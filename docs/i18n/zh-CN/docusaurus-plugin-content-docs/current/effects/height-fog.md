@@ -196,5 +196,9 @@ import HeightFogComponent from '@site/src/components/effects/HeightFog'
 | inscatteringIntensity | number | 1 | 散射强度 |
 | inscatteringExponent | number | 5 | 方向衰减指数，值越大散射越集中在光源方向 |
 | inscatteringStartDistance | number | 0 | 散射从距离相机多远开始 |
-| lightAzimuth | number | 30 | 光源方向方位角（度） |
-| lightElevation | number | 25 | 光源方向仰角（度） |
+
+光源方向不再是属性，雾效会跟随[全局参数总线](/zh-CN/guide/effects/global-parameters)中的太阳，从而与天空和水面保持一致：
+
+```ts
+globalParameterBus.set('sunDirection', new THREE.Vector3(0.453, 0.423, 0.785))
+```

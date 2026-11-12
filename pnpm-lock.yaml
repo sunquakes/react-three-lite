@@ -10,10 +10,10 @@ importers:
     dependencies:
       three:
         specifier: '>=0.180.0'
-        version: 0.184.0
+        version: 0.187.0
       three-stdlib:
         specifier: ^2.36.1
-        version: 2.36.1(three@0.184.0)
+        version: 2.36.1(three@0.187.0)
     devDependencies:
       '@eslint/js':
         specifier: ^10.0.1
@@ -112,8 +112,8 @@ importers:
         specifier: workspace:*
         version: link:..
       three:
-        specifier: ^0.184.0
-        version: 0.184.0
+        specifier: ^0.187.0
+        version: 0.187.0
     devDependencies:
       '@docusaurus/module-type-aliases':
         specifier: ^3.10.1
@@ -6362,8 +6362,8 @@ packages:
     peerDependencies:
       three: '>=0.128.0'
 
-  three@0.184.0:
-    resolution: {integrity: sha512-wtTRjG92pM5eUg/KuUnHsqSAlPM296brTOcLgMRqEeylYTh/CdtvKUvCyyCQTzFuStieWxvZb8mVTMvdPyUpxg==}
+  three@0.187.0:
+    resolution: {integrity: sha512-Qiu7R+Cmh8CstZsY1uJOSWnVlfo7ZtNLV7mF8Jltk3LB3AtDu9cRZlcnRKkAk8Y4z6KKw35z7Y7Urd7jWY8etA==}
 
   thunky@1.1.0:
     resolution: {integrity: sha512-eHY7nBftgThBqOyHGVN+l8gF0BucP09fMo0oO/Lb0w1OF80dJv+lDVpXG60WMQvkcxAkNybKsrEIE3ZtKGmPrA==}
@@ -14954,7 +14954,7 @@ snapshots:
     dependencies:
       tslib: 2.8.1
 
-  three-stdlib@2.36.1(three@0.184.0):
+  three-stdlib@2.36.1(three@0.187.0):
     dependencies:
       '@types/draco3d': 1.4.10
       '@types/offscreencanvas': 2019.7.3
@@ -14962,9 +14962,9 @@ snapshots:
       draco3d: 1.5.7
       fflate: 0.6.9
       potpack: 1.0.2
-      three: 0.184.0
+      three: 0.187.0
 
-  three@0.184.0: {}
+  three@0.187.0: {}
 
   thunky@1.1.0: {}
 

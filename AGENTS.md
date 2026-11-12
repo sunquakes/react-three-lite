@@ -99,6 +99,24 @@ import * as THREE from 'three'  // Don't mix both
 4. Add demo component in `docs/src/components/`
 5. Update `docs/sidebars.js`
 6. Add i18n labels in `docs/i18n/*/docusaurus-plugin-content-docs/current.json`
+7. Update the AI skill in `.agents/skills/react-three-lite/SKILL.md` and its two docs pages (see below)
+8. Update the Features list in `README.md` and `README_ZH.md` (see below)
+
+**README stays current (Mandatory)**: `README.md` and `README_ZH.md` are the front door for users browsing the repository, so they must never lag behind the exported API:
+
+- A feature added, renamed, removed, or whose behaviour changed (component, class, utility, loader, effect, GIS helper) requires a matching Features entry in **both** READMEs in the same change, plus any install/usage snippet it affects.
+- The two languages stay in sync — a feature listed in one README and missing from the other is considered incomplete.
+- Describe the user-visible result, not the implementation, and keep the existing `**Name** — short description` bullet format.
+- Internal refactors with no user-visible change need no README edit.
+
+**The AI skill, the AI docs page and the library are one contract**: `.agents/skills/react-three-lite/SKILL.md` is what users install, `docs/guide/ai.md` plus `docs/i18n/zh-CN/docusaurus-plugin-content-docs/current/ai.md` are the install page, and `docs/scripts/pack-skill.js` packages the skill into `docs/static/skills/react-three-lite.zip` on every docs build. These rules apply to every edit:
+
+- **A user-visible library change updates the skill in the same commit.** A new, renamed or removed feature, a changed prop/option/default, a changed required setup, or changed renderer/cleanup/texture/tone-mapping behaviour means editing `SKILL.md` (API inventory, rules, common tasks) before the commit lands. Purely editorial changes need no skill edit.
+- **`src/index.ts` is the inventory source.** Every name in the skill's Components / Classes / Functions lists must exist in `src/index.ts`, and every new public export must be added to the matching list rather than described only in prose.
+- **The skill links only to pages that exist.** Adding, renaming or removing a docs page requires updating "Look before you write" in the skill; `docs:build` throws on broken links, so a stale URL fails the build.
+- **Never hand-edit or commit the archive.** `docs/static/skills/*.zip` is generated and gitignored. The packer fails the build when `SKILL.md` frontmatter is missing, malformed, BOM-prefixed, or when `name` does not match the skill directory.
+- **The install page and the archive move together.** If the skill directory name or download path changes, update `docs/scripts/pack-skill.js`, `docs/guide/ai.md` and the Chinese AI page in the same change; otherwise the documented download 404s.
+- **Validate with `pnpm --dir docs run docs:build`.** It must pass for `en` and `zh-CN`, and it re-packs the zip, so it is the single check covering the skill, the install page and the archive.
 
 **Dual Renderer Support (Mandatory)**: Every new feature (component, mesh, utility, effect, loader, etc.) MUST support BOTH renderers — `webgpu` (default, `WebGPURenderer`) and `webgl` (classic `THREE.WebGLRenderer` with `WebGLNodesHandler`). The scene renders differently per renderer, so a feature that works on one backend but not the other is considered broken:
 
@@ -177,6 +195,27 @@ export default function App() {
   )
 }
 ```
+
+### Global Parameters
+Scene-wide environment values live on one bus, `globalParameterBus` (a `ParameterBus` instance), instead of being threaded through individual props.
+
+- Any value that more than one effect has to agree on (currently only `sunDirection`) MUST live on the bus. Never add a `sunDirection`, `lightAzimuth`, `lightElevation` or similar light-direction prop, option, constructor argument or `<Scene>` prop to a new component, class, mesh or loader.
+- Effect-local settings stay props: wind and drop counts on `Rain` / `Snow`, `intensity` / `radius` on `Bloom`, palette and speed on `NebulaGalaxy`, and the time-of-day preset on `SandyBeach` (its preset cross-fades the whole look, so it is not a static global).
+- Read the value when the effect is created, then subscribe so runtime changes apply without re-rendering React:
+
+```ts
+const sunVector = globalParameterBus.get('sunDirection').clone().normalize()
+const uSunDirection = uniform(sunVector)
+const unsubscribeSunDirection = globalParameterBus.subscribe('sunDirection', (direction) => {
+  uSunDirection.value.copy(direction).normalize()
+})
+```
+
+- Always keep the unsubscribe function and call it in cleanup, before disposing geometry, materials or textures: `useEffect` return for components, `dispose()` for classes. Set the stored function to `null` in classes so a double dispose is harmless.
+- `get` returns the live stored value. Do not mutate it; call `set`, which clones and normalizes vectors and notifies every subscriber.
+- When the value also drives CPU work, forward it there in the subscription instead of caching a second copy, and flag any derived texture with `needsUpdate = true`.
+- The default is `(-0.78, 0.2, -0.6)`. A demo that needs a different look calls `globalParameterBus.set('sunDirection', new THREE.Vector3(...))` once in `handleCreated`, before creating the effect.
+- Adding a new global parameter means extending `GlobalParameters` and `createDefaults()` in `src/utils/ParameterBus.ts` (no new exports are needed), and updating `docs/guide/effects/global-parameters.md`, its Chinese page, `.agents/skills/react-three-lite/SKILL.md`, both READMEs and the unit tests.
 
 ### Shader Development
 - Use `ShaderMaterial` with custom vertex/fragment shaders

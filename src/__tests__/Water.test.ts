@@ -5,6 +5,11 @@ import { createWaterMaterial } from '../utils/WaterMaterial'
 import { createNoiseTexture, NOISE_TEXTURE_SIZE } from '../utils/WaterNoise'
 import { updateMirrorCamera } from '../utils/WaterReflection'
 import { OCEAN_WAVES, sampleOceanSurface } from '../utils/WaterSpectrum'
+import { resolveWaterPoolShape, sampleWaterPoolOutline } from '../utils/WaterPoolShape'
+import {
+  createWaterSurfaceGeometry,
+  getWaterOutlineSubdivisions
+} from '../utils/WaterSurfaceGeometry'
 
 describe('WaterSpectrum', () => {
   it('defines a directional spectrum with normalized wave directions', () => {
@@ -168,5 +173,61 @@ describe('WaterReflection', () => {
     camera.updateMatrixWorld(true)
 
     expect(updateMirrorCamera(camera, mirror, mirrorCamera)).toBe(false)
+  })
+})
+
+describe('WaterSurfaceGeometry', () => {
+  // Irregular heptagon in world units, counter-clockwise and around the origin.
+  const outline = resolveWaterPoolShape([
+    [-8, -2.5],
+    [-4.5, -5.5],
+    [1.5, -6],
+    [6.5, -3.5],
+    [8, 1],
+    [4.5, 5],
+    [-1.5, 5.5],
+    [-6.5, 3]
+  ])
+
+  it('builds a flat surface whose edge follows the outline', () => {
+    const segments = 64
+    const geometry = createWaterSurfaceGeometry(segments, outline)
+    const position = geometry.getAttribute('position')
+    const indices = geometry.getIndex()
+    const boundary = sampleWaterPoolOutline(outline, getWaterOutlineSubdivisions(segments, outline))
+    const angular = boundary.length
+    const rings = Math.max(8, Math.round(segments / 4))
+
+    expect(position.count).toBe(1 + angular * rings)
+    expect(indices?.count).toBe(angular * 3 + (rings - 1) * angular * 6)
+    expect(position.getX(0)).toBe(0)
+    expect(position.getZ(0)).toBe(0)
+
+    for (let index = 0; index < position.count; index += 1) {
+      expect(position.getY(index)).toBe(0)
+    }
+    for (let index = 0; index < (indices?.count ?? 0); index += 1) {
+      expect(indices!.getX(index)).toBeLessThan(position.count)
+    }
+
+    // The outer ring is the sampled outline itself.
+    const outerStart = 1 + (rings - 1) * angular
+    boundary.forEach(([x, z], index) => {
+      expect(position.getX(outerStart + index)).toBeCloseTo(x, 5)
+      expect(position.getZ(outerStart + index)).toBeCloseTo(z, 5)
+    })
+
+    geometry.dispose()
+  })
+
+  it('keeps the outline in world units so irregular shapes stay unscaled', () => {
+    const geometry = createWaterSurfaceGeometry(8, outline)
+    const position = geometry.getAttribute('position')
+    const xs = Array.from({ length: position.count }, (_, index) => position.getX(index))
+
+    expect(Math.max(...xs)).toBeCloseTo(8, 5)
+    expect(Math.min(...xs)).toBeCloseTo(-8, 5)
+
+    geometry.dispose()
   })
 })

@@ -15,6 +15,22 @@
     "message": "效果",
     "description": "The label for category 'Effect' in sidebar 'guideSidebar'"
   },
+  "sidebar.guideSidebar.category.Nature": {
+    "message": "自然",
+    "description": "The label for category 'Nature' in sidebar 'guideSidebar'"
+  },
+  "sidebar.guideSidebar.category.Sky & Atmosphere": {
+    "message": "天空与大气",
+    "description": "The label for category 'Sky & Atmosphere' in sidebar 'guideSidebar'"
+  },
+  "sidebar.guideSidebar.category.Light": {
+    "message": "光照",
+    "description": "The label for category 'Light' in sidebar 'guideSidebar'"
+  },
+  "sidebar.guideSidebar.category.Particles & Sprites": {
+    "message": "粒子与精灵",
+    "description": "The label for category 'Particles & Sprites' in sidebar 'guideSidebar'"
+  },
   "sidebar.guideSidebar.category.GIS": {
     "message": "GIS",
     "description": "The label for category 'GIS' in sidebar 'guideSidebar'"
@@ -87,6 +103,10 @@
     "message": "流动线网格",
     "description": "The label for doc 'meshes/flow-line-mesh' in sidebar 'guideSidebar'"
   },
+  "sidebar.guideSidebar.doc.effects/global-parameters": {
+    "message": "全局参数总线",
+    "description": "The label for doc 'effects/global-parameters' in sidebar 'guideSidebar'"
+  },
   "sidebar.guideSidebar.doc.effects/bloom": {
     "message": "光晕效果",
     "description": "The label for doc 'effects/bloom' in sidebar 'guideSidebar'"
@@ -102,6 +122,10 @@
   "sidebar.guideSidebar.doc.effects/water": {
     "message": "海洋水面",
     "description": "The label for doc 'effects/water' in sidebar 'guideSidebar'"
+  },
+  "sidebar.guideSidebar.doc.effects/water-pool": {
+    "message": "互动水池",
+    "description": "The label for doc 'effects/water-pool' in sidebar 'guideSidebar'"
   },
   "sidebar.guideSidebar.doc.effects/height-fog": {
     "message": "高度雾",
@@ -123,6 +147,10 @@
     "message": "烟花效果",
     "description": "The label for doc 'effects/fireworks' in sidebar 'guideSidebar'"
   },
+  "sidebar.guideSidebar.doc.effects/text-fireworks": {
+    "message": "文字烟花",
+    "description": "The label for doc 'effects/text-fireworks' in sidebar 'guideSidebar'"
+  },
   "sidebar.guideSidebar.doc.effects/sky-dome": {
     "message": "渐变天空穹顶",
     "description": "The label for doc 'effects/sky-dome' in sidebar 'guideSidebar'"
@@ -138,5 +166,17 @@
   "sidebar.guideSidebar.doc.effects/glow-sprite": {
     "message": "光晕精灵",
     "description": "The label for doc 'effects/glow-sprite' in sidebar 'guideSidebar'"
+  },
+  "sidebar.guideSidebar.doc.effects/nebula-galaxy": {
+    "message": "星云银河",
+    "description": "The label for doc 'effects/nebula-galaxy' in sidebar 'guideSidebar'"
+  },
+  "sidebar.guideSidebar.doc.effects/sandy-beach": {
+    "message": "沙滩漫步",
+    "description": "The label for doc 'effects/sandy-beach' in sidebar 'guideSidebar'"
+  },
+  "sidebar.guideSidebar.doc.effects/force-shield": {
+    "message": "能量护盾",
+    "description": "The label for doc 'effects/force-shield' in sidebar 'guideSidebar'"
   }
 }

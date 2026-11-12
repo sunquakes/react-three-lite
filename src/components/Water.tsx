@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import {
   reflector,
@@ -15,19 +15,29 @@ import { createWaterMaterial, type WaterMaterialSamplers } from '../utils/WaterM
 import { createNoiseTexture } from '../utils/WaterNoise'
 import { updateMirrorCamera } from '../utils/WaterReflection'
 import { sampleOceanSurface } from '../utils/WaterSpectrum'
+import { resolveWaterPoolShape, type WaterPoolOutline } from '../utils/WaterPoolShape'
+import { createWaterSurfaceGeometry } from '../utils/WaterSurfaceGeometry'
+import { globalParameterBus } from '../utils/ParameterBus'
 
 export interface WaterProps {
-  /** Direction from the water surface towards the sun. */
-  sunDirection?: THREE.Vector3 | [number, number, number]
   /** Longest edge of the planar captures, in device pixels. */
   captureResolution?: number
-  /** Plane subdivisions per axis. */
+  /** Plane subdivisions per axis. When `shape` is set, the total boundary budget. */
   segments?: number
-  /** Size of the water patch, in world units. */
+  /** Size of the water patch, in world units. Ignored when `shape` is set. */
   size?: number
+  /**
+   * Custom water outline. Pass convex `[x, z]` points in world units, or a
+   * `THREE.BufferGeometry` such as `ConvexGeometry`; geometry vertices are
+   * projected onto the XZ plane. Both are reduced to their convex hull and the
+   * outline must contain the origin. The surface then follows the outline
+   * instead of the square plane.
+   */
+  shape?: WaterPoolOutline | THREE.BufferGeometry
+  /** World position of the water surface centre. Defaults to [0, 0, 0]. */
+  position?: THREE.Vector3 | [number, number, number]
 }
 
-const DEFAULT_SUN_DIRECTION: [number, number, number] = [-0.58, 0.1, -0.81]
 // Captures are sized relative to the drawing buffer and clamped to keep the
 // cost bounded on very large and very small canvases.
 const MIN_CAPTURE_SCALE = 0.14
@@ -50,17 +60,31 @@ const UNDERWATER_EASING = 0.085
  * captures into half float render targets on the CPU side.
  */
 const Water = ({
-  sunDirection = DEFAULT_SUN_DIRECTION,
   captureResolution = 512,
   segments = 240,
-  size = 420
+  size = 420,
+  shape,
+  position = [0, 0, 0]
 }: WaterProps) => {
   const sceneContext = useScene()
   const animationIdRef = useRef<number | null>(null)
 
-  const [sunX, sunY, sunZ] = Array.isArray(sunDirection)
-    ? sunDirection
-    : [sunDirection.x, sunDirection.y, sunDirection.z]
+  const [positionX, positionY, positionZ] = Array.isArray(position)
+    ? position
+    : [position.x, position.y, position.z]
+
+  // An inline outline array must keep a stable identity, so it is compared by
+  // value. A geometry cannot round trip through JSON and is tracked by identity.
+  const shapeGeometry = shape instanceof THREE.BufferGeometry ? shape : null
+  const shapeKey = shapeGeometry || shape === undefined ? '' : JSON.stringify(shape)
+  const shapeConfig = useMemo(
+    () => (shapeGeometry || shapeKey === '' ? null : (JSON.parse(shapeKey) as WaterPoolOutline)),
+    [shapeGeometry, shapeKey]
+  )
+  const outline = useMemo(() => {
+    const target = shapeGeometry ?? shapeConfig
+    return target ? resolveWaterPoolShape(target) : null
+  }, [shapeGeometry, shapeConfig])
 
   useEffect(() => {
     const { renderer, scene, sceneComponents, container } = sceneContext
@@ -70,15 +94,23 @@ const Water = ({
 
     const camera = sceneComponents.camera
     const isWebGPU = renderer.isWebGPURenderer === true
-    const sunVector = new THREE.Vector3(sunX, sunY, sunZ).normalize()
+    const sunVector = globalParameterBus.get('sunDirection').clone().normalize()
 
     const noiseTexture = createNoiseTexture()
     const uTime = uniform(0)
     const uUnderwater = uniform(0)
     const uSunDirection = uniform(sunVector)
 
-    const geometry = new THREE.PlaneGeometry(size, size, segments, segments)
-    geometry.rotateX(-Math.PI / 2)
+    const unsubscribeSunDirection = globalParameterBus.subscribe('sunDirection', (direction) => {
+      uSunDirection.value.copy(direction).normalize()
+    })
+
+    const geometry = outline
+      ? createWaterSurfaceGeometry(segments, outline)
+      : new THREE.PlaneGeometry(size, size, segments, segments)
+    if (!outline) {
+      geometry.rotateX(-Math.PI / 2)
+    }
 
     const drawingSize = new THREE.Vector2()
 
@@ -157,6 +189,7 @@ const Water = ({
     const mesh = new THREE.Mesh(geometry, material)
     mesh.name = 'Water'
     mesh.frustumCulled = false
+    mesh.position.set(positionX, positionY, positionZ)
     // Draw after the rest of the scene so the viewport captures include it.
     mesh.renderOrder = 5
     if (reflectionSampler) {
@@ -218,8 +251,13 @@ const Water = ({
       uTime.value = elapsed
 
       // The CPU sampler mirrors the GPU displacement, so the waterline test
-      // follows the same surface the shader renders.
-      const cameraSurface = sampleOceanSurface(camera.position.x, camera.position.z, elapsed)
+      // follows the same surface the shader renders. The patch is sampled in
+      // its own space, so the offset has to be removed from the camera.
+      const cameraSurface = sampleOceanSurface(
+        camera.position.x - positionX,
+        camera.position.z - positionZ,
+        elapsed
+      )
       const underwaterTarget = camera.position.y < cameraSurface.height ? 1 : 0
       underwaterMix = THREE.MathUtils.lerp(underwaterMix, underwaterTarget, UNDERWATER_EASING)
       uUnderwater.value = underwaterMix
@@ -234,6 +272,7 @@ const Water = ({
 
     // Cleanup on unmount
     return () => {
+      unsubscribeSunDirection()
       if (animationIdRef.current !== null) {
         cancelAnimationFrame(animationIdRef.current)
         animationIdRef.current = null
@@ -247,7 +286,7 @@ const Water = ({
       reflectionTarget?.dispose()
       refractionTarget?.dispose()
     }
-  }, [sceneContext, sunX, sunY, sunZ, captureResolution, segments, size])
+  }, [sceneContext, captureResolution, segments, size, outline, positionX, positionY, positionZ])
 
   return null
 }

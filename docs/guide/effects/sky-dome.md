@@ -111,12 +111,17 @@ Every example below can be viewed with either the **WebGPU** (default) or the **
 | lowerSkyColor | number | 0x803624 | Color just above the horizon |
 | upperSkyColor | number | 0x260f13 | Color of the intermediate band |
 | zenithColor | number | 0x060409 | Color at the top of the dome |
-| sunDirection | [number, number, number] | [-0.78, 0.2, -0.6] | Direction of the sun, normalized internally |
 | glowColor | number | 0xff9947 | Color of the wide halo around the sun |
 | sunColor | number | 0xffe0b8 | Color of the sun disc |
 | sunIntensity | number | 2.4 | Brightness multiplier of the sun disc |
 | sunSize | number | 10 | Angular diameter of the sun disc in degrees. The disc is drawn in screen space, so it stays round wherever the sun sits in the view |
 | segments | number | 48 | Horizontal segment count of the dome sphere |
+
+The sun direction comes from the [global parameter bus](/guide/effects/global-parameters), so the disc automatically follows the same sun used by the water, the pool and the fog:
+
+```ts
+globalParameterBus.set('sunDirection', new THREE.Vector3(-0.78, 0.2, -0.6))
+```
 
 ## Methods
 

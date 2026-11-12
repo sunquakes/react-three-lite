@@ -28,6 +28,7 @@ import {
   select
 } from 'three/tsl'
 import { useScene } from '../context/SceneContext'
+import { globalParameterBus } from '../utils/ParameterBus'
 
 interface HeightFogProps {
   fogColor?: string | number | THREE.Color
@@ -44,8 +45,6 @@ interface HeightFogProps {
   inscatteringIntensity?: number
   inscatteringExponent?: number
   inscatteringStartDistance?: number
-  lightAzimuth?: number
-  lightElevation?: number
   children?: React.ReactNode
 }
 
@@ -207,8 +206,6 @@ const HeightFog = ({
   inscatteringIntensity = 1,
   inscatteringExponent = 5,
   inscatteringStartDistance = 0,
-  lightAzimuth = 30,
-  lightElevation = 25,
   children
 }: HeightFogProps) => {
   const sceneContext = useScene()
@@ -232,13 +229,7 @@ const HeightFog = ({
     const fogColorLinear = new THREE.Color(fogColor)
     const inscatteringColorLinear = new THREE.Color(inscatteringColor)
 
-    const azimuth = THREE.MathUtils.degToRad(lightAzimuth)
-    const elevation = THREE.MathUtils.degToRad(lightElevation)
-    const lightDirection = new THREE.Vector3(
-      Math.cos(elevation) * Math.sin(azimuth),
-      Math.sin(elevation),
-      Math.cos(elevation) * Math.cos(azimuth)
-    ).normalize()
+    const lightDirection = globalParameterBus.get('sunDirection').clone().normalize()
 
     // Camera state is forwarded through custom uniforms because the fog runs
     // in a post-processing pass whose active camera is an internal fullscreen
@@ -266,6 +257,10 @@ const HeightFog = ({
     const uInscatteringExponent = uniform(inscatteringExponent)
     const uInscatteringStartDistance = uniform(inscatteringStartDistance)
     const uLightDirection = uniform(lightDirection)
+
+    const unsubscribeSunDirection = globalParameterBus.subscribe('sunDirection', (direction) => {
+      uLightDirection.value.copy(direction).normalize()
+    })
 
     const fogUniforms: HeightFogNodeUniforms = {
       cameraPosition: uCameraPosition,
@@ -376,6 +371,7 @@ const HeightFog = ({
 
     // Cleanup on unmount
     return () => {
+      unsubscribeSunDirection()
       resizeObserver?.disconnect()
       postProcessingRef.current?.dispose()
       postProcessingRef.current = null
@@ -404,9 +400,7 @@ const HeightFog = ({
     inscatteringColor,
     inscatteringIntensity,
     inscatteringExponent,
-    inscatteringStartDistance,
-    lightAzimuth,
-    lightElevation
+    inscatteringStartDistance
   ])
 
   return <>{children}</>

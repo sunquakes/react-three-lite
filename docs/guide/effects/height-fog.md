@@ -197,5 +197,9 @@ The demo below drops a ground plane plus a row of pillars receding into the dist
 | inscatteringIntensity | number | 1 | Inscattering intensity |
 | inscatteringExponent | number | 5 | Sharpness of the directional falloff around the light direction |
 | inscatteringStartDistance | number | 0 | Distance from the camera where inscattering starts |
-| lightAzimuth | number | 30 | Light direction azimuth in degrees |
-| lightElevation | number | 25 | Light direction elevation in degrees |
+
+The light direction is shared, not a prop: the fog follows the sun stored in the [global parameter bus](/guide/effects/global-parameters), so it matches the sky and the water:
+
+```ts
+globalParameterBus.set('sunDirection', new THREE.Vector3(0.453, 0.423, 0.785))
+```

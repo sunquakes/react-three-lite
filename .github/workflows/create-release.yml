@@ -87,6 +87,9 @@ jobs:
         run: |
           pnpm publish --provenance --access public --no-git-checks
 
+      - name: Package Skill Zip
+        run: node docs/scripts/pack-skill.js
+
       - name: Install Docusaurus and Build Docs
         run: |
           cd docs
