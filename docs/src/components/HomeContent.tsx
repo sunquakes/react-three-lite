@@ -329,7 +329,7 @@ function App() {
 
         {/* AI Agents Banner */}
         <section style={{
-          background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+          background: 'linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%)',
           padding: '4rem 2rem',
           marginBottom: '4rem',
           textAlign: 'center',
@@ -357,24 +357,23 @@ function App() {
           <Link
             to="/guide/ai"
             style={{
-              background: 'rgba(255, 255, 255, 0.12)',
-              color: '#fff',
+              background: '#fff',
+              color: '#3b82f6',
               padding: '1rem 2.5rem',
               borderRadius: '12px',
               fontWeight: 600,
               textDecoration: 'none',
               display: 'inline-block',
-              border: '1px solid rgba(255, 255, 255, 0.3)',
               transition: 'all 0.3s ease',
               boxShadow: '0 4px 15px rgba(0,0,0,0.2)'
             }}
             onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => {
               e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
+              e.currentTarget.style.boxShadow = '0 6px 20px rgba(0,0,0,0.25)';
             }}
             onMouseLeave={(e: React.MouseEvent<HTMLAnchorElement>) => {
               e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.12)';
+              e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.2)';
             }}
           >
             {aiCta}
