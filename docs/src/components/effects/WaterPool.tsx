@@ -1,29 +1,38 @@
-import { useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import * as THREE from 'three'
-import { GLTFLoaderAsync, Scene, WaterPool, disposeModel, globalParameterBus } from 'react-three-lite'
-import type { SceneComponents } from 'react-three-lite'
+import { GLTFLoader, Scene, SkyDome, WaterPool, globalParameterBus } from 'react-three-lite'
+import type { SceneComponents, WaterPoolOutline } from 'react-three-lite'
 
 interface AppProps {
   rendererType?: 'webgpu' | 'webgl'
 }
 
-// The default pool is an irregular cube outline that spans 1.82 units at
-// scale 1, so this scale keeps the water just inside the 1.28 unit tub
-// opening. The depth scales with it.
+// The pool depth scales with the water, so the surface stays 0.7 units deep.
 const WATER_SCALE = 0.7
 
 // The model is 0.86 x 0.74 x 1.64 units with its floor at y = 0, its rim at
 // y = 0.53 and its inner opening 0.66 x 1.44 (no textures, about 3k triangles).
-// These scales stretch that opening into the square the tub encloses, and the
-// height keeps the rim 9 cm above the surface so the tub stays readable.
-const TUB_SCALE = new THREE.Vector3(1.94, 1.3, 0.89)
-const TUB_Y = -0.598
+// These scales turn that opening into a 1.05 x 1.25 basin small enough to sit
+// under the camera, and the height keeps the rim 9 cm above the surface.
+const TUB_SCALE: [number, number, number] = [1.59, 1.15, 0.868]
+const TUB_Y = 0.09 - 0.53 * TUB_SCALE[1]
+
+// The water follows the tub opening with a 2 cm tuck under the porcelain, so
+// the surface meets all four walls with no gap. The outline is in pool space,
+// which WaterPool scales by WATER_SCALE.
+const WATER_HALF_X = (0.33 * TUB_SCALE[0] + 0.02) / WATER_SCALE
+const WATER_HALF_Z = (0.72 * TUB_SCALE[2] + 0.02) / WATER_SCALE
+const WATER_OUTLINE: WaterPoolOutline = [
+  [-WATER_HALF_X, -WATER_HALF_Z],
+  [WATER_HALF_X, -WATER_HALF_Z],
+  [WATER_HALF_X, WATER_HALF_Z],
+  [-WATER_HALF_X, WATER_HALF_Z]
+]
 
 export default function App({ rendererType }: AppProps) {
-  const tubRef = useRef<THREE.Group | null>(null)
-  const cancelledRef = useRef(false)
+  const skyRef = useRef<SkyDome | null>(null)
 
-  const handleCreated = async (scene: THREE.Scene, components: SceneComponents) => {
+  const handleCreated = (scene: THREE.Scene, components: SceneComponents) => {
     const { camera, controls } = components
 
     // A high sun keeps the refracted light crisp; every effect shares this
@@ -34,29 +43,32 @@ export default function App({ rendererType }: AppProps) {
     controls.target.set(0, 0, 0)
     camera.lookAt(0, 0, 0)
 
-    const tub = await GLTFLoaderAsync('/models/water-tub.glb', false)
-    if (cancelledRef.current) {
-      disposeModel(tub)
-      return
-    }
-
-    // The tub is only the visual container: the irregular cube sits inside its
-    // opening, so the rim stays just above the surface all round.
-    tub.scale.copy(TUB_SCALE)
-    tub.position.set(0, TUB_Y, 0)
-    scene.add(tub)
-    tubRef.current = tub
+    // WaterPool draws the water only, so the sky and the sun come from SkyDome.
+    // The palette matches the sky the water shader traces in its reflections.
+    skyRef.current = new SkyDome({
+      horizonColor: 0x94c2f0,
+      lowerSkyColor: 0x7fb4ec,
+      upperSkyColor: 0x3d7bd5,
+      zenithColor: 0x296bc7,
+      glowColor: 0xfff1d8,
+      sunColor: 0xfff7e6,
+      sunIntensity: 2.2,
+      sunSize: 5
+    })
+    scene.add(skyRef.current)
   }
+
+  // The loader component adds the tub to the scene; only its height needs
+  // adjusting so the rim sits just above the surface all round.
+  const handleTubLoaded = useCallback((tub: THREE.Group) => {
+    tub.position.set(0, TUB_Y, 0)
+  }, [])
 
   // Cleanup on unmount
   useEffect(() => {
-    cancelledRef.current = false
     return () => {
-      cancelledRef.current = true
-      if (tubRef.current) {
-        disposeModel(tubRef.current)
-        tubRef.current = null
-      }
+      skyRef.current?.dispose()
+      skyRef.current = null
     }
   }, [])
 
@@ -69,7 +81,13 @@ export default function App({ rendererType }: AppProps) {
       gridHelper={false}
       style={{ marginTop: '10px', marginBottom: '16px', width: '100%', height: '300px' }}
     >
-      <WaterPool scale={WATER_SCALE} />
+      <WaterPool shape={WATER_OUTLINE} scale={WATER_SCALE} />
+      <GLTFLoader
+        modelUrl="/models/water-tub.glb"
+        useDraco={false}
+        scale={TUB_SCALE}
+        onLoaded={handleTubLoaded}
+      />
     </Scene>
   )
 }

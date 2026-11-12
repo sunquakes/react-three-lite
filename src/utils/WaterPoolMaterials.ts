@@ -48,7 +48,6 @@ export interface WaterPoolMaterialOptions {
 
 export interface WaterPoolMaterials {
   water: MeshBasicNodeMaterial
-  sky: MeshBasicNodeMaterial
 }
 
 const IOR_AIR = 1
@@ -91,7 +90,7 @@ function refractedSunlightNode(lightDirection: Node<'vec3'>): Node<'vec3'> {
   return refract(lightDirection.negate(), vec3(0, 1, 0), SURFACE_TO_AIR)
 }
 
-/** Procedural sky used by the background dome and by the water reflections. */
+/** Procedural sky traced by the water reflections. */
 export function waterPoolSkyColorNode(
   ray: Node<'vec3'>,
   lightDirection: Node<'vec3'>
@@ -240,16 +239,5 @@ export function createWaterPoolMaterials(
     return color
   })()
 
-  const sky = new MeshBasicNodeMaterial()
-  sky.name = 'WaterPoolSky'
-  sky.side = THREE.BackSide
-  sky.depthWrite = false
-  sky.colorNode = Fn(() =>
-    waterPoolSkyColorNode(
-      normalize(positionWorld.sub(cameraPosition)),
-      context.lightDirection
-    )
-  )()
-
-  return { water, sky }
+  return { water }
 }

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import {
   reflector,
@@ -15,15 +15,25 @@ import { createWaterMaterial, type WaterMaterialSamplers } from '../utils/WaterM
 import { createNoiseTexture } from '../utils/WaterNoise'
 import { updateMirrorCamera } from '../utils/WaterReflection'
 import { sampleOceanSurface } from '../utils/WaterSpectrum'
+import { resolveWaterPoolShape, type WaterPoolOutline } from '../utils/WaterPoolShape'
+import { createWaterSurfaceGeometry } from '../utils/WaterSurfaceGeometry'
 import { globalParameterBus } from '../utils/ParameterBus'
 
 export interface WaterProps {
   /** Longest edge of the planar captures, in device pixels. */
   captureResolution?: number
-  /** Plane subdivisions per axis. */
+  /** Plane subdivisions per axis. When `shape` is set, the total boundary budget. */
   segments?: number
-  /** Size of the water patch, in world units. */
+  /** Size of the water patch, in world units. Ignored when `shape` is set. */
   size?: number
+  /**
+   * Custom water outline. Pass convex `[x, z]` points in world units, or a
+   * `THREE.BufferGeometry` such as `ConvexGeometry`; geometry vertices are
+   * projected onto the XZ plane. Both are reduced to their convex hull and the
+   * outline must contain the origin. The surface then follows the outline
+   * instead of the square plane.
+   */
+  shape?: WaterPoolOutline | THREE.BufferGeometry
   /** World position of the water surface centre. Defaults to [0, 0, 0]. */
   position?: THREE.Vector3 | [number, number, number]
 }
@@ -53,6 +63,7 @@ const Water = ({
   captureResolution = 512,
   segments = 240,
   size = 420,
+  shape,
   position = [0, 0, 0]
 }: WaterProps) => {
   const sceneContext = useScene()
@@ -61,6 +72,19 @@ const Water = ({
   const [positionX, positionY, positionZ] = Array.isArray(position)
     ? position
     : [position.x, position.y, position.z]
+
+  // An inline outline array must keep a stable identity, so it is compared by
+  // value. A geometry cannot round trip through JSON and is tracked by identity.
+  const shapeGeometry = shape instanceof THREE.BufferGeometry ? shape : null
+  const shapeKey = shapeGeometry || shape === undefined ? '' : JSON.stringify(shape)
+  const shapeConfig = useMemo(
+    () => (shapeGeometry || shapeKey === '' ? null : (JSON.parse(shapeKey) as WaterPoolOutline)),
+    [shapeGeometry, shapeKey]
+  )
+  const outline = useMemo(() => {
+    const target = shapeGeometry ?? shapeConfig
+    return target ? resolveWaterPoolShape(target) : null
+  }, [shapeGeometry, shapeConfig])
 
   useEffect(() => {
     const { renderer, scene, sceneComponents, container } = sceneContext
@@ -81,8 +105,12 @@ const Water = ({
       uSunDirection.value.copy(direction).normalize()
     })
 
-    const geometry = new THREE.PlaneGeometry(size, size, segments, segments)
-    geometry.rotateX(-Math.PI / 2)
+    const geometry = outline
+      ? createWaterSurfaceGeometry(segments, outline)
+      : new THREE.PlaneGeometry(size, size, segments, segments)
+    if (!outline) {
+      geometry.rotateX(-Math.PI / 2)
+    }
 
     const drawingSize = new THREE.Vector2()
 
@@ -258,7 +286,7 @@ const Water = ({
       reflectionTarget?.dispose()
       refractionTarget?.dispose()
     }
-  }, [sceneContext, captureResolution, segments, size, positionX, positionY, positionZ])
+  }, [sceneContext, captureResolution, segments, size, outline, positionX, positionY, positionZ])
 
   return null
 }

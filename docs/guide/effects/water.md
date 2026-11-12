@@ -10,6 +10,7 @@ Component
 import Tabs from '@theme/Tabs'
 import TabItem from '@theme/TabItem'
 import Water from '@site/src/components/effects/Water'
+import WaterShape from '@site/src/components/effects/WaterShape'
 
 ## Default Usage
 
@@ -71,13 +72,108 @@ Every example below can be viewed with either the **WebGPU** (default) or the **
   </TabItem>
 </Tabs>
 
+## Custom Shape
+
+Pass `shape` to replace the square patch with an irregular water outline. Points are `[x, z]` pairs in **world units** on the XZ plane, or a `THREE.BufferGeometry` such as a `ConvexGeometry`; geometry vertices are projected onto XZ. Both are reduced to their convex hull, and the outline must contain the origin, which is where `position` places the water centre. Boundary vertices are sampled from the outline and interior vertices are the outline scaled towards the centre, so the wave shader and the planar captures keep working unchanged. Once `shape` is set, `size` is ignored and `segments` sets the total boundary budget.
+
+The demo below shapes the surface into an irregular lake, so the water edge is the shoreline instead of a square edge far out of view.
+
+<Tabs groupId="renderer">
+  <TabItem value="webgpu" label="WebGPU" default>
+    <WaterShape />
+
+    ```tsx
+    import * as THREE from 'three'
+    import { Scene, Water } from 'react-three-lite'
+    import type { SceneComponents } from 'react-three-lite'
+
+    // Irregular lake shoreline in world units on the XZ plane, around the origin.
+    const LAKE_OUTLINE: [number, number][] = [
+      [-8, -2.5],
+      [-4.5, -5.5],
+      [1.5, -6],
+      [6.5, -3.5],
+      [8, 1],
+      [4.5, 5],
+      [-1.5, 5.5],
+      [-6.5, 3]
+    ]
+
+    export default function App() {
+      const handleCreated = (scene: THREE.Scene, components: SceneComponents) => {
+        const { camera, controls } = components
+        camera.position.set(0, 6, 15)
+        controls.target.set(0, 0, 0)
+        camera.lookAt(0, 0, 0)
+      }
+
+      return (
+        <Scene
+          bgColor="rgb(40, 42, 54)"
+          axesHelper={false}
+          gridHelper={false}
+          style={{ width: '100%', height: '300px' }}
+          onCreated={handleCreated}
+        >
+          <Water shape={LAKE_OUTLINE} segments={160} />
+        </Scene>
+      )
+    }
+    ```
+  </TabItem>
+  <TabItem value="webgl" label="WebGL">
+    <WaterShape rendererType="webgl" />
+
+    ```tsx
+    import * as THREE from 'three'
+    import { Scene, Water } from 'react-three-lite'
+    import type { SceneComponents } from 'react-three-lite'
+
+    // Irregular lake shoreline in world units on the XZ plane, around the origin.
+    const LAKE_OUTLINE: [number, number][] = [
+      [-8, -2.5],
+      [-4.5, -5.5],
+      [1.5, -6],
+      [6.5, -3.5],
+      [8, 1],
+      [4.5, 5],
+      [-1.5, 5.5],
+      [-6.5, 3]
+    ]
+
+    export default function App() {
+      const handleCreated = (scene: THREE.Scene, components: SceneComponents) => {
+        const { camera, controls } = components
+        camera.position.set(0, 6, 15)
+        controls.target.set(0, 0, 0)
+        camera.lookAt(0, 0, 0)
+      }
+
+      return (
+        <Scene
+          rendererType="webgl"
+          bgColor="rgb(40, 42, 54)"
+          axesHelper={false}
+          gridHelper={false}
+          style={{ width: '100%', height: '300px' }}
+          onCreated={handleCreated}
+        >
+          <Water shape={LAKE_OUTLINE} segments={160} />
+        </Scene>
+      )
+    }
+    ```
+  </TabItem>
+</Tabs>
+
 ## Props
 
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
 | captureResolution | number | 512 | Longest edge of the planar reflection and refraction captures, in device pixels |
-| segments | number | 240 | Plane subdivisions per axis |
-| size | number | 420 | Size of the water patch, in world units |
+| segments | number | 240 | Plane subdivisions per axis, or the total boundary budget once `shape` is set |
+| size | number | 420 | Size of the water patch, in world units. Ignored when `shape` is set |
+| shape | `[number, number][] \| THREE.BufferGeometry` | - | Custom convex outline in world units; replaces the square patch. Must contain the origin |
 | position | Vector3 \| [number, number, number] | [0, 0, 0] | World position of the water surface centre |
 
 The sun direction is shared, not a prop: `Water` reads it from the [global parameter bus](/guide/effects/global-parameters), so the same sun lights the sky, the water and the pool. Set it once per scene:

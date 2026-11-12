@@ -20,25 +20,35 @@ import WaterPoolIrregular from '@site/src/components/effects/WaterPoolIrregular'
     <WaterPool />
 
     ```tsx
-    import { useEffect, useRef } from 'react'
+    import { useCallback, useEffect, useRef } from 'react'
     import * as THREE from 'three'
-    import { GLTFLoaderAsync, Scene, WaterPool, disposeModel, globalParameterBus } from 'react-three-lite'
-    import type { SceneComponents } from 'react-three-lite'
+    import { GLTFLoader, Scene, SkyDome, WaterPool, globalParameterBus } from 'react-three-lite'
+    import type { SceneComponents, WaterPoolOutline } from 'react-three-lite'
 
-    // 默认水池是不规则立方体轮廓，scale 为 1 时最大跨度为 1.82，
-    // 因此这个缩放让水面刚好落在 1.28 的浴缸开口内。池深也随之缩放。
+    // 池深随水面一起缩放，因此水面始终位于 0.7 个单位的深度上。
     const WATER_SCALE = 0.7
 
-    // 模型尺寸为 0.86 x 0.74 x 1.64，缸沿位于 y = 0.53，内开口为 0.66 x 1.44。
-    // 这两个缩放把开口拉伸成浴缸围合的正方形，高度让缸沿高出水面 9 cm。
-    const TUB_SCALE = new THREE.Vector3(1.94, 1.3, 0.89)
-    const TUB_Y = -0.598
+    // 模型尺寸为 0.86 x 0.74 x 1.64，缸底位于 y = 0，缸沿位于 y = 0.53，
+    // 内开口为 0.66 x 1.44。这两个缩放把开口变成 1.05 x 1.25 的池子，
+    // 刚好落在相机下方，高度让缸沿高出水面 9 cm。
+    const TUB_SCALE: [number, number, number] = [1.59, 1.15, 0.868]
+    const TUB_Y = 0.09 - 0.53 * TUB_SCALE[1]
+
+    // 水面沿缸口并向瓷器壁下多塞 2 cm，因此四周都贴住缸壁、不会露出缝隙。
+    // 轮廓位于水池自身坐标系中，由 WaterPool 按 WATER_SCALE 缩放。
+    const WATER_HALF_X = (0.33 * TUB_SCALE[0] + 0.02) / WATER_SCALE
+    const WATER_HALF_Z = (0.72 * TUB_SCALE[2] + 0.02) / WATER_SCALE
+    const WATER_OUTLINE: WaterPoolOutline = [
+      [-WATER_HALF_X, -WATER_HALF_Z],
+      [WATER_HALF_X, -WATER_HALF_Z],
+      [WATER_HALF_X, WATER_HALF_Z],
+      [-WATER_HALF_X, WATER_HALF_Z]
+    ]
 
     export default function App() {
-      const tubRef = useRef<THREE.Group | null>(null)
-      const cancelledRef = useRef(false)
+      const skyRef = useRef<SkyDome | null>(null)
 
-      const handleCreated = async (scene: THREE.Scene, components: SceneComponents) => {
+      const handleCreated = (scene: THREE.Scene, components: SceneComponents) => {
         const { camera, controls } = components
 
         // 太阳角度高一些折射光更清晰；所有效果共用这个方向。
@@ -48,29 +58,32 @@ import WaterPoolIrregular from '@site/src/components/effects/WaterPoolIrregular'
         controls.target.set(0, 0, 0)
         camera.lookAt(0, 0, 0)
 
-        const tub = await GLTFLoaderAsync('/models/water-tub.glb', false)
-        if (cancelledRef.current) {
-          disposeModel(tub)
-          return
-        }
-
-        // 浴缸只是视觉上的容器：水面填满它的开口，缸沿一圈刚好高出水面，
-        // 不会留下干边。
-        tub.scale.copy(TUB_SCALE)
-        tub.position.set(0, TUB_Y, 0)
-        scene.add(tub)
-        tubRef.current = tub
+        // WaterPool 只绘制水面，天空和太阳由 SkyDome 提供。
+        // 这里选用的色板与水面着色器反射时追踪的天空一致。
+        skyRef.current = new SkyDome({
+          horizonColor: 0x94c2f0,
+          lowerSkyColor: 0x7fb4ec,
+          upperSkyColor: 0x3d7bd5,
+          zenithColor: 0x296bc7,
+          glowColor: 0xfff1d8,
+          sunColor: 0xfff7e6,
+          sunIntensity: 2.2,
+          sunSize: 5
+        })
+        scene.add(skyRef.current)
       }
+
+      // 加载组件会把浴缸加进场景，这里只需要调整高度，
+      // 让缸沿一圈刚好高出水面。
+      const handleTubLoaded = useCallback((tub: THREE.Group) => {
+        tub.position.set(0, TUB_Y, 0)
+      }, [])
 
       // 卸载时清理
       useEffect(() => {
-        cancelledRef.current = false
         return () => {
-          cancelledRef.current = true
-          if (tubRef.current) {
-            disposeModel(tubRef.current)
-            tubRef.current = null
-          }
+          skyRef.current?.dispose()
+          skyRef.current = null
         }
       }, [])
 
@@ -82,7 +95,13 @@ import WaterPoolIrregular from '@site/src/components/effects/WaterPoolIrregular'
           style={{ width: '100%', height: '300px' }}
           onCreated={handleCreated}
         >
-          <WaterPool scale={WATER_SCALE} />
+          <WaterPool shape={WATER_OUTLINE} scale={WATER_SCALE} />
+          <GLTFLoader
+            modelUrl="/models/water-tub.glb"
+            useDraco={false}
+            scale={TUB_SCALE}
+            onLoaded={handleTubLoaded}
+          />
         </Scene>
       )
     }
@@ -92,54 +111,66 @@ import WaterPoolIrregular from '@site/src/components/effects/WaterPoolIrregular'
     <WaterPool rendererType="webgl" />
 
     ```tsx
-    import { useEffect, useRef } from 'react'
+    import { useCallback, useEffect, useRef } from 'react'
     import * as THREE from 'three'
-    import { GLTFLoaderAsync, Scene, WaterPool, disposeModel, globalParameterBus } from 'react-three-lite'
-    import type { SceneComponents } from 'react-three-lite'
+    import { GLTFLoader, Scene, SkyDome, WaterPool, globalParameterBus } from 'react-three-lite'
+    import type { SceneComponents, WaterPoolOutline } from 'react-three-lite'
 
-    // 默认水池是不规则立方体轮廓，scale 为 1 时最大跨度为 1.82，
-    // 因此这个缩放让水面刚好落在 1.28 的浴缸开口内。池深也随之缩放。
+    // 池深随水面一起缩放，因此水面始终位于 0.7 个单位的深度上。
     const WATER_SCALE = 0.7
 
-    // 模型尺寸为 0.86 x 0.74 x 1.64，缸沿位于 y = 0.53，内开口为 0.66 x 1.44。
-    // 这两个缩放把开口拉伸成浴缸围合的正方形，高度让缸沿高出水面 9 cm。
-    const TUB_SCALE = new THREE.Vector3(1.94, 1.3, 0.89)
-    const TUB_Y = -0.598
+    // 模型尺寸为 0.86 x 0.74 x 1.64，缸底位于 y = 0，缸沿位于 y = 0.53，
+    // 内开口为 0.66 x 1.44。这两个缩放把开口变成 1.05 x 1.25 的池子，
+    // 刚好落在相机下方，高度让缸沿高出水面 9 cm。
+    const TUB_SCALE: [number, number, number] = [1.59, 1.15, 0.868]
+    const TUB_Y = 0.09 - 0.53 * TUB_SCALE[1]
+
+    // 水面沿缸口并向瓷器壁下多塞 2 cm，因此四周都贴住缸壁、不会露出缝隙。
+    // 轮廓位于水池自身坐标系中，由 WaterPool 按 WATER_SCALE 缩放。
+    const WATER_HALF_X = (0.33 * TUB_SCALE[0] + 0.02) / WATER_SCALE
+    const WATER_HALF_Z = (0.72 * TUB_SCALE[2] + 0.02) / WATER_SCALE
+    const WATER_OUTLINE: WaterPoolOutline = [
+      [-WATER_HALF_X, -WATER_HALF_Z],
+      [WATER_HALF_X, -WATER_HALF_Z],
+      [WATER_HALF_X, WATER_HALF_Z],
+      [-WATER_HALF_X, WATER_HALF_Z]
+    ]
 
     export default function App() {
-      const tubRef = useRef<THREE.Group | null>(null)
-      const cancelledRef = useRef(false)
+      const skyRef = useRef<SkyDome | null>(null)
 
-      const handleCreated = async (scene: THREE.Scene, components: SceneComponents) => {
+      const handleCreated = (scene: THREE.Scene, components: SceneComponents) => {
         const { camera, controls } = components
         globalParameterBus.set('sunDirection', new THREE.Vector3(0.55, 0.9, 0.35))
         camera.position.set(1.75, 2.2, 2.0)
         controls.target.set(0, 0, 0)
         camera.lookAt(0, 0, 0)
 
-        const tub = await GLTFLoaderAsync('/models/water-tub.glb', false)
-        if (cancelledRef.current) {
-          disposeModel(tub)
-          return
-        }
-
-        // 浴缸只是视觉上的容器：水面填满它的开口，缸沿一圈刚好高出水面，
-        // 不会留下干边。
-        tub.scale.copy(TUB_SCALE)
-        tub.position.set(0, TUB_Y, 0)
-        scene.add(tub)
-        tubRef.current = tub
+        // WaterPool 只绘制水面，天空和太阳由 SkyDome 提供。
+        skyRef.current = new SkyDome({
+          horizonColor: 0x94c2f0,
+          lowerSkyColor: 0x7fb4ec,
+          upperSkyColor: 0x3d7bd5,
+          zenithColor: 0x296bc7,
+          glowColor: 0xfff1d8,
+          sunColor: 0xfff7e6,
+          sunIntensity: 2.2,
+          sunSize: 5
+        })
+        scene.add(skyRef.current)
       }
+
+      // 加载组件会把浴缸加进场景，这里只需要调整高度，
+      // 让缸沿一圈刚好高出水面。
+      const handleTubLoaded = useCallback((tub: THREE.Group) => {
+        tub.position.set(0, TUB_Y, 0)
+      }, [])
 
       // 卸载时清理
       useEffect(() => {
-        cancelledRef.current = false
         return () => {
-          cancelledRef.current = true
-          if (tubRef.current) {
-            disposeModel(tubRef.current)
-            tubRef.current = null
-          }
+          skyRef.current?.dispose()
+          skyRef.current = null
         }
       }, [])
 
@@ -152,7 +183,13 @@ import WaterPoolIrregular from '@site/src/components/effects/WaterPoolIrregular'
           style={{ width: '100%', height: '300px' }}
           onCreated={handleCreated}
         >
-          <WaterPool scale={WATER_SCALE} />
+          <WaterPool shape={WATER_OUTLINE} scale={WATER_SCALE} />
+          <GLTFLoader
+            modelUrl="/models/water-tub.glb"
+            useDraco={false}
+            scale={TUB_SCALE}
+            onLoaded={handleTubLoaded}
+          />
         </Scene>
       )
     }
@@ -162,9 +199,11 @@ import WaterPoolIrregular from '@site/src/components/effects/WaterPoolIrregular'
 
 在水池内拖动可以产生涟漪，在水池外拖动可以旋转相机。
 
-水面默认采用不规则立方体轮廓——四条边长度各不相同、没有直角的四边形，因此看起来像一块轻微变形的方块而不是正方形。传入 `shape` 即可替换。
+示例自己传入了 `shape`：水面沿浴缸开口（一个普通矩形）铺开，而不是默认的不规则立方体轮廓，因此水面四周都贴住缸壁、不会在瓷器边留下缝隙。传入 `shape` 即可替换。
 
-水面外围的浴缸是一个用 `GLTFLoaderAsync` 加载的浴缸 GLB。它的尺寸为 0.86 × 0.74 × 1.64 个单位，缸底位于 `y = 0`，缸沿位于 `y = 0.53`，内开口为 0.66 × 1.44，因此示例把开口拉伸成一个正方形把水围住，并向下移动到缸沿高出水面 9 cm。该模型只用于显示 —— 着色器仍然只追踪池底与天空，因此着色开销不变。
+`WaterPool` 只绘制水面。天空和太阳由 `handleCreated` 中创建的 `SkyDome` 提供，它的色板与水面着色器反射时追踪的天空一致，因此肉眼看到的天空和倒影里的天空能够对上。卸载时与场景其他资源一起释放即可。
+
+水面外围的浴缸是一个用 `GLTFLoader` 组件加载的浴缸 GLB。它的尺寸为 0.86 × 0.74 × 1.64 个单位，缸底位于 `y = 0`，缸沿位于 `y = 0.53`，内开口为 0.66 × 1.44，因此示例把它缩放到 1.59 × 1.15 × 0.868（1.05 × 1.25 的池子），并向下移动到缸沿高出水面 9 cm。`WATER_OUTLINE` 就是这个开口并向瓷器壁下多塞 2 cm，因此水面四周都贴住缸壁。该模型只用于显示 —— 着色器仍然只追踪水面之下的池底，因此着色开销不变。
 
 ## 自定义形状
 
@@ -177,13 +216,14 @@ import WaterPoolIrregular from '@site/src/components/effects/WaterPoolIrregular'
     <WaterPoolIrregular />
 
     ```tsx
-    import { useEffect, useRef } from 'react'
+    import { useCallback, useEffect, useRef } from 'react'
     import * as THREE from 'three'
-    import { GLTFLoaderAsync, Scene, WaterPool, disposeModel, globalParameterBus } from 'react-three-lite'
+    import { GLTFLoader, Scene, SkyDome, WaterPool, globalParameterBus } from 'react-three-lite'
     import type { SceneComponents } from 'react-three-lite'
 
     // 浴缸尺寸为 1.19 x 0.56，缸沿位于 y = 0.35，缸底位于 y = 0。
     const TUB_SCALE = 1.7
+    const TUB_SCALE_VEC: [number, number, number] = [TUB_SCALE, TUB_SCALE, TUB_SCALE]
     // 轮廓按开口半宽 0.536 归一化，因此水池的 scale 就是该半宽的世界尺寸，
     // 水深也与之匹配。
     const WATER_SCALE = 0.536 * TUB_SCALE
@@ -220,38 +260,38 @@ import WaterPoolIrregular from '@site/src/components/effects/WaterPoolIrregular'
     ]
 
     export default function App() {
-      const tubRef = useRef<THREE.Group | null>(null)
-      const cancelledRef = useRef(false)
+      const skyRef = useRef<SkyDome | null>(null)
 
-      const handleCreated = async (scene: THREE.Scene, components: SceneComponents) => {
+      const handleCreated = (scene: THREE.Scene, components: SceneComponents) => {
         const { camera, controls } = components
         globalParameterBus.set('sunDirection', new THREE.Vector3(0.55, 0.9, 0.35))
         camera.position.set(1.7, 1.35, 1.9)
         controls.target.set(0, 0.3, 0)
         camera.lookAt(0, 0.3, 0)
 
-        const tub = await GLTFLoaderAsync('/models/bathtub.glb', false)
-        if (cancelledRef.current) {
-          disposeModel(tub)
-          return
-        }
-
-        // 模型的坐标原点在角落，因此整体平移回水面正中。
-        tub.scale.setScalar(TUB_SCALE)
-        tub.position.set(-0.595 * TUB_SCALE, 0, 0.28 * TUB_SCALE)
-        scene.add(tub)
-        tubRef.current = tub
+        skyRef.current = new SkyDome({
+          horizonColor: 0x94c2f0,
+          lowerSkyColor: 0x7fb4ec,
+          upperSkyColor: 0x3d7bd5,
+          zenithColor: 0x296bc7,
+          glowColor: 0xfff1d8,
+          sunColor: 0xfff7e6,
+          sunIntensity: 2.2,
+          sunSize: 5
+        })
+        scene.add(skyRef.current)
       }
+
+      // 模型的坐标原点在角落，因此整体平移回水面正中。
+      const handleTubLoaded = useCallback((tub: THREE.Group) => {
+        tub.position.set(-0.595 * TUB_SCALE, 0, 0.28 * TUB_SCALE)
+      }, [])
 
       // 卸载时清理
       useEffect(() => {
-        cancelledRef.current = false
         return () => {
-          cancelledRef.current = true
-          if (tubRef.current) {
-            disposeModel(tubRef.current)
-            tubRef.current = null
-          }
+          skyRef.current?.dispose()
+          skyRef.current = null
         }
       }, [])
 
@@ -264,6 +304,12 @@ import WaterPoolIrregular from '@site/src/components/effects/WaterPoolIrregular'
           onCreated={handleCreated}
         >
           <WaterPool shape={TUB_OUTLINE} scale={WATER_SCALE} position={[0, WATER_Y, 0]} />
+          <GLTFLoader
+            modelUrl="/models/bathtub.glb"
+            useDraco={false}
+            scale={TUB_SCALE_VEC}
+            onLoaded={handleTubLoaded}
+          />
         </Scene>
       )
     }
@@ -273,13 +319,14 @@ import WaterPoolIrregular from '@site/src/components/effects/WaterPoolIrregular'
     <WaterPoolIrregular rendererType="webgl" />
 
     ```tsx
-    import { useEffect, useRef } from 'react'
+    import { useCallback, useEffect, useRef } from 'react'
     import * as THREE from 'three'
-    import { GLTFLoaderAsync, Scene, WaterPool, disposeModel, globalParameterBus } from 'react-three-lite'
+    import { GLTFLoader, Scene, SkyDome, WaterPool, globalParameterBus } from 'react-three-lite'
     import type { SceneComponents } from 'react-three-lite'
 
     // 浴缸尺寸为 1.19 x 0.56，缸沿位于 y = 0.35，缸底位于 y = 0。
     const TUB_SCALE = 1.7
+    const TUB_SCALE_VEC: [number, number, number] = [TUB_SCALE, TUB_SCALE, TUB_SCALE]
     // 轮廓按缸口半宽（0.536）归一化，因此水池缩放就是缸口的半宽，水深也随之一致。
     const WATER_SCALE = 0.536 * TUB_SCALE
     const WATER_Y = 0.33 * TUB_SCALE
@@ -315,38 +362,38 @@ import WaterPoolIrregular from '@site/src/components/effects/WaterPoolIrregular'
     ]
 
     export default function App() {
-      const tubRef = useRef<THREE.Group | null>(null)
-      const cancelledRef = useRef(false)
+      const skyRef = useRef<SkyDome | null>(null)
 
-      const handleCreated = async (scene: THREE.Scene, components: SceneComponents) => {
+      const handleCreated = (scene: THREE.Scene, components: SceneComponents) => {
         const { camera, controls } = components
         globalParameterBus.set('sunDirection', new THREE.Vector3(0.55, 0.9, 0.35))
         camera.position.set(1.7, 1.35, 1.9)
         controls.target.set(0, 0.3, 0)
         camera.lookAt(0, 0.3, 0)
 
-        const tub = await GLTFLoaderAsync('/models/bathtub.glb', false)
-        if (cancelledRef.current) {
-          disposeModel(tub)
-          return
-        }
-
-        // 模型的坐标原点在角上，因此平移回水面中心。
-        tub.scale.setScalar(TUB_SCALE)
-        tub.position.set(-0.595 * TUB_SCALE, 0, 0.28 * TUB_SCALE)
-        scene.add(tub)
-        tubRef.current = tub
+        skyRef.current = new SkyDome({
+          horizonColor: 0x94c2f0,
+          lowerSkyColor: 0x7fb4ec,
+          upperSkyColor: 0x3d7bd5,
+          zenithColor: 0x296bc7,
+          glowColor: 0xfff1d8,
+          sunColor: 0xfff7e6,
+          sunIntensity: 2.2,
+          sunSize: 5
+        })
+        scene.add(skyRef.current)
       }
+
+      // 模型的坐标原点在角上，因此平移回水面中心。
+      const handleTubLoaded = useCallback((tub: THREE.Group) => {
+        tub.position.set(-0.595 * TUB_SCALE, 0, 0.28 * TUB_SCALE)
+      }, [])
 
       // 卸载时清理
       useEffect(() => {
-        cancelledRef.current = false
         return () => {
-          cancelledRef.current = true
-          if (tubRef.current) {
-            disposeModel(tubRef.current)
-            tubRef.current = null
-          }
+          skyRef.current?.dispose()
+          skyRef.current = null
         }
       }, [])
 
@@ -363,6 +410,12 @@ import WaterPoolIrregular from '@site/src/components/effects/WaterPoolIrregular'
             shape={TUB_OUTLINE}
             scale={WATER_SCALE}
             position={[0, WATER_Y, 0]}
+          />
+          <GLTFLoader
+            modelUrl="/models/bathtub.glb"
+            useDraco={false}
+            scale={TUB_SCALE_VEC}
+            onLoaded={handleTubLoaded}
           />
         </Scene>
       )
@@ -382,11 +435,10 @@ import WaterPoolIrregular from '@site/src/components/effects/WaterPoolIrregular'
 | segments | number | 160 | 沿容器轮廓的细分数 |
 | autoRipples | boolean | true | 每 1.8 秒自动产生一个随机涟漪 |
 | interactive | boolean | true | 允许拖动水面 |
-| sky | boolean | true | 在水池后方绘制程序化天空穹顶 |
 | position | Vector3 \| [number, number, number] | [0, 0, 0] | 水面的世界坐标中心位置 |
 | scale | number | 1 | 水池整体的统一缩放：占地与深度 |
 
-太阳方向通过[全局参数总线](/zh-CN/guide/effects/global-parameters)共享，不再是属性，因此反射与折射光同天空、海面使用同一个太阳：
+太阳方向通过[全局参数总线](/zh-CN/guide/effects/global-parameters)共享，不再是属性，因此反射、折射光与 `SkyDome` 的太阳都使用同一个方向：
 
 ```ts
 globalParameterBus.set('sunDirection', new THREE.Vector3(0.55, 0.9, 0.35))

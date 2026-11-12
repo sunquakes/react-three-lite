@@ -136,7 +136,9 @@ passing a prop to every effect.
 11. **One sun for the whole scene.** `SkyDome`, `Water`, `WaterPool` and
     `HeightFog` have no sun direction props. Set
     `globalParameterBus.set('sunDirection', new THREE.Vector3(x, y, z))` once;
-    every effect reads and subscribes to it.
+    every effect reads and subscribes to it. `WaterPool` draws only the water
+    surface, so add a `SkyDome` to the scene for the visible sky and sun; the
+    water still traces its own sky for reflections.
 
 ## Common tasks
 
@@ -150,6 +152,8 @@ passing a prop to every effect.
 | HTML label anchored in 3D | `Popup` or `Callout` class |
 | Draggable object | `Movable` class |
 | Rain, snow, water, fog | `Rain`, `Snow`, `Water`, `WaterPool`, `HeightFog` components |
+| Sky and sun behind a scene | `SkyDome` class (added to the scene in `onCreated`, disposed on unmount) |
+| Irregular shoreline or lake shape | `<Water shape={[[x, z], ...]} />` (world units, convex, contains origin); `<WaterPool shape={...} />` uses the same outline format in normalized units |
 | Shared sun direction | `globalParameterBus.set('sunDirection', ...)` |
 | Glow / post-processing | `Bloom` component, `GlowSprite` class |
 | Sci-fi energy shield with impacts | `ForceShield` class (`hit()`, `setActive()`, `life`) |

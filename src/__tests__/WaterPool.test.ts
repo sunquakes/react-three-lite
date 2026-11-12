@@ -268,24 +268,19 @@ describe('WaterPoolMaterials', () => {
 
     const dispose = () => {
       materials.water.dispose()
-      materials.sky.dispose()
       waterTexture.dispose()
     }
 
     return { materials, dispose }
   }
 
-  it('builds node materials for the water and sky', () => {
+  it('builds the node material for the water surface', () => {
     const { materials, dispose } = createMaterials()
 
     expect(materials.water.name).toBe('WaterPoolSurface')
     expect(materials.water.positionNode).toBeDefined()
     expect(materials.water.colorNode).toBeDefined()
     expect(materials.water.side).toBe(THREE.DoubleSide)
-
-    expect(materials.sky.name).toBe('WaterPoolSky')
-    expect(materials.sky.side).toBe(THREE.BackSide)
-    expect(materials.sky.depthWrite).toBe(false)
 
     dispose()
   })

@@ -26,8 +26,8 @@ Visit [r3l.sunquakes.com](https://r3l.sunquakes.com).
 - **Fireworks** — Shader-driven firework launch with gravity-bent burst trails
 - **TextFireworks** — Fireworks that assemble a text glyph from particles
 - **Rain / Snow** — Particle effects with custom GLSL shaders
-- **Water** — Cinematic shallow ocean with planar reflection and refraction
-- **WaterPool** — Interactive ray-traced water pool you can ripple by dragging
+- **Water** — Cinematic shallow ocean with planar reflection and refraction, plus an optional irregular outline for lakes and shorelines
+- **WaterPool** — Interactive ray-traced water pool you can ripple by dragging (water surface only; add `SkyDome` for the sky and sun)
 - **SandyBeach** — Walkable dawn beach island with footprints in the sand
 - **SkyBox** — Skybox background support
 - **SkyDome** — Gradient sky dome with a low sun

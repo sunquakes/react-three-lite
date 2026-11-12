@@ -8,12 +8,12 @@ import {
   getWaterPoolBounds,
   isInsideWaterPool,
   resolveWaterPoolShape,
-  sampleWaterPoolOutline,
   WATER_POOL_IRREGULAR_CUBE_OUTLINE,
   type WaterPoolEdge,
   type WaterPoolOutline,
   type WaterPoolShape
 } from '../utils/WaterPoolShape'
+import { createWaterSurfaceGeometry } from '../utils/WaterSurfaceGeometry'
 import { createWaterPoolMaterials } from '../utils/WaterPoolMaterials'
 import { globalParameterBus } from '../utils/ParameterBus'
 
@@ -34,18 +34,11 @@ export interface WaterPoolProps {
   autoRipples?: boolean
   /** Enables dragging the water surface. Defaults to true. */
   interactive?: boolean
-  /** Draws the procedural sky dome behind the pool. Defaults to true. */
-  sky?: boolean
   /** World position of the water surface centre. Defaults to [0, 0, 0]. */
   position?: THREE.Vector3 | [number, number, number]
   /** Uniform scale of the pool and its depth. Defaults to 1. */
   scale?: number
 }
-
-const getOutlineSubdivisions = (
-  segments: number,
-  outline: WaterPoolOutline
-) => Math.max(1, Math.round(segments / outline.length))
 
 const DROP_RADIUS = 0.06
 const DROP_STRENGTH = 0.01
@@ -54,54 +47,6 @@ const AUTO_RIPPLE_INTERVAL = 1.8
 const FIXED_STEP = 1 / 60
 const MAX_STEPS_PER_FRAME = 3
 const DRAG_STRENGTH = 0.01
-
-/**
- * Water surface shaped like the container outline: concentric rings that scale
- * the outline towards the center, so the water edge follows the outline exactly.
- */
-const createWaterSurfaceGeometry = (
-  segments: number,
-  outline: WaterPoolOutline
-) => {
-  const outlinePoints = sampleWaterPoolOutline(
-    outline,
-    getOutlineSubdivisions(segments, outline)
-  )
-  const angular = outlinePoints.length
-  const rings = Math.max(8, Math.round(segments / 4))
-  const positions: number[] = [0, 0, 0]
-
-  for (let ring = 1; ring <= rings; ring += 1) {
-    const scale = ring / rings
-    outlinePoints.forEach(([x, z]) => {
-      positions.push(x * scale, 0, z * scale)
-    })
-  }
-
-  const indices: number[] = []
-  for (let index = 0; index < angular; index += 1) {
-    indices.push(0, 1 + index, 1 + ((index + 1) % angular))
-  }
-  for (let ring = 1; ring < rings; ring += 1) {
-    const inner = 1 + (ring - 1) * angular
-    const outer = 1 + ring * angular
-    for (let index = 0; index < angular; index += 1) {
-      const next = (index + 1) % angular
-      // Counter-clockwise seen from above, so the surface stays front facing
-      // like the flat plane it replaced. The water shader branches on
-      // `frontFacing`, and a flipped winding would trace the reflection into
-      // the pool instead of towards the sky.
-      indices.push(inner + index, inner + next, outer + next)
-      indices.push(inner + index, outer + next, outer + index)
-    }
-  }
-
-  const geometry = new THREE.BufferGeometry()
-  geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3))
-  geometry.setIndex(indices)
-
-  return geometry
-}
 
 /** Random point inside the outline, used for the initial and ambient ripples. */
 const randomPoolPoint = (
@@ -142,7 +87,6 @@ const WaterPool = ({
   segments = 160,
   autoRipples = true,
   interactive = true,
-  sky = true,
   position = [0, 0, 0],
   scale = 1
 }: WaterPoolProps) => {
@@ -238,19 +182,6 @@ const WaterPool = ({
     waterMesh.name = 'WaterPoolSurface'
     waterMesh.frustumCulled = false
     poolGroup.add(waterMesh)
-
-    let skyGeometry: THREE.SphereGeometry | null = null
-    let skyMesh: THREE.Mesh | null = null
-    if (sky) {
-      // Keep the dome around the pool no matter how large the pool is placed.
-      skyGeometry = new THREE.SphereGeometry(18 * Math.max(1, scale), 32, 16)
-      skyMesh = new THREE.Mesh(skyGeometry, materials.sky)
-      skyMesh.name = 'WaterPoolSky'
-      skyMesh.renderOrder = -10
-      skyMesh.frustumCulled = false
-      skyMesh.position.copy(camera.position)
-      scene.add(skyMesh)
-    }
 
     const raycaster = new THREE.Raycaster()
     const pointer = new THREE.Vector2()
@@ -383,10 +314,6 @@ const WaterPool = ({
         waterTexture.needsUpdate = true
       }
 
-      if (skyMesh) {
-        skyMesh.position.copy(camera.position)
-      }
-
       animationIdRef.current = requestAnimationFrame(animate)
     }
     animationIdRef.current = requestAnimationFrame(animate)
@@ -407,15 +334,10 @@ const WaterPool = ({
       }
 
       scene.remove(poolGroup)
-      if (skyMesh) {
-        scene.remove(skyMesh)
-      }
 
       waterGeometry.dispose()
-      skyGeometry?.dispose()
 
       materials.water.dispose()
-      materials.sky.dispose()
       waterTexture.dispose()
     }
   }, [
@@ -426,7 +348,6 @@ const WaterPool = ({
     segments,
     autoRipples,
     interactive,
-    sky,
     positionX,
     positionY,
     positionZ,

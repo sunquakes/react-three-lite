@@ -2,6 +2,8 @@
 
 ### Added
 
+- Add a `shape` prop to `Water`: pass a convex `[x, z]` outline in world units or a `THREE.BufferGeometry` such as `ConvexGeometry`, and the surface follows it instead of the square patch, giving lakes and shorelines a real edge. Boundary vertices are sampled from the outline and interior vertices scale it towards the centre, so the wave shader and both planar captures are unchanged; `size` is ignored and `segments` becomes the boundary budget.
+- Add a bilingual irregular lake demo for the new `Water` option, plus unit tests for the shaped surface geometry.
 - Add the `NebulaGalaxy` class: a four-armed spiral galaxy built from additive billboard particles (arms, core and dust) plus a procedural haze plane and distant background stars. Drag tilts the disc, wheel or pinch zooms it within limits, and a click sends a light wave from the core; the internal loop drives the spin, tilt, zoom and palette transitions so no per-frame code is required. `setPalette()`, `setSpeed()`, `setPaused()` and `pulse()` control it at runtime, and reduced-motion preferences disable the idle rotation and click wave by default.
 - Add WebGPU / WebGL demos and bilingual (English and Chinese) documentation for the new effect, plus unit tests for the star distribution, timeline, pointer interaction, uniform color handling and resource cleanup.
 - Add the `TextFireworks` class: a sentence is sampled from an offscreen canvas into particles, lifted into four staggered colour bursts from left to right, then pulled back onto the original glyphs. A delayed, dimmer copy of the same particles forms the trail, and `setText()` / `launch()` resample and replay the effect.
@@ -23,6 +25,7 @@
 - `WaterPool` no longer paints a caustic net on the basin. The traced floor is a plain lit color, and the simulation no longer builds a caustic map, so the per-frame CPU cost is lower.
 - `WaterPool` now defaults to an irregular cube outline instead of the square tub: the water surface is a skewed quadrilateral with four sides of different lengths. Pass `shape="box"` to get the old square, or a custom outline as before.
 - `WaterPool` no longer accepts floating `boxes`. The `boxes` prop and the `WaterPoolBoxConfig` type are gone, the water shader stops ray tracing boxes on the surface, the basin has no box shadows, and `WaterPoolSimulation` drops `moveBox`. Only the water surface and the dragged ripples remain interactive.
+- `WaterPool` now draws the water only. The `sky` prop is gone and the component no longer adds a procedural sky dome or sun behind the pool, so add `SkyDome` to the scene for the sky and the sun; the water still traces its own sky for reflections.
 - Rescale the `WaterPool` demo so the tub no longer dominates the frame and the water sits inside its opening instead of a much larger vessel.
 
 ## [0.8.0] - 2026-10-29
