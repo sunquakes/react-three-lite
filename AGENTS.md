@@ -281,10 +281,32 @@ pnpm format       # Format with Prettier
 pnpm build        # Build for production
 ```
 
+### Versioning
+
+Determine the next version from the latest released tag before preparing a
+release. Tags and changelog headings both use the `x.y.z` form with no `v`
+prefix, matching the `version` in `package.json` and the `*.*.*` trigger of
+`.github/workflows/create-release.yml`.
+
+1. **Find the latest tag.** Run `git fetch --tags origin` and then
+   `git ls-remote --tags origin | sed 's#.*refs/tags/##' | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1`.
+   Use `ls-remote` rather than `git describe` because sandbox checkouts are
+   often shallow and cannot walk back to older tags and because the workflow is
+   driven by the pushed tag, not by local history.
+
+2. **Choose the bump.** Increment the patch (`x.y.z+1`) for fixes, refactors and
+   documentation; the minor (`x.y+1.0`) for new features; the major (`x+1.0.0`)
+   for breaking changes to the public API.
+
+3. **Use it consistently.** Feed the resulting `x.y.z` into the Releasing steps
+   below so `package.json`, the `CHANGELOG.md` heading, and the git tag all carry
+   the same version.
+
 ### Releasing
 
-When the user defines a release version (`x.y.z`), execute these steps in this
-exact order. Do not stop halfway and do not reorder them:
+When the user defines a release version (`x.y.z`) or asks for the next version,
+execute these steps in this exact order. Do not stop halfway and do not reorder
+them:
 
 1. **Add the changelog entry.** Update `CHANGELOG.md`: rename the
    `## [Unreleased]` heading to `## [x.y.z] - YYYY-MM-DD`, keep the accumulated
