@@ -281,6 +281,17 @@ pnpm format       # Format with Prettier
 pnpm build        # Build for production
 ```
 
+### Pull Requests
+
+- Land work through a pull request into `main`; do not commit directly to `main`.
+- A pull request is not finished when it is merged: its head branch must also be
+  gone. Pass `--delete-branch` to `gh pr merge` so the remote branch is removed
+  in the same step, then prune and delete the local copy
+  (`git fetch --prune`, `git branch -d <branch>`).
+- Never leave a merged temporary branch behind on the remote or in the local
+  checkout. This applies to every short-lived branch; long-lived branches such as
+  `develop` are kept.
+
 ### Versioning
 
 Determine the next version from the latest released tag before preparing a
